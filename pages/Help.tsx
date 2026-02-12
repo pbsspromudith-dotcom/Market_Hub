@@ -66,77 +66,73 @@ const Help: React.FC = () => {
 
   return (
     <div className="bg-slate-50 min-h-screen">
-      {/* Header */}
-      <section className="bg-white border-b border-slate-200 pt-24 pb-20 px-4 text-center">
+      {/* Search Header */}
+      <section className="bg-white border-b border-slate-100 pt-32 pb-24 px-4 text-center">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-5xl md:text-6xl font-black text-slate-900 tracking-tight mb-8">Help Center</h1>
-          <p className="text-slate-500 text-lg font-medium max-w-2xl mx-auto mb-12">
-            Learn about Canadian trading regulations, safety protocols, and how to succeed on MarketHub.
-          </p>
-          <div className="relative max-w-xl mx-auto">
-            <span className="material-icons absolute left-5 top-4.5 text-slate-400">search</span>
+          <div className="relative max-w-2xl mx-auto">
+            <span className="material-icons absolute left-6 top-5 text-slate-400">search</span>
             <input 
               type="text" 
-              placeholder="Search help articles..." 
-              className="w-full pl-14 pr-6 py-4.5 bg-slate-50 border-none rounded-2xl focus:ring-4 focus:ring-primary/20 text-sm font-semibold shadow-inner"
+              placeholder="Search safety tips, legal rules, or help..." 
+              className="w-full pl-16 pr-6 py-5 bg-slate-50 border-none rounded-[2rem] shadow-inner text-slate-900 font-medium focus:ring-4 focus:ring-primary/10 transition-all"
             />
           </div>
         </div>
       </section>
 
       <main className="max-w-7xl mx-auto px-4 py-20">
-        {/* Category Cards (Matching User Screenshot) */}
+        {/* Topic Grid (Exactly as per provided Screenshot) */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-24">
           {categories.map((cat) => (
             <div 
               key={cat.id} 
               onClick={() => setActiveTab(cat.id as HelpCategory)}
-              className={`bg-white p-12 rounded-[2.5rem] border transition-all cursor-pointer group text-center ${activeTab === cat.id ? 'border-primary ring-4 ring-primary/5 shadow-2xl' : 'border-slate-100 shadow-sm hover:shadow-xl'}`}
+              className={`bg-white p-16 rounded-[3rem] border transition-all cursor-pointer group text-center ${activeTab === cat.id ? 'border-primary ring-8 ring-primary/5 shadow-2xl' : 'border-slate-100 shadow-sm hover:shadow-xl hover:border-slate-200'}`}
             >
-              <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-8 group-hover:scale-110 transition-transform">
-                <span className={`material-icons text-3xl ${activeTab === cat.id ? 'text-primary' : 'text-slate-400'}`}>{cat.icon}</span>
+              <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-10 group-hover:bg-primary/5 transition-all">
+                <span className={`material-icons text-4xl ${activeTab === cat.id ? 'text-primary' : 'text-slate-300'}`}>{cat.icon}</span>
               </div>
-              <h4 className="text-xl font-black mb-2 text-slate-900">{cat.title}</h4>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{cat.count}</p>
+              <h4 className="text-2xl font-black mb-3 text-slate-900 tracking-tight">{cat.title}</h4>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">{cat.count}</p>
             </div>
           ))}
         </div>
 
-        {/* Detailed FAQ Section */}
-        <div className="bg-white p-10 md:p-16 rounded-[3.5rem] border border-slate-100 shadow-2xl shadow-slate-200/50">
-          <div className="mb-12">
-            <h2 className="text-3xl font-black text-slate-900 mb-2">{activeTab} Guidelines</h2>
-            <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">Regulatory Compliance: Canada 2024</p>
-          </div>
-
-          <div className="space-y-8">
-            {faqs[activeTab].map((item, i) => (
-              <div key={i} className="group">
-                <h3 className="text-lg font-black text-slate-900 mb-4 flex items-start gap-4">
-                  <span className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary text-xs flex-shrink-0">Q</span>
-                  {item.q}
+        {/* Dynamic FAQ Content */}
+        <div className="max-w-4xl mx-auto space-y-8">
+           <div className="mb-12 text-center md:text-left">
+              <h2 className="text-3xl font-black text-slate-900 mb-2">{activeTab} Guidance</h2>
+              <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">Official Canada Trading Protocols 2024</p>
+           </div>
+           
+           {faqs[activeTab].map((faq, i) => (
+             <div key={i} className="bg-white p-10 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+                <h3 className="text-xl font-black text-slate-900 mb-6 flex items-start gap-5 leading-tight">
+                  <span className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary text-xs flex-shrink-0 font-black">Q</span>
+                  {faq.q}
                 </h3>
-                <div className="flex items-start gap-4">
-                   <span className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-300 text-xs flex-shrink-0">A</span>
-                   <p className="text-slate-600 font-medium leading-relaxed">{item.a}</p>
+                <div className="flex items-start gap-5">
+                  <span className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-300 text-xs flex-shrink-0 font-black">A</span>
+                  <p className="text-slate-600 font-medium leading-relaxed text-lg">
+                    {faq.a}
+                  </p>
                 </div>
-                {i < faqs[activeTab].length - 1 && <div className="h-px bg-slate-50 mt-8"></div>}
-              </div>
-            ))}
-          </div>
+             </div>
+           ))}
         </div>
 
-        {/* Canadian Safety Badges */}
-        <div className="mt-24 grid grid-cols-2 md:grid-cols-4 gap-8">
+        {/* Safety Badges Footer */}
+        <div className="mt-32 pt-20 border-t border-slate-100 flex flex-wrap justify-center gap-12 md:gap-20">
           {[
-            { label: 'PIPEDA Protected', icon: 'verified_user' },
-            { icon: 'gavel', label: 'CRA Compliant' },
-            { icon: 'security', label: 'Safe Trade Zones' },
-            { icon: 'policy', label: 'Fraud Detection' }
-          ].map((badge, i) => (
-            <div key={i} className="flex flex-col items-center gap-3 opacity-40">
-              <span className="material-icons text-primary text-3xl">{badge.icon}</span>
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-900">{badge.label}</span>
+            { icon: 'verified_user', label: 'PIPEDA PROTECTED' },
+            { icon: 'account_balance', label: 'CRA REGISTERED' },
+            { icon: 'location_on', label: 'SAFE TRADE ZONES' },
+            { icon: 'privacy_tip', label: 'FRAUD PREVENTION' }
+          ].map(badge => (
+            <div key={badge.label} className="flex flex-col items-center gap-4 opacity-40 hover:opacity-100 transition-opacity">
+               <span className="material-icons text-3xl text-primary">{badge.icon}</span>
+               <span className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em]">{badge.label}</span>
             </div>
           ))}
         </div>
