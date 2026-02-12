@@ -8,6 +8,8 @@ import ItemDetails from './pages/ItemDetails';
 import PostAd from './pages/PostAd';
 import AdminDashboard from './pages/AdminDashboard';
 import Login from './pages/Login';
+import Help from './pages/Help';
+import Contact from './pages/Contact';
 
 const App: React.FC = () => {
   // Mock authentication state for demo purposes
@@ -27,6 +29,8 @@ const App: React.FC = () => {
           <Route path="/post-ad" element={<PostAd />} />
           <Route path="/dashboard" element={<AdminDashboard />} />
           <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/help" element={<Help />} />
+          <Route path="/contact" element={<Contact />} />
         </Routes>
       </Layout>
     </Router>

@@ -21,7 +21,7 @@ const Layout: React.FC<LayoutProps> = ({ children, isLoggedIn, onLogout }) => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-slate-50">
       <header className="sticky top-0 z-50 bg-white border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
@@ -65,7 +65,6 @@ const Layout: React.FC<LayoutProps> = ({ children, isLoggedIn, onLogout }) => {
                       <img src={CURRENT_USER.avatar} alt="Avatar" className="w-9 h-9 rounded-full border border-slate-200" />
                       <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
                     </div>
-                    {/* Logout Dropdown (Simplified for Demo) */}
                     <button 
                       onClick={handleLogoutClick}
                       className="ml-2 text-slate-400 hover:text-red-500 transition-colors"
@@ -97,71 +96,49 @@ const Layout: React.FC<LayoutProps> = ({ children, isLoggedIn, onLogout }) => {
       </main>
 
       {!isLoginPage && (
-        <footer className="bg-white border-t border-slate-200 py-16 mt-12">
+        <footer className="bg-white pt-24 pb-12 border-t border-slate-100">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-12">
-              <div className="col-span-2">
-                <div className="flex items-center gap-2 mb-6">
-                  <div className="w-8 h-8 bg-primary flex items-center justify-center rounded-lg">
-                    <span className="material-icons text-white text-sm">shopping_bag</span>
-                  </div>
-                  <span className="text-xl font-black tracking-tight text-slate-900 uppercase">MARKET<span className="text-primary">HUB</span></span>
-                </div>
-                <p className="text-sm text-slate-500 mb-8 max-w-sm leading-relaxed">
-                  Join millions of local users buying and selling anything from cars to furniture. The safest marketplace in your neighborhood.
-                </p>
-                <div className="flex gap-4">
-                  {['facebook', 'twitter', 'instagram'].map(social => (
-                    <a key={social} href="#" className="w-10 h-10 rounded-full border border-slate-100 flex items-center justify-center text-slate-400 hover:border-primary hover:text-primary transition-all">
-                      <span className="material-icons text-lg">{social === 'twitter' ? 'X' : social}</span>
-                    </a>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <h4 className="font-black text-[10px] text-slate-400 uppercase tracking-[0.2em] mb-6">Marketplace</h4>
-                <ul className="space-y-4 text-sm font-bold text-slate-600">
-                  <li><Link to="/search" className="hover:text-primary">Vehicles</Link></li>
-                  <li><Link to="/search" className="hover:text-primary">Electronics</Link></li>
-                  <li><Link to="/search" className="hover:text-primary">Real Estate</Link></li>
-                  <li><Link to="/search" className="hover:text-primary">Community</Link></li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="font-black text-[10px] text-slate-400 uppercase tracking-[0.2em] mb-6">Company</h4>
-                <ul className="space-y-4 text-sm font-bold text-slate-600">
-                  <li><a href="#" className="hover:text-primary">About Us</a></li>
-                  <li><a href="#" className="hover:text-primary">Safety Tips</a></li>
-                  <li><a href="#" className="hover:text-primary">Terms of Use</a></li>
-                  <li><a href="#" className="hover:text-primary">Privacy Policy</a></li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="font-black text-[10px] text-slate-400 uppercase tracking-[0.2em] mb-6">Mobile App</h4>
-                <div className="space-y-3">
-                   <button className="w-full bg-slate-900 text-white p-3 rounded-xl flex items-center gap-3 hover:bg-slate-800 transition-colors">
-                      <span className="material-icons text-lg">apple</span>
-                      <div className="text-left">
-                        <p className="text-[8px] font-bold uppercase leading-none opacity-60">Download on</p>
-                        <p className="text-[10px] font-black leading-none">App Store</p>
-                      </div>
-                   </button>
-                   <button className="w-full bg-slate-900 text-white p-3 rounded-xl flex items-center gap-3 hover:bg-slate-800 transition-colors">
-                      <span className="material-icons text-lg">android</span>
-                      <div className="text-left">
-                        <p className="text-[8px] font-bold uppercase leading-none opacity-60">Get it on</p>
-                        <p className="text-[10px] font-black leading-none">Google Play</p>
-                      </div>
-                   </button>
-                </div>
-              </div>
+            {/* Social Icons (As per screenshot) */}
+            <div className="flex gap-4 mb-12">
+              <a href="#" className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 hover:text-primary hover:border-primary transition-all">
+                <span className="material-icons text-lg">facebook</span>
+              </a>
+              <a href="#" className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 hover:text-primary hover:border-primary transition-all font-bold">
+                X
+              </a>
+              <a href="#" className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 hover:text-primary hover:border-primary transition-all">
+                <span className="material-icons text-lg">tag</span>
+              </a>
             </div>
-            <div className="mt-16 pt-8 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-              <p>© 2024 MarketHub Pro. All rights reserved.</p>
-              <div className="flex gap-6">
-                <a href="#" className="hover:text-primary">Status</a>
-                <a href="#" className="hover:text-primary">Help</a>
-                <a href="#" className="hover:text-primary">Contact</a>
+
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-20">
+              {/* SUPPORT Section (As per screenshot) */}
+              <div className="space-y-6">
+                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Support</h4>
+                <ul className="space-y-4">
+                  <li>
+                    <Link to="/help" className="text-sm font-bold text-slate-600 hover:text-primary transition-colors">Help Center</Link>
+                  </li>
+                  <li>
+                    <Link to="/contact" className="text-sm font-bold text-slate-600 hover:text-primary transition-colors">Contact Us</Link>
+                  </li>
+                  <li>
+                    <Link to="/help" className="text-sm font-bold text-slate-600 hover:text-primary transition-colors">Trust & Safety</Link>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Other sections can go here but keeping focus on user's screenshot layout */}
+            </div>
+
+            {/* Bottom Bar (As per screenshot) */}
+            <div className="pt-8 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4">
+              <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                © 2024 MarketHub Pro. All Rights Reserved.
+              </div>
+              <div className="flex gap-8 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                <Link to="/help" className="hover:text-primary">Help</Link>
+                <Link to="/contact" className="hover:text-primary">Contact</Link>
               </div>
             </div>
           </div>
