@@ -30,6 +30,7 @@ export interface User {
 
 export enum AppRoute {
   Home = '/',
+  Login = '/login',
   Search = '/search',
   ItemDetails = '/item/:id',
   PostAd = '/post-ad',
