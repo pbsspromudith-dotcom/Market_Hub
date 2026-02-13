@@ -32,11 +32,11 @@ const Layout: React.FC<LayoutProps> = ({ children, isLoggedIn, onLogout }) => {
           <div className="flex justify-between items-center h-20">
             {/* Logo Section */}
             <Link to="/" className="flex items-center gap-3 shrink-0">
-              <div className="w-10 h-10 bg-primary flex items-center justify-center rounded-xl shadow-sm">
+              <div className="w-10 h-10 bg-primary flex items-center justify-center rounded-xl shadow-sm transition-transform hover:scale-105">
                 <span className="material-icons text-white">shopping_bag</span>
               </div>
               <span className="text-xl font-black tracking-tight text-[#0f172a]">
-                MARKET<span className="text-primary">{isLoggedIn && isAdminPage ? 'ADMIN' : 'HUB'}</span>
+                MARKET<span className="text-primary-light">{isLoggedIn && isAdminPage ? 'ADMIN' : 'HUB'}</span>
               </span>
             </Link>
 
@@ -47,7 +47,7 @@ const Layout: React.FC<LayoutProps> = ({ children, isLoggedIn, onLogout }) => {
                   <Link to="/search" className="text-sm font-bold text-slate-500 hover:text-primary transition-colors">Browse</Link>
                   <Link 
                     to={isLoggedIn ? "/post-ad" : "/login"} 
-                    className="bg-primary hover:bg-primary-hover text-white px-6 py-3 rounded-full font-black text-xs uppercase tracking-widest flex items-center gap-2 transition-all shadow-lg shadow-primary/10"
+                    className="bg-primary hover:bg-primary-hover text-white px-6 py-3 rounded-full font-black text-xs uppercase tracking-widest flex items-center gap-2 transition-all shadow-lg shadow-primary/20"
                   >
                     <span className="material-icons text-sm">add</span>
                     Post an Ad
@@ -60,7 +60,7 @@ const Layout: React.FC<LayoutProps> = ({ children, isLoggedIn, onLogout }) => {
               <div className="flex items-center gap-6">
                 {isLoggedIn ? (
                   <div className="flex items-center gap-3">
-                    <Link to="/dashboard" className="w-9 h-9 rounded-full border border-slate-200 overflow-hidden">
+                    <Link to="/dashboard" className="w-9 h-9 rounded-full border border-slate-200 overflow-hidden ring-2 ring-transparent hover:ring-primary-soft transition-all">
                       <img src={CURRENT_USER.avatar} alt="Avatar" className="w-full h-full object-cover" />
                     </Link>
                     <button 
@@ -72,10 +72,10 @@ const Layout: React.FC<LayoutProps> = ({ children, isLoggedIn, onLogout }) => {
                   </div>
                 ) : !isLoginPage ? (
                   <div className="flex items-center gap-6">
-                    <Link to="/login" className="text-xs font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors">
+                    <Link to="/login" className="text-xs font-black uppercase tracking-widest text-slate-400 hover:text-primary transition-colors">
                       Sign In
                     </Link>
-                    <Link to="/login" className="px-6 py-3 border-2 border-[#0f172a] text-[#0f172a] rounded-full text-xs font-black uppercase tracking-widest hover:bg-[#0f172a] hover:text-white transition-all">
+                    <Link to="/login" className="px-6 py-3 border-2 border-primary text-primary rounded-full text-xs font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-all">
                       Join Free
                     </Link>
                   </div>
@@ -146,7 +146,7 @@ const Layout: React.FC<LayoutProps> = ({ children, isLoggedIn, onLogout }) => {
                     <Link 
                       to="/login" 
                       onClick={() => setIsMobileMenuOpen(false)}
-                      className="block w-full text-center py-4 bg-[#0f172a] text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl"
+                      className="block w-full text-center py-4 bg-primary text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl"
                     >
                       Join Free
                     </Link>
@@ -179,7 +179,7 @@ const Layout: React.FC<LayoutProps> = ({ children, isLoggedIn, onLogout }) => {
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-20 text-center md:text-left">
               <div className="space-y-6">
-                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Support</h4>
+                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Support Hub</h4>
                 <ul className="space-y-4">
                   <li><Link to="/help" className="text-sm font-bold text-slate-600 hover:text-primary transition-colors">Help Center</Link></li>
                   <li><Link to="/contact" className="text-sm font-bold text-slate-600 hover:text-primary transition-colors">Contact Us</Link></li>
@@ -190,11 +190,11 @@ const Layout: React.FC<LayoutProps> = ({ children, isLoggedIn, onLogout }) => {
 
             <div className="pt-8 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4">
               <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                © 2024 MarketHub Pro. All Rights Reserved.
+                © 2024 MarketHub Pro. Built with Professional Standards.
               </div>
               <div className="flex gap-8 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                <Link to="/help" className="hover:text-primary">Help</Link>
-                <Link to="/contact" className="hover:text-primary">Contact</Link>
+                <Link to="/help" className="hover:text-primary transition-colors">Safety Guidelines</Link>
+                <Link to="/contact" className="hover:text-primary transition-colors">Contact</Link>
               </div>
             </div>
           </div>
