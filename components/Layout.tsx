@@ -6,16 +6,17 @@ import { CURRENT_USER } from '../constants';
 interface LayoutProps {
   children: React.ReactNode;
   isLoggedIn: boolean;
+  isAdmin?: boolean;
   onLogout: () => void;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children, isLoggedIn, onLogout }) => {
+const Layout: React.FC<LayoutProps> = ({ children, isLoggedIn, isAdmin, onLogout }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const isAdminPage = location.pathname.startsWith('/admin') || location.pathname.startsWith('/dashboard');
-  const isLoginPage = location.pathname === '/login';
+  const isLoginPage = location.pathname === '/login' || location.pathname === '/admin-login';
 
   const handleLogoutClick = () => {
     onLogout();
@@ -36,7 +37,7 @@ const Layout: React.FC<LayoutProps> = ({ children, isLoggedIn, onLogout }) => {
                 <span className="material-icons text-white">shopping_bag</span>
               </div>
               <span className="text-xl font-black tracking-tight text-[#0f172a]">
-                MARKET<span className="text-primary-light">{isLoggedIn && isAdminPage ? 'ADMIN' : 'HUB'}</span>
+                MARKET<span className="text-primary-light">{isAdmin ? 'ADMIN' : 'HUB'}</span>
               </span>
             </Link>
 
@@ -60,9 +61,15 @@ const Layout: React.FC<LayoutProps> = ({ children, isLoggedIn, onLogout }) => {
               <div className="flex items-center gap-6">
                 {isLoggedIn ? (
                   <div className="flex items-center gap-3">
-                    <Link to="/dashboard" className="w-9 h-9 rounded-full border border-slate-200 overflow-hidden ring-2 ring-transparent hover:ring-primary-soft transition-all">
-                      <img src={CURRENT_USER.avatar} alt="Avatar" className="w-full h-full object-cover" />
-                    </Link>
+                    {isAdmin ? (
+                      <Link to="/dashboard" className="w-9 h-9 rounded-full border border-slate-200 overflow-hidden ring-2 ring-transparent hover:ring-primary-soft transition-all">
+                        <img src={CURRENT_USER.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                      </Link>
+                    ) : (
+                      <div className="w-9 h-9 rounded-full border border-slate-200 overflow-hidden ring-2 ring-transparent hover:ring-primary-soft transition-all">
+                        <img src={CURRENT_USER.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                      </div>
+                    )}
                     <button 
                       onClick={handleLogoutClick}
                       className="text-slate-400 hover:text-red-500 transition-colors"
@@ -117,7 +124,7 @@ const Layout: React.FC<LayoutProps> = ({ children, isLoggedIn, onLogout }) => {
                 >
                   Browse
                 </Link>
-                {isLoggedIn && (
+                {isLoggedIn && isAdmin && (
                   <Link 
                     to="/dashboard" 
                     onClick={() => setIsMobileMenuOpen(false)}

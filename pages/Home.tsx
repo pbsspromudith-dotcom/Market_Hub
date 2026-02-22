@@ -19,6 +19,35 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn }) => {
   const [serverMessage, setServerMessage] = useState<string>('Checking backend connection...');
   const [listings, setListings] = useState<any[]>([]);
 
+  const [searchQuery, setSearchQuery] = useState('');
+  const [locationSearch, setLocationSearch] = useState(() => {
+    return localStorage.getItem('user_location') || 'Toronto, ON';
+  });
+  const [locationSuggestions, setLocationSuggestions] = useState<any[]>([]);
+  const [isSearchingLocation, setIsSearchingLocation] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  useEffect(() => {
+    if (locationSearch.trim().length > 2 && showSuggestions) {
+      const delayFn = setTimeout(() => {
+        setIsSearchingLocation(true);
+        fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(locationSearch)}&countrycodes=ca&format=json&addressdetails=1&limit=5`)
+          .then(res => res.json())
+          .then(data => setLocationSuggestions(data))
+          .catch(console.error)
+          .finally(() => setIsSearchingLocation(false));
+      }, 500);
+      return () => clearTimeout(delayFn);
+    } else {
+      setLocationSuggestions([]);
+    }
+  }, [locationSearch, showSuggestions]);
+
+  const handleSelectLocation = (place: any) => {
+    setLocationSearch(place.display_name.split(',')[0] + ', ' + (place.address?.state || 'CA'));
+    setShowSuggestions(false);
+  };
+
   useEffect(() => {
     fetch('/api/status')
       .then(res => res.json())
@@ -29,6 +58,14 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn }) => {
       .then(res => res.json())
       .then(data => setListings(data.slice(0, 6))) // get top 6 recent
       .catch(err => console.error('DB fetch error', err));
+
+    const handleLocationUpdate = () => {
+      const loc = localStorage.getItem('user_location');
+      if (loc) setLocationSearch(loc);
+    };
+
+    window.addEventListener('location_updated', handleLocationUpdate);
+    return () => window.removeEventListener('location_updated', handleLocationUpdate);
   }, []);
 
   return (
@@ -53,14 +90,62 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn }) => {
           <div className="max-w-4xl mx-auto bg-white p-2.5 rounded-[2.5rem] shadow-2xl shadow-primary-neutral/40 border border-slate-100 flex flex-col md:flex-row gap-2">
             <div className="flex-grow relative flex items-center">
               <span className="material-icons absolute left-5 text-primary-neutral">search</span>
-              <input className="w-full pl-14 pr-4 py-5 bg-transparent border-none focus:ring-0 text-sm font-medium" placeholder="Search for anything..." type="text" />
+              <input 
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="w-full pl-14 pr-4 py-5 bg-transparent border-none focus:ring-0 text-sm font-medium" 
+                placeholder="Search for anything..." 
+                type="text" 
+              />
             </div>
             <div className="w-px h-10 bg-slate-100 self-center hidden md:block"></div>
             <div className="md:w-64 relative flex items-center">
-              <span className="material-icons absolute left-5 text-primary-neutral">location_on</span>
-              <input className="w-full pl-14 pr-4 py-5 bg-transparent border-none focus:ring-0 text-sm font-bold text-slate-700" defaultValue="Toronto, ON" type="text" />
+              <span className="material-icons absolute left-5 text-primary-neutral z-10">location_on</span>
+              <input 
+                value={locationSearch}
+                onChange={e => {
+                  setLocationSearch(e.target.value);
+                  setShowSuggestions(true);
+                }}
+                onFocus={() => setShowSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                className="w-full pl-14 pr-4 py-5 bg-transparent border-none focus:ring-0 text-sm font-bold text-slate-700" 
+                type="text" 
+                placeholder="City or location..."
+                autoComplete="off"
+              />
+              
+              {/* Autocomplete Dropdown */}
+              {showSuggestions && locationSearch.length > 2 && (
+                <div className="absolute top-[110%] left-0 w-full min-w-[250px] bg-white border border-slate-200 rounded-xl shadow-2xl z-50 overflow-hidden text-left">
+                  {isSearchingLocation ? (
+                    <div className="p-4 text-xs font-bold text-slate-400 text-center">Searching...</div>
+                  ) : locationSuggestions.length > 0 ? (
+                    <ul>
+                      {locationSuggestions.map((place, idx) => (
+                        <li 
+                          key={idx} 
+                          onClick={() => handleSelectLocation(place)}
+                          className="px-4 py-3 hover:bg-slate-50 cursor-pointer border-b border-slate-50 last:border-0 flex items-start gap-3 transition-colors"
+                        >
+                          <span className="material-icons text-slate-300 text-lg mt-0.5">place</span>
+                          <div>
+                            <p className="text-sm font-bold text-slate-700 leading-tight mb-0.5">{place.display_name.split(',')[0]}</p>
+                            <p className="text-xs text-slate-400 leading-tight">{place.display_name}</p>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <div className="p-4 text-xs font-bold text-slate-400 text-center">No locations found.</div>
+                  )}
+                </div>
+              )}
             </div>
-            <Link to="/search" className="bg-primary hover:bg-primary-hover text-white px-12 py-5 rounded-[1.8rem] font-black transition-all flex items-center justify-center shadow-lg shadow-primary/25">
+            <Link 
+              to={`/search?q=${encodeURIComponent(searchQuery)}&loc=${encodeURIComponent(locationSearch)}`} 
+              className="bg-primary hover:bg-primary-hover text-white px-12 py-5 rounded-[1.8rem] font-black transition-all flex items-center justify-center shadow-lg shadow-primary/25"
+            >
               Explore
             </Link>
           </div>
@@ -109,8 +194,8 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn }) => {
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
               {listings.map((item) => (
                 <Link to={`/item/${item.id}`} key={item.id} className="group bg-white rounded-[2.5rem] border border-slate-100 overflow-hidden hover:shadow-2xl transition-all">
-                  <div className="aspect-[4/3] relative overflow-hidden bg-slate-100">
-                    <img src={item.image || 'https://picsum.photos/seed/default/800/600'} alt={item.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                  <div className="aspect-[4/3] relative flex items-center justify-center bg-slate-100">
+                    <img src={item.image || 'https://picsum.photos/seed/default/800/600'} alt={item.title} className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-700" />
                     <button className="absolute top-5 right-5 w-10 h-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors shadow-sm">
                       <span className="material-icons text-xl">favorite_border</span>
                     </button>

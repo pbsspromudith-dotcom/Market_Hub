@@ -120,6 +120,7 @@ app.post("/api/upload", upload.array("images", 5), (req, res) => {
 const processListing = (row) => {
   let image = row.image;
   let allImages = row.image ? [row.image] : [];
+
   if (row.image && row.image.startsWith("[")) {
     try {
       const parsed = JSON.parse(row.image);
@@ -127,7 +128,9 @@ const processListing = (row) => {
         image = parsed[0];
         allImages = parsed;
       }
-    } catch (e) {}
+    } catch (e) {
+      console.log("Error parsing row image", e);
+    }
   }
   return { ...row, image, allImages };
 };
@@ -148,7 +151,7 @@ app.get("/api/listings/:id", async (req, res) => {
   try {
     const [rows] = await pool.query(
       `
-      SELECT l.*, u.name as seller_name, u.avatar as seller_avatar, u.join_date as seller_join_date
+      SELECT l.*, u.name as seller_name, u.avatar as seller_avatar, u.join_date as seller_join_date, u.email as seller_email, u.phone as seller_phone
       FROM listings l 
       LEFT JOIN users u ON l.user_id = u.id 
       WHERE l.id = ?`,
@@ -165,8 +168,18 @@ app.get("/api/listings/:id", async (req, res) => {
 });
 
 app.post("/api/listings", async (req, res) => {
-  const { title, price, category, location, description, image, user_id } =
-    req.body;
+  const {
+    title,
+    price,
+    category,
+    location,
+    description,
+    image,
+    user_id,
+    contact_email,
+    contact_phone,
+    postal_code,
+  } = req.body;
   try {
     const time = "Just now"; // Simplified
     let imageToSave = image;
@@ -178,8 +191,8 @@ app.post("/api/listings", async (req, res) => {
 
     const [result] = await pool.query(
       `
-      INSERT INTO listings (title, price, category, location, description, image, user_id, time)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO listings (title, price, category, location, description, image, user_id, time, contact_email, contact_phone, postal_code)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `,
       [
         title,
@@ -190,6 +203,9 @@ app.post("/api/listings", async (req, res) => {
         imageToSave || "https://picsum.photos/seed/new/800/600",
         user_id,
         time,
+        contact_email || null,
+        contact_phone || null,
+        postal_code || null,
       ],
     );
     res.json({ success: true, id: result.insertId });

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const PostAd: React.FC = () => {
@@ -11,9 +11,40 @@ const PostAd: React.FC = () => {
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
   const [location, setLocation] = useState('');
-  const [imageFiles, setImageFiles] = useState<File[]>([]);
-  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [postalCode, setPostalCode] = useState('');
+  const [contactEmail, setContactEmail] = useState('');
+  const [contactPhone, setContactPhone] = useState('');
+  const [imageFiles, setImageFiles] = useState<(File | null)[]>([null, null, null, null, null]);
+  const [imagePreviews, setImagePreviews] = useState<(string | null)[]>([null, null, null, null, null]);
   const [isPublishing, setIsPublishing] = useState(false);
+
+  const [locationSuggestions, setLocationSuggestions] = useState<any[]>([]);
+  const [isSearchingLocation, setIsSearchingLocation] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  useEffect(() => {
+    if (location.trim().length > 2 && showSuggestions) {
+      const delayFn = setTimeout(() => {
+        setIsSearchingLocation(true);
+        fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(location)}&countrycodes=ca&format=json&addressdetails=1&limit=5`)
+          .then(res => res.json())
+          .then(data => setLocationSuggestions(data))
+          .catch(console.error)
+          .finally(() => setIsSearchingLocation(false));
+      }, 500);
+      return () => clearTimeout(delayFn);
+    } else {
+      setLocationSuggestions([]);
+    }
+  }, [location, showSuggestions]);
+
+  const handleSelectLocation = (place: any) => {
+    setLocation(place.display_name);
+    if (place.address && place.address.postcode) {
+      setPostalCode(place.address.postcode);
+    }
+    setShowSuggestions(false);
+  };
 
   const categories = [
     { name: 'Cars', icon: 'directions_car' },
@@ -34,9 +65,11 @@ const PostAd: React.FC = () => {
       const user = userStr ? JSON.parse(userStr) : null;
       
       let imageUrls: string[] = [];
-      if (imageFiles.length > 0) {
+      const validFiles = imageFiles.filter(f => f !== null) as File[];
+
+      if (validFiles.length > 0) {
         const formData = new FormData();
-        imageFiles.forEach((file: File) => {
+        validFiles.forEach((file: File) => {
           formData.append('images', file);
         });
         const uploadRes = await fetch('/api/upload', {
@@ -59,7 +92,10 @@ const PostAd: React.FC = () => {
           location: location || 'Unknown',
           description,
           image: imageUrls,
-          user_id: user ? user.id : 1 // fallback to 1 if not logged in
+          user_id: user ? user.id : 1, // fallback to 1 if not logged in
+          contact_email: contactEmail,
+          contact_phone: contactPhone,
+          postal_code: postalCode
         })
       });
       const data = await response.json();
@@ -196,53 +232,146 @@ const PostAd: React.FC = () => {
               
               <section>
                 <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Add Photos (Up to 5)</label>
-                <div className="mb-6 relative">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    id="imagesUpload"
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                    onChange={(e) => {
-                      if (e.target.files) {
-                        const filesArray = Array.from(e.target.files).slice(0, 5) as File[];
-                        setImageFiles(filesArray);
-                        setImagePreviews(filesArray.map((file: File) => URL.createObjectURL(file)));
-                      }
-                    }}
-                  />
-                  {imagePreviews.length > 0 ? (
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                      {imagePreviews.map((preview, idx) => (
-                        <div key={idx} className="w-full aspect-[4/3] rounded-2xl overflow-hidden relative">
-                           <img src={preview} className="w-full h-full object-cover" alt={`Preview ${idx + 1}`} />
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+                  {Array.from({ length: 5 }).map((_, index) => (
+                    <div key={index} className="relative w-full aspect-square border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center bg-slate-50 group hover:border-primary hover:bg-white transition-all overflow-hidden cursor-pointer">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files[0]) {
+                            const newFiles = [...imageFiles];
+                            newFiles[index] = e.target.files[0];
+                            setImageFiles(newFiles);
+
+                            const newPreviews = [...imagePreviews];
+                            newPreviews[index] = URL.createObjectURL(e.target.files[0]);
+                            setImagePreviews(newPreviews);
+                          }
+                        }}
+                      />
+                      {imagePreviews[index] ? (
+                        <div className="absolute inset-0 z-10 pointer-events-none">
+                          <img src={imagePreviews[index]!} className="w-full h-full object-cover" alt={`Image ${index + 1}`} />
                         </div>
-                      ))}
-                      {imagePreviews.length < 5 && (
-                        <div className="w-full aspect-[4/3] bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center">
-                           <span className="material-icons text-3xl text-slate-300">add_a_photo</span>
-                        </div>
+                      ) : (
+                        <>
+                          <span className="material-icons text-3xl text-slate-300 group-hover:text-primary mb-1">
+                             {index === 0 ? 'add_a_photo' : 'add'}
+                          </span>
+                          <span className="text-[10px] font-bold text-slate-400 tracking-widest uppercase">
+                             {index === 0 ? 'Cover' : `Pic ${index + 1}`}
+                          </span>
+                        </>
+                      )}
+                      
+                      {/* Delete button if image exists */}
+                      {imagePreviews[index] && (
+                        <button 
+                          className="absolute top-2 right-2 z-30 w-6 h-6 bg-white/90 rounded-full flex items-center justify-center text-red-500 hover:scale-110 shadow-sm transition-all"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            const newFiles = [...imageFiles];
+                            newFiles[index] = null;
+                            setImageFiles(newFiles);
+
+                            const newPreviews = [...imagePreviews];
+                            // Revoke safely to avoid memory leaks
+                            if (newPreviews[index]) URL.revokeObjectURL(newPreviews[index]!);
+                            newPreviews[index] = null;
+                            setImagePreviews(newPreviews);
+                          }}
+                        >
+                          <span className="material-icons text-xs pointer-events-none">close</span>
+                        </button>
                       )}
                     </div>
-                  ) : (
-                    <div className="w-full aspect-[4/3] bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center group hover:border-primary hover:bg-white transition-all">
-                       <span className="material-icons text-5xl text-slate-300 group-hover:text-primary mb-2">cloud_upload</span>
-                       <span className="font-bold text-slate-500">Tap to upload up to 5 photos</span>
-                    </div>
-                  )}
+                  ))}
                 </div>
               </section>
 
               <section>
                 <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Item Location</label>
-                <div className="relative mb-4">
-                  <span className="material-icons absolute left-4 top-3.5 text-slate-400">location_on</span>
-                  <input 
-                    value={location}
-                    onChange={e => setLocation(e.target.value)}
-                    className="w-full pl-12 pr-4 py-4 bg-slate-50 border-slate-100 rounded-xl focus:ring-primary focus:border-primary text-sm" 
-                    placeholder="Enter street address or city..." 
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                  <div className="relative">
+                    <span className="material-icons absolute left-4 top-3.5 text-slate-400">location_on</span>
+                    <input 
+                      value={location}
+                      onChange={e => {
+                        setLocation(e.target.value);
+                        setShowSuggestions(true);
+                      }}
+                      onFocus={() => setShowSuggestions(true)}
+                      onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                      className="w-full pl-12 pr-4 py-4 bg-slate-50 border-slate-100 rounded-xl focus:ring-primary focus:border-primary text-sm" 
+                      placeholder="Enter street address or city in Canada..." 
+                      autoComplete="off"
+                    />
+                    
+                    {/* Suggestions Dropdown */}
+                    {showSuggestions && location.length > 2 && (
+                      <div className="absolute top-14 left-0 w-full bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden">
+                        {isSearchingLocation ? (
+                          <div className="p-4 text-xs font-bold text-slate-400 text-center">Searching...</div>
+                        ) : locationSuggestions.length > 0 ? (
+                          <ul>
+                            {locationSuggestions.map((place, idx) => (
+                              <li 
+                                key={idx} 
+                                onClick={() => handleSelectLocation(place)}
+                                className="px-4 py-3 hover:bg-slate-50 cursor-pointer border-b border-slate-50 last:border-0 flex items-start gap-3 transition-colors"
+                              >
+                                <span className="material-icons text-slate-300 text-lg mt-0.5">place</span>
+                                <div>
+                                  <p className="text-sm font-bold text-slate-700 leading-tight mb-0.5">{place.display_name.split(',')[0]}</p>
+                                  <p className="text-xs text-slate-400 leading-tight">{place.display_name}</p>
+                                </div>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <div className="p-4 text-xs font-bold text-slate-400 text-center">No locations found.</div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  <div className="relative">
+                    <span className="material-icons absolute left-4 top-3.5 text-slate-400">markunread_mailbox</span>
+                    <input 
+                      value={postalCode}
+                      onChange={e => setPostalCode(e.target.value)}
+                      className="w-full pl-12 pr-4 py-4 bg-slate-50 border-slate-100 rounded-xl focus:ring-primary focus:border-primary text-sm" 
+                      placeholder="Postal Code" 
+                    />
+                  </div>
+                </div>
+              </section>
+
+              <section>
+                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Contact Details</label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="relative">
+                    <span className="material-icons absolute left-4 top-3.5 text-slate-400">email</span>
+                    <input 
+                      type="email"
+                      value={contactEmail}
+                      onChange={e => setContactEmail(e.target.value)}
+                      className="w-full pl-12 pr-4 py-4 bg-slate-50 border-slate-100 rounded-xl focus:ring-primary focus:border-primary text-sm" 
+                      placeholder="Contact Email" 
+                    />
+                  </div>
+                  <div className="relative">
+                    <span className="material-icons absolute left-4 top-3.5 text-slate-400">phone</span>
+                    <input 
+                      type="tel"
+                      value={contactPhone}
+                      onChange={e => setContactPhone(e.target.value)}
+                      className="w-full pl-12 pr-4 py-4 bg-slate-50 border-slate-100 rounded-xl focus:ring-primary focus:border-primary text-sm" 
+                      placeholder="Contact Phone Number" 
+                    />
+                  </div>
                 </div>
               </section>
               <div className="pt-10 border-t border-slate-100 flex justify-between">
