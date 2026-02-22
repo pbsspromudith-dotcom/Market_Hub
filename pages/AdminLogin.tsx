@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const AdminLogin: React.FC = () => {
+interface AdminLoginProps {
+  onLogin?: () => void;
+}
+
+const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin }) => {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -28,9 +32,8 @@ const AdminLogin: React.FC = () => {
       
       if (data.success) {
         localStorage.setItem('user', JSON.stringify({ ...data.user, isAdmin: true }));
-        // A hack to force App level re-render if using standard context, but window reload handles it here
-        window.location.href = '#/dashboard'; 
-        window.location.reload();
+        if (onLogin) onLogin();
+        navigate('/dashboard');
       } else {
         setError(data.message || 'Invalid admin credentials.');
       }

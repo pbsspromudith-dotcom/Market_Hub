@@ -12,6 +12,7 @@ import AdminLogin from './pages/AdminLogin';
 import Help from './pages/Help';
 import Contact from './pages/Contact';
 import LocationPrompt from './components/LocationPrompt';
+import ChatBot from './components/ChatBot';
 
 const App: React.FC = () => {
   const checkAuth = () => {
@@ -43,11 +44,12 @@ const App: React.FC = () => {
   return (
     <Router>
       <LocationPrompt />
+      <ChatBot />
       <Layout isLoggedIn={isLoggedIn} isAdmin={isAdmin} onLogout={handleLogout}>
         <Routes>
           <Route path="/" element={<Home isLoggedIn={isLoggedIn} />} />
           <Route path="/login" element={<Login onLogin={handleLogin} />} />
-          <Route path="/admin-login" element={<AdminLogin />} />
+          <Route path="/admin-login" element={<AdminLogin onLogin={handleLogin} />} />
           <Route path="/search" element={<SearchResults />} />
           <Route path="/item/:id" element={<ItemDetails />} />
           <Route path="/post-ad" element={<PostAd />} />

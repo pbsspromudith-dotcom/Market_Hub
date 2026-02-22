@@ -6,6 +6,10 @@ import path from "path";
 import { fileURLToPath } from "url";
 import multer from "multer";
 import fs from "fs";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
+import hpp from "hpp";
+import xss from "xss-clean";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -15,8 +19,42 @@ dotenv.config({ path: path.join(__dirname, ".env") });
 const app = express();
 const port = process.env.PORT || 5000;
 
-app.use(cors());
-app.use(express.json());
+// Security Middleware
+app.use(helmet()); // Set security HTTP headers
+app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" })); // Allow images to load from cross origin
+
+// Custom CORS Configuration
+app.use(
+  cors({
+    origin: process.env.CLIENT_URL || "http://localhost:5173", // Only allow the frontend
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
+  }),
+);
+
+// Body parser with size limits
+app.use(express.json({ limit: "10kb" }));
+
+// Data Sanitization against XSS (cross-site scripting)
+app.use(xss());
+
+// Prevent HTTP Parameter Pollution
+app.use(hpp());
+
+// Rate Limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per 15 minutes
+  message: "Too many requests from this IP, please try again after 15 minutes",
+});
+app.use("/api", limiter);
+
+const authLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 10,
+  message: "Too many login attempts, please try again later",
+});
+app.use("/api/auth/login", authLimiter);
 
 // Set up static folder for uploads
 const uploadDir = path.join(__dirname, "uploads");
@@ -212,6 +250,145 @@ app.post("/api/listings", async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.post("/api/chat", async (req, res) => {
+  const { message } = req.body;
+  if (!message) return res.json({ text: "How can I help you today?" });
+
+  try {
+    const m = message.toLowerCase();
+
+    // Help Context
+    if (
+      m.includes("post") &&
+      (m.includes("how") || m.includes("help") || m.includes("ad"))
+    ) {
+      return res.json({
+        text: "To post an ad, simply click the 'Post Ad' button in the top navigation bar. You will be guided through a simple 3-step process to add your photos, title, price, and location!",
+      });
+    }
+    if (
+      (m.includes("search") || m.includes("filter") || m.includes("find")) &&
+      m.includes("how")
+    ) {
+      return res.json({
+        text: "You can find items by using the search bar on the home page, or by clicking 'Explore' to visit the Search page where you can filter by price, category, condition, and distance.",
+      });
+    }
+    if (m === "hello" || m === "hi" || m === "hey") {
+      return res.json({
+        text: "Hi there! I am your MarketHub AI assistant. I can search our live database for items, or guide you on how to use the site. What do you need help with?",
+      });
+    }
+
+    // DB Context Search
+    const [rows] = await pool.query(
+      `SELECT title, price, category, location, id FROM listings ORDER BY id DESC LIMIT 100`,
+    );
+
+    // Simple keyword extraction (ignore common words)
+    const ignoreWords = [
+      "how",
+      "can",
+      "find",
+      "search",
+      "give",
+      "me",
+      "want",
+      "buy",
+      "do",
+      "you",
+      "have",
+      "any",
+      "the",
+      "for",
+      "a",
+      "an",
+      "is",
+      "there",
+      "please",
+      "need",
+    ];
+    const keywords = m
+      .split(" ")
+      .filter((w) => w.length > 2 && !ignoreWords.includes(w));
+
+    if (keywords.length > 0) {
+      const matches = rows.filter((r) =>
+        keywords.some(
+          (k) =>
+            r.title.toLowerCase().includes(k) ||
+            r.category.toLowerCase().includes(k) ||
+            r.location.toLowerCase().includes(k),
+        ),
+      );
+
+      if (matches.length > 0) {
+        const top3 = matches.slice(0, 3);
+        const listText = top3
+          .map(
+            (r) =>
+              `• ${r.title} - $${Number(r.price).toLocaleString()} (${r.location})`,
+          )
+          .join("\n");
+        return res.json({
+          text: `I searched our live database and found ${matches.length} item(s) that might match what you're looking for:\n\n${listText}\n\nYou can find these by heading over to the main Search page!`,
+        });
+      } else {
+        return res.json({
+          text: `I searched our database for "${keywords.join(" ")}" but couldn't find any active listings matching that right now. Try adjusting your keywords or checking different categories!`,
+        });
+      }
+    }
+
+    res.json({
+      text: "I'm your friendly MarketHub Assistant! Try asking me how to post an ad, how to search, or ask me to check if we have a specific item like 'laptop' or 'car' in our database.",
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      text: "Oops, my database connection is a bit fuzzy right now. Try again in a moment!",
+    });
+  }
+});
+
+app.get("/api/admin/stats", async (req, res) => {
+  try {
+    const [listingsResult] = await pool.query(
+      "SELECT COUNT(*) as total FROM listings",
+    );
+    const [usersResult] = await pool.query(
+      "SELECT COUNT(*) as total FROM users",
+    );
+    const [recentUsersResult] = await pool.query(
+      "SELECT COUNT(*) as total FROM users WHERE join_date >= NOW() - INTERVAL 1 DAY",
+    );
+
+    // Revenue calculated simply from number of users * 15 (dummy metric) or total listings
+    const [revenueResult] = await pool.query(
+      "SELECT SUM(price) as total FROM listings",
+    );
+
+    // Recent activity
+    const [recentListings] = await pool.query(
+      "SELECT title, created_at FROM listings ORDER BY created_at DESC LIMIT 5",
+    );
+
+    res.json({
+      success: true,
+      stats: {
+        totalListings: listingsResult[0].total,
+        totalUsers: usersResult[0].total,
+        newUsersToday: recentUsersResult?.[0]?.total || 0,
+        revenue: revenueResult[0].total || 0,
+        recentActivity: recentListings,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to fetch admin stats" });
   }
 });
 

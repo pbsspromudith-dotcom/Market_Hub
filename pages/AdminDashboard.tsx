@@ -1,8 +1,21 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const AdminDashboard: React.FC = () => {
+  const [adminStats, setAdminStats] = useState<any>(null);
+
+  useEffect(() => {
+    fetch('/api/admin/stats')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          setAdminStats(data.stats);
+        }
+      })
+      .catch(console.error);
+  }, []);
+
   const data = [
     { name: '30d ago', value: 400 },
     { name: '25d ago', value: 300 },
@@ -13,11 +26,16 @@ const AdminDashboard: React.FC = () => {
     { name: 'Today', value: 900 },
   ];
 
-  const stats = [
-    { label: 'Total Listings', value: '42,894', change: '+12%', icon: 'inventory_2', color: 'blue' },
-    { label: 'New Users Today', value: '1,204', change: '+5.2%', icon: 'person_add', color: 'purple' },
-    { label: 'Reported Ads', value: '84', change: '+18%', icon: 'report_problem', color: 'red' },
-    { label: 'Revenue (Monthly)', value: '$12,450.00', change: '+3%', icon: 'payments', color: 'green' },
+  const stats = adminStats ? [
+    { label: 'Total Listings', value: adminStats.totalListings.toLocaleString(), change: '+12%', icon: 'inventory_2', color: 'blue' },
+    { label: 'New Users Today', value: adminStats.newUsersToday.toLocaleString(), change: '+5.2%', icon: 'person_add', color: 'purple' },
+    { label: 'Total Users', value: adminStats.totalUsers.toLocaleString(), change: '+18%', icon: 'people', color: 'red' },
+    { label: 'Total Listing Value', value: '$' + Number(adminStats.revenue).toLocaleString(), change: '+3%', icon: 'payments', color: 'green' },
+  ] : [
+    { label: 'Total Listings', value: '-', change: '0%', icon: 'inventory_2', color: 'blue' },
+    { label: 'New Users Today', value: '-', change: '0%', icon: 'person_add', color: 'purple' },
+    { label: 'Total Users', value: '-', change: '0%', icon: 'people', color: 'red' },
+    { label: 'Total Listing Value', value: '-', change: '0%', icon: 'payments', color: 'green' },
   ];
 
   return (
@@ -84,25 +102,21 @@ const AdminDashboard: React.FC = () => {
         <div className="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm">
           <h2 className="text-xl font-black mb-8">Recent Activity</h2>
           <div className="space-y-8">
-            {[
-              { name: 'John Doe', action: 'joined as a new seller.', time: '2 minutes ago', color: 'blue' },
-              { name: 'iPhone 15 Pro Max', action: 'was posted as a new listing.', time: '15 minutes ago', color: 'green' },
-              { name: 'Ad #94021', action: 'was flagged for spam.', time: '1 hour ago', color: 'red' },
-              { name: 'Sara Smith', action: 'purchased featured package.', time: '3 hours ago', color: 'purple' },
-              { name: 'Maintenance', action: 'scheduled for midnight.', time: '5 hours ago', color: 'slate' }
-            ].map((activity, i) => (
+            {adminStats?.recentActivity ? adminStats.recentActivity.map((activity: any, i: number) => (
               <div key={i} className="flex gap-4">
-                <div className={`w-10 h-10 rounded-xl bg-${activity.color}-50 flex-shrink-0 flex items-center justify-center text-${activity.color}-500`}>
-                  <span className="material-icons text-lg">{i % 2 === 0 ? 'person' : 'inventory_2'}</span>
+                <div className={`w-10 h-10 rounded-xl bg-green-50 flex-shrink-0 flex items-center justify-center text-green-500`}>
+                  <span className="material-icons text-lg">inventory_2</span>
                 </div>
                 <div>
                   <p className="text-sm">
-                    <span className="font-bold">{activity.name}</span> {activity.action}
+                    <span className="font-bold">{activity.title}</span> was posted as a new listing.
                   </p>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">{activity.time}</p>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Recently</p>
                 </div>
               </div>
-            ))}
+            )) : (
+              <p className="text-sm text-slate-400">Loading recent activity...</p>
+            )}
           </div>
           <button className="w-full mt-10 py-3 font-bold text-primary hover:bg-primary/5 rounded-xl transition-all uppercase tracking-widest text-xs">View All Activity</button>
         </div>
