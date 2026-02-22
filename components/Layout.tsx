@@ -58,21 +58,28 @@ const Layout: React.FC<LayoutProps> = ({ children, isLoggedIn, isAdmin, onLogout
 
               <div className="h-8 w-px bg-slate-100 mx-2"></div>
 
-              <div className="flex items-center gap-6">
+              <div className="flex items-center gap-3">
                 {isLoggedIn ? (
                   <div className="flex items-center gap-3">
-                    {isAdmin ? (
-                      <Link to="/dashboard" className="w-9 h-9 rounded-full border border-slate-200 overflow-hidden ring-2 ring-transparent hover:ring-primary-soft transition-all">
-                        <img src={CURRENT_USER.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                    {isAdmin && (
+                      <Link
+                        to="/dashboard"
+                        className="bg-slate-900 hover:bg-slate-700 text-white px-5 py-2.5 rounded-full font-black text-xs uppercase tracking-widest flex items-center gap-2 transition-all shadow-lg"
+                      >
+                        <span className="material-icons text-sm">admin_panel_settings</span>
+                        Admin Panel
                       </Link>
-                    ) : (
-                      <div className="w-9 h-9 rounded-full border border-slate-200 overflow-hidden ring-2 ring-transparent hover:ring-primary-soft transition-all">
-                        <img src={CURRENT_USER.avatar} alt="Avatar" className="w-full h-full object-cover" />
-                      </div>
                     )}
-                    <button 
+                    <Link
+                      to={isAdmin ? '/dashboard' : '/profile'}
+                      className="w-9 h-9 rounded-full border-2 border-primary overflow-hidden ring-2 ring-transparent hover:ring-primary/30 transition-all flex-shrink-0"
+                    >
+                      <img src={CURRENT_USER.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                    </Link>
+                    <button
                       onClick={handleLogoutClick}
                       className="text-slate-400 hover:text-red-500 transition-colors"
+                      title="Logout"
                     >
                       <span className="material-icons text-lg">logout</span>
                     </button>
@@ -128,9 +135,19 @@ const Layout: React.FC<LayoutProps> = ({ children, isLoggedIn, isAdmin, onLogout
                   <Link 
                     to="/dashboard" 
                     onClick={() => setIsMobileMenuOpen(false)}
+                    className="mx-4 px-4 py-3 text-sm font-black text-white bg-slate-900 rounded-2xl flex items-center gap-2 transition-all"
+                  >
+                    <span className="material-icons text-sm">admin_panel_settings</span>
+                    Admin Panel
+                  </Link>
+                )}
+                {isLoggedIn && !isAdmin && (
+                  <Link
+                    to="/profile"
+                    onClick={() => setIsMobileMenuOpen(false)}
                     className="block px-4 py-3 text-lg font-black text-slate-900 hover:bg-slate-50 rounded-2xl transition-all"
                   >
-                    Dashboard
+                    My Profile
                   </Link>
                 )}
                 <div className="h-px bg-slate-50 mx-4"></div>

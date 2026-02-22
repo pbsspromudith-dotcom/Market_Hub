@@ -7,12 +7,14 @@ import SearchResults from './pages/SearchResults';
 import ItemDetails from './pages/ItemDetails';
 import PostAd from './pages/PostAd';
 import AdminDashboard from './pages/AdminDashboard';
+import UserProfile from './pages/UserProfile';
 import Login from './pages/Login';
 import AdminLogin from './pages/AdminLogin';
 import Help from './pages/Help';
 import Contact from './pages/Contact';
 import LocationPrompt from './components/LocationPrompt';
 import ChatBot from './components/ChatBot';
+import AdminRoute from './components/AdminRoute';
 
 const App: React.FC = () => {
   const checkAuth = () => {
@@ -31,14 +33,31 @@ const App: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(checkAuth());
   const [isAdmin, setIsAdmin] = useState(checkAdmin());
 
+  // Re-sync auth state from localStorage (fixes race condition after login/navigate)
+  useEffect(() => {
+    const syncAuth = () => {
+      setIsLoggedIn(checkAuth());
+      setIsAdmin(checkAdmin());
+    };
+    window.addEventListener('storage', syncAuth);
+    window.addEventListener('auth_updated', syncAuth);
+    return () => {
+      window.removeEventListener('storage', syncAuth);
+      window.removeEventListener('auth_updated', syncAuth);
+    };
+  }, []);
+
   const handleLogin = () => {
-     setIsLoggedIn(true);
-     setIsAdmin(checkAdmin());
+    setIsLoggedIn(true);
+    setIsAdmin(checkAdmin());
+    // Dispatch custom event so the listener above fires on same-window updates too
+    window.dispatchEvent(new Event('auth_updated'));
   };
   const handleLogout = () => {
-     localStorage.removeItem('user');
-     setIsLoggedIn(false);
-     setIsAdmin(false);
+    localStorage.removeItem('user');
+    setIsLoggedIn(false);
+    setIsAdmin(false);
+    window.dispatchEvent(new Event('auth_updated'));
   };
 
   return (
@@ -53,8 +72,9 @@ const App: React.FC = () => {
           <Route path="/search" element={<SearchResults />} />
           <Route path="/item/:id" element={<ItemDetails />} />
           <Route path="/post-ad" element={<PostAd />} />
-          <Route path="/dashboard" element={<AdminDashboard />} />
-          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/profile" element={<UserProfile />} />
+          <Route path="/dashboard" element={<AdminRoute isAdmin={isAdmin}><AdminDashboard /></AdminRoute>} />
+          <Route path="/admin" element={<AdminRoute isAdmin={isAdmin}><AdminDashboard /></AdminRoute>} />
           <Route path="/help" element={<Help />} />
           <Route path="/contact" element={<Contact />} />
         </Routes>

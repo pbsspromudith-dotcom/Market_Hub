@@ -9,7 +9,7 @@ import fs from "fs";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import hpp from "hpp";
-import xss from "xss-clean";
+import bcrypt from "bcryptjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -23,10 +23,23 @@ const port = process.env.PORT || 5000;
 app.use(helmet()); // Set security HTTP headers
 app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" })); // Allow images to load from cross origin
 
-// Custom CORS Configuration
+// Custom CORS Configuration - allow the Vite dev server on any common local port
+const allowedOrigins = [
+  "http://localhost:3000",
+  "http://localhost:3001",
+  "http://localhost:5173",
+  "http://127.0.0.1:3000",
+  "http://127.0.0.1:3001",
+  "http://127.0.0.1:5173",
+];
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "http://localhost:5173", // Only allow the frontend
+    origin: (origin, callback) => {
+      // Allow requests with no origin (mobile apps, curl, Postman)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      return callback(new Error(`CORS blocked: ${origin}`));
+    },
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   }),
@@ -34,9 +47,6 @@ app.use(
 
 // Body parser with size limits
 app.use(express.json({ limit: "10kb" }));
-
-// Data Sanitization against XSS (cross-site scripting)
-app.use(xss());
 
 // Prevent HTTP Parameter Pollution
 app.use(hpp());
@@ -100,26 +110,51 @@ app.get("/api/status", async (req, res) => {
 // Auth Routes
 app.post("/api/auth/login", async (req, res) => {
   const { email, password } = req.body;
+  if (!email || !password) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Email and password required" });
+  }
   try {
-    const [rows] = await pool.query(
-      "SELECT * FROM users WHERE email = ? AND password = ?",
-      [email, password],
-    );
-    if (rows.length > 0) {
-      const user = rows[0];
-      // Exclude password
-      delete user.password;
-      res.json({ success: true, user });
-    } else {
-      res.status(401).json({ success: false, message: "Invalid credentials" });
+    const [rows] = await pool.query("SELECT * FROM users WHERE email = ?", [
+      email,
+    ]);
+    if (rows.length === 0) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Invalid credentials" });
     }
+    const user = rows[0];
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Invalid credentials" });
+    }
+    // Exclude password from response
+    delete user.password;
+    res.json({ success: true, user });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ success: false, message: "Server error" });
   }
 });
 
 app.post("/api/auth/register", async (req, res) => {
   const { name, email, password } = req.body;
+  if (!name || !email || !password) {
+    return res
+      .status(400)
+      .json({ success: false, message: "All fields required" });
+  }
+  if (password.length < 6) {
+    return res
+      .status(400)
+      .json({
+        success: false,
+        message: "Password must be at least 6 characters",
+      });
+  }
   try {
     const [existing] = await pool.query("SELECT * FROM users WHERE email = ?", [
       email,
@@ -129,9 +164,10 @@ app.post("/api/auth/register", async (req, res) => {
         .status(400)
         .json({ success: false, message: "Email already exists" });
     }
+    const hashedPassword = await bcrypt.hash(password, 12);
     const [result] = await pool.query(
       "INSERT INTO users (name, email, password) VALUES (?, ?, ?)",
-      [name, email, password],
+      [name, email, hashedPassword],
     );
     res.json({
       success: true,
@@ -139,6 +175,7 @@ app.post("/api/auth/register", async (req, res) => {
       userId: result.insertId,
     });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ success: false, message: "Server error" });
   }
 });
