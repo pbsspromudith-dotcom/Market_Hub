@@ -13,21 +13,34 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
 
-    // Simulated network delay
-    setTimeout(() => {
-      if (email === 'admin@markethub.com' && password === 'admin123') {
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await response.json();
+      
+      if (data.success) {
+        // Assume successful login
+        localStorage.setItem('user', JSON.stringify(data.user));
         onLogin();
-        navigate('/dashboard');
+        navigate('/');
       } else {
-        setError('Invalid email or password. Please use the demo credentials below.');
-        setIsLoading(false);
+        setError(data.message || 'Invalid email or password.');
       }
-    }, 800);
+    } catch (err) {
+      setError('Network error. Backend might not be running.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -69,7 +82,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="w-full pl-12 pr-4 py-4 bg-slate-50 border-slate-100 rounded-2xl focus:ring-primary focus:border-primary text-sm font-medium transition-all" 
-                    placeholder="admin@markethub.com" 
+                    placeholder="alex.j@example.com" 
                   />
                 </div>
               </div>
@@ -120,12 +133,12 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 <span className="material-icons text-xs">info</span> Demo Account
               </h4>
               <div className="flex justify-between items-center">
-                <code className="text-[11px] font-bold text-slate-600">admin@markethub.com</code>
-                <code className="text-[11px] font-bold text-slate-600">admin123</code>
+                <code className="text-[11px] font-bold text-slate-600">alex.j@example.com</code>
+                <code className="text-[11px] font-bold text-slate-600">password123</code>
               </div>
               <button 
                 type="button"
-                onClick={() => { setEmail('admin@markethub.com'); setPassword('admin123'); }}
+                onClick={() => { setEmail('alex.j@example.com'); setPassword('password123'); }}
                 className="mt-3 w-full text-[10px] font-black text-primary uppercase tracking-widest hover:underline"
               >
                 Auto-fill Credentials

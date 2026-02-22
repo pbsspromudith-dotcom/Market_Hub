@@ -1,10 +1,19 @@
-
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { MOCK_LISTINGS } from '../constants';
 
 const SearchResults: React.FC = () => {
   const [mileage, setMileage] = useState(125);
+  const [listings, setListings] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    setIsLoading(true);
+    fetch('/api/listings')
+      .then(res => res.json())
+      .then(data => setListings(data))
+      .catch(console.error)
+      .finally(() => setIsLoading(false));
+  }, []);
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -97,9 +106,9 @@ const SearchResults: React.FC = () => {
           <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <nav className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
-                Home / Vehicles / Cars & Trucks
+                Home / Search Results
               </nav>
-              <h1 className="text-2xl font-black">1,245 Cars & Trucks in Toronto</h1>
+              <h1 className="text-2xl font-black">{listings.length} Results Found</h1>
             </div>
             <div className="flex items-center gap-4">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Sort by:</span>
@@ -112,39 +121,39 @@ const SearchResults: React.FC = () => {
           </div>
 
           <div className="space-y-4">
-            {MOCK_LISTINGS.map((item) => (
+            {isLoading && <p className="text-center p-10 font-bold">Loading listings...</p>}
+            {!isLoading && listings.length === 0 && <p className="text-center p-10">No listings found.</p>}
+            {listings.map((item) => (
               <Link 
                 to={`/item/${item.id}`} 
                 key={item.id} 
-                className={`group flex flex-col md:flex-row bg-white rounded-2xl border overflow-hidden hover:shadow-lg transition-all ${item.isFeatured ? 'border-primary/30 ring-1 ring-primary/10' : 'border-slate-200'}`}
+                className={`group flex flex-col md:flex-row bg-white rounded-2xl border overflow-hidden hover:shadow-lg transition-all ${item.is_featured ? 'border-primary/30 ring-1 ring-primary/10' : 'border-slate-200'}`}
               >
                 <div className="w-full md:w-64 aspect-video md:aspect-square flex-shrink-0 relative">
-                  <img src={item.image} alt={item.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                  {item.isFeatured && (
+                  <img src={item.image || 'https://picsum.photos/seed/default/800/600'} alt={item.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                  {item.is_featured ? (
                     <div className="absolute top-3 left-3 bg-primary text-white text-[10px] font-black px-2 py-0.5 rounded-md flex items-center gap-1 shadow-sm">
                       <span className="material-icons text-xs">star</span> FEATURED
                     </div>
-                  )}
+                  ) : null}
                 </div>
                 <div className="p-6 flex-grow flex flex-col justify-between">
                   <div>
                     <div className="flex justify-between items-start gap-4 mb-2">
                       <h3 className="text-xl font-bold group-hover:text-primary transition-colors leading-tight">{item.title}</h3>
-                      <span className="text-2xl font-black text-slate-900">${item.price.toLocaleString()}</span>
+                      <span className="text-2xl font-black text-slate-900">\${Number(item.price).toLocaleString()}</span>
                     </div>
                     <p className="text-sm text-slate-500 line-clamp-2 mb-4">
-                      {item.description || "Excellent condition, well maintained and ready for its next owner. Competitive pricing and reliable performance."}
+                      {item.description || "No description provided."}
                     </p>
                     <div className="flex flex-wrap gap-2">
-                      <span className="px-3 py-1 bg-slate-100 rounded-full text-[10px] font-bold text-slate-500 uppercase tracking-wide">12,400 KM</span>
-                      <span className="px-3 py-1 bg-slate-100 rounded-full text-[10px] font-bold text-slate-500 uppercase tracking-wide">Automatic</span>
-                      <span className="px-3 py-1 bg-slate-100 rounded-full text-[10px] font-bold text-slate-500 uppercase tracking-wide">Gasoline</span>
+                      <span className="px-3 py-1 bg-slate-100 rounded-full text-[10px] font-bold text-slate-500 uppercase tracking-wide">{item.category}</span>
                     </div>
                   </div>
                   <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-50">
                     <div className="flex items-center gap-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                       <span className="flex items-center gap-1"><span className="material-icons text-sm">location_on</span> {item.location}</span>
-                      <span className="flex items-center gap-1"><span className="material-icons text-sm">schedule</span> {item.time}</span>
+                      <span className="flex items-center gap-1"><span className="material-icons text-sm">schedule</span> {item.time || 'Recently'}</span>
                     </div>
                     <button className="material-icons text-slate-300 hover:text-red-500 transition-colors">favorite_border</button>
                   </div>

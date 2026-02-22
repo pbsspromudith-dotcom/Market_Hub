@@ -1,7 +1,6 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { MOCK_LISTINGS } from '../constants';
 
 interface HomeProps {
   isLoggedIn: boolean;
@@ -17,8 +16,28 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn }) => {
     { name: 'More', icon: 'more_horiz' },
   ];
 
+  const [serverMessage, setServerMessage] = useState<string>('Checking backend connection...');
+  const [listings, setListings] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch('/api/status')
+      .then(res => res.json())
+      .then(data => setServerMessage(data.message))
+      .catch(err => setServerMessage('Backend is not running: ' + err.message));
+
+    fetch('/api/listings')
+      .then(res => res.json())
+      .then(data => setListings(data.slice(0, 6))) // get top 6 recent
+      .catch(err => console.error('DB fetch error', err));
+  }, []);
+
   return (
     <div className="overflow-x-hidden">
+      {/* Backend Status Banner */}
+      <div className="bg-slate-900 text-white text-center py-2 text-sm font-medium z-50 relative">
+        <span>Backend Status: {serverMessage}</span>
+      </div>
+
       {/* Hero Section */}
       <section className="bg-gradient-mesh border-b border-slate-100 pt-20 pb-24 relative overflow-hidden">
         <div className="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 bg-primary-soft/10 rounded-full blur-3xl"></div>
@@ -93,24 +112,24 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn }) => {
             </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
-              {MOCK_LISTINGS.map((item) => (
+              {listings.map((item) => (
                 <Link to={`/item/${item.id}`} key={item.id} className="group bg-white rounded-[2.5rem] border border-slate-100 overflow-hidden hover:shadow-2xl transition-all">
                   <div className="aspect-[4/3] relative overflow-hidden bg-slate-100">
-                    <img src={item.image} alt={item.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                    <img src={item.image || 'https://picsum.photos/seed/default/800/600'} alt={item.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                     <button className="absolute top-5 right-5 w-10 h-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors shadow-sm">
                       <span className="material-icons text-xl">favorite_border</span>
                     </button>
-                    {item.isFeatured && (
+                    {item.is_featured ? (
                       <div className="absolute top-5 left-5 bg-primary-light text-white text-[10px] font-black px-3 py-1.5 rounded-xl shadow-lg">FEATURED</div>
-                    )}
+                    ) : null}
                   </div>
                   <div className="p-8">
-                    <div className="text-primary font-black text-2xl mb-2">${item.price.toLocaleString()}</div>
+                    <div className="text-primary font-black text-2xl mb-2">${Number(item.price).toLocaleString()}</div>
                     <h3 className="font-bold text-slate-800 line-clamp-2 min-h-[3rem] text-lg group-hover:text-primary-light transition-colors mb-4">{item.title}</h3>
                     <div className="flex items-center text-slate-400 text-[10px] font-black uppercase tracking-widest pt-5 border-t border-slate-50">
                       <span className="flex items-center gap-1.5"><span className="material-icons text-sm text-primary-soft">location_on</span> {item.location}</span>
                       <span className="mx-3 text-slate-200">|</span>
-                      <span>{item.time}</span>
+                      <span>{item.time || 'Recently'}</span>
                     </div>
                   </div>
                 </Link>
