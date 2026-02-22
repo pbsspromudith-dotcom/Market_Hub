@@ -33,11 +33,6 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn }) => {
 
   return (
     <div className="overflow-x-hidden">
-      {/* Backend Status Banner */}
-      <div className="bg-slate-900 text-white text-center py-2 text-sm font-medium z-50 relative">
-        <span>Backend Status: {serverMessage}</span>
-      </div>
-
       {/* Hero Section */}
       <section className="bg-gradient-mesh border-b border-slate-100 pt-20 pb-24 relative overflow-hidden">
         <div className="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 bg-primary-soft/10 rounded-full blur-3xl"></div>

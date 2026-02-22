@@ -10,31 +10,60 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoginBlock, setIsLoginBlock] = useState(true);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
 
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
-      const data = await response.json();
-      
-      if (data.success) {
-        // Assume successful login
-        localStorage.setItem('user', JSON.stringify(data.user));
-        onLogin();
-        navigate('/');
+      if (isLoginBlock) {
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email, password }),
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+          localStorage.setItem('user', JSON.stringify(data.user));
+          onLogin();
+          navigate('/');
+        } else {
+          setError(data.message || 'Invalid email or password.');
+        }
       } else {
-        setError(data.message || 'Invalid email or password.');
+        const response = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ name, email, password }),
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+          // auto log in
+          const loginRes = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password }),
+          });
+          const loginData = await loginRes.json();
+          if (loginData.success) {
+            localStorage.setItem('user', JSON.stringify(loginData.user));
+            onLogin();
+            navigate('/');
+          }
+        } else {
+          setError(data.message || 'Failed to register.');
+        }
       }
     } catch (err) {
       setError('Network error. Backend might not be running.');
@@ -50,9 +79,16 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           <div className="inline-flex items-center justify-center w-20 h-20 bg-primary rounded-3xl shadow-xl shadow-primary/20 mb-6">
             <span className="material-icons text-white text-4xl">shopping_bag</span>
           </div>
-          <h2 className="text-3xl font-black text-slate-900 tracking-tight">Welcome Back</h2>
+          <h2 className="text-3xl font-black text-slate-900 tracking-tight">{isLoginBlock ? 'Welcome Back' : 'Create an Account'}</h2>
           <p className="mt-2 text-sm text-slate-500 font-medium">
-            Don't have an account? <Link to="/login" className="font-bold text-primary hover:underline">Sign up for free</Link>
+            {isLoginBlock ? "Don't have an account?" : "Already have an account?"}{' '}
+            <button 
+              type="button" 
+              onClick={() => setIsLoginBlock(!isLoginBlock)} 
+              className="font-bold text-primary hover:underline"
+            >
+              {isLoginBlock ? 'Sign up for free' : 'Sign In'}
+            </button>
           </p>
         </div>
 
@@ -63,7 +99,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
             </div>
           )}
 
-          <form className="space-y-6" onSubmit={handleLogin}>
+          <form className="space-y-6" onSubmit={handleSubmit}>
             {error && (
               <div className="bg-red-50 border border-red-100 text-red-600 px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-2 animate-bounce">
                 <span className="material-icons text-sm">error</span>
@@ -72,6 +108,22 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
             )}
 
             <div className="space-y-4">
+              {!isLoginBlock && (
+                <div>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Full Name</label>
+                  <div className="relative">
+                    <span className="material-icons absolute left-4 top-3.5 text-slate-400 text-lg">person</span>
+                    <input 
+                      type="text" 
+                      required={!isLoginBlock}
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="w-full pl-12 pr-4 py-4 bg-slate-50 border-slate-100 rounded-2xl focus:ring-primary focus:border-primary text-sm font-medium transition-all" 
+                      placeholder="Jane Doe" 
+                    />
+                  </div>
+                </div>
+              )}
               <div>
                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Email Address</label>
                 <div className="relative">
@@ -122,7 +174,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
               disabled={isLoading}
               className="w-full bg-primary hover:bg-primary-hover text-white font-black py-5 rounded-2xl transition-all shadow-xl shadow-primary/25 flex items-center justify-center gap-2 group disabled:opacity-50"
             >
-              Sign In
+              {isLoginBlock ? 'Sign In' : 'Sign Up'}
               <span className="material-icons text-xl group-hover:translate-x-1 transition-transform">arrow_forward</span>
             </button>
           </form>

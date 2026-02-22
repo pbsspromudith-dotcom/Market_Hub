@@ -106,16 +106,31 @@ app.post("/api/auth/register", async (req, res) => {
 });
 
 // Upload Route
-app.post("/api/upload", upload.single("image"), (req, res) => {
-  if (!req.file) {
+app.post("/api/upload", upload.array("images", 5), (req, res) => {
+  if (!req.files || req.files.length === 0) {
     return res
       .status(400)
-      .json({ success: false, message: "No file uploaded" });
+      .json({ success: false, message: "No files uploaded" });
   }
-  // Return the path starting with /uploads so the frontend can display it
-  const imageUrl = `/uploads/${req.file.filename}`;
-  res.json({ success: true, imageUrl });
+  // Return the paths starting with /uploads
+  const imageUrls = req.files.map((file) => `/uploads/${file.filename}`);
+  res.json({ success: true, imageUrls });
 });
+
+const processListing = (row) => {
+  let image = row.image;
+  let allImages = row.image ? [row.image] : [];
+  if (row.image && row.image.startsWith("[")) {
+    try {
+      const parsed = JSON.parse(row.image);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        image = parsed[0];
+        allImages = parsed;
+      }
+    } catch (e) {}
+  }
+  return { ...row, image, allImages };
+};
 
 // Listings Routes
 app.get("/api/listings", async (req, res) => {
@@ -123,7 +138,7 @@ app.get("/api/listings", async (req, res) => {
     const [rows] = await pool.query(
       "SELECT * FROM listings ORDER BY created_at DESC",
     );
-    res.json(rows);
+    res.json(rows.map(processListing));
   } catch (error) {
     res.status(500).json({ error: "Database error" });
   }
@@ -140,7 +155,7 @@ app.get("/api/listings/:id", async (req, res) => {
       [req.params.id],
     );
     if (rows.length > 0) {
-      res.json(rows[0]);
+      res.json(processListing(rows[0]));
     } else {
       res.status(404).json({ error: "Not found" });
     }
@@ -154,6 +169,13 @@ app.post("/api/listings", async (req, res) => {
     req.body;
   try {
     const time = "Just now"; // Simplified
+    let imageToSave = image;
+    if (Array.isArray(image) && image.length > 0) {
+      imageToSave = JSON.stringify(image);
+    } else if (Array.isArray(image) && image.length === 0) {
+      imageToSave = "https://picsum.photos/seed/new/800/600";
+    }
+
     const [result] = await pool.query(
       `
       INSERT INTO listings (title, price, category, location, description, image, user_id, time)
@@ -165,7 +187,7 @@ app.post("/api/listings", async (req, res) => {
         category,
         location,
         description,
-        image || "https://picsum.photos/seed/new/800/600",
+        imageToSave || "https://picsum.photos/seed/new/800/600",
         user_id,
         time,
       ],

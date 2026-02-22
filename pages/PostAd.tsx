@@ -11,8 +11,8 @@ const PostAd: React.FC = () => {
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
   const [location, setLocation] = useState('');
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [isPublishing, setIsPublishing] = useState(false);
 
   const categories = [
@@ -33,17 +33,19 @@ const PostAd: React.FC = () => {
       const userStr = localStorage.getItem('user');
       const user = userStr ? JSON.parse(userStr) : null;
       
-      let imageUrl = null;
-      if (imageFile) {
+      let imageUrls: string[] = [];
+      if (imageFiles.length > 0) {
         const formData = new FormData();
-        formData.append('image', imageFile);
+        imageFiles.forEach((file: File) => {
+          formData.append('images', file);
+        });
         const uploadRes = await fetch('/api/upload', {
           method: 'POST',
           body: formData,
         });
         const uploadData = await uploadRes.json();
         if (uploadData.success) {
-          imageUrl = uploadData.imageUrl;
+          imageUrls = uploadData.imageUrls;
         }
       }
 
@@ -56,7 +58,7 @@ const PostAd: React.FC = () => {
           category: category || 'Other',
           location: location || 'Unknown',
           description,
-          image: imageUrl,
+          image: imageUrls,
           user_id: user ? user.id : 1 // fallback to 1 if not logged in
         })
       });
@@ -193,28 +195,39 @@ const PostAd: React.FC = () => {
               <h2 className="text-2xl font-black">Media & Location</h2>
               
               <section>
-                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Add Photo</label>
+                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Add Photos (Up to 5)</label>
                 <div className="mb-6 relative">
                   <input
                     type="file"
                     accept="image/*"
-                    id="imageUpload"
+                    multiple
+                    id="imagesUpload"
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                     onChange={(e) => {
-                      if (e.target.files && e.target.files[0]) {
-                        setImageFile(e.target.files[0]);
-                        setImagePreview(URL.createObjectURL(e.target.files[0]));
+                      if (e.target.files) {
+                        const filesArray = Array.from(e.target.files).slice(0, 5) as File[];
+                        setImageFiles(filesArray);
+                        setImagePreviews(filesArray.map((file: File) => URL.createObjectURL(file)));
                       }
                     }}
                   />
-                  {imagePreview ? (
-                    <div className="w-full aspect-[4/3] rounded-2xl overflow-hidden relative">
-                       <img src={imagePreview} className="w-full h-full object-cover" alt="Preview" />
+                  {imagePreviews.length > 0 ? (
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      {imagePreviews.map((preview, idx) => (
+                        <div key={idx} className="w-full aspect-[4/3] rounded-2xl overflow-hidden relative">
+                           <img src={preview} className="w-full h-full object-cover" alt={`Preview ${idx + 1}`} />
+                        </div>
+                      ))}
+                      {imagePreviews.length < 5 && (
+                        <div className="w-full aspect-[4/3] bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center">
+                           <span className="material-icons text-3xl text-slate-300">add_a_photo</span>
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <div className="w-full aspect-[4/3] bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center group hover:border-primary hover:bg-white transition-all">
                        <span className="material-icons text-5xl text-slate-300 group-hover:text-primary mb-2">cloud_upload</span>
-                       <span className="font-bold text-slate-500">Tap to upload cover photo</span>
+                       <span className="font-bold text-slate-500">Tap to upload up to 5 photos</span>
                     </div>
                   )}
                 </div>

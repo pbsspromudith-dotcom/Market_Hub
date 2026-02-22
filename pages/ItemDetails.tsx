@@ -6,13 +6,17 @@ const ItemDetails: React.FC = () => {
   const { id } = useParams();
   const [listing, setListing] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [activeImage, setActiveImage] = useState<string>('');
 
   useEffect(() => {
     setLoading(true);
     fetch('/api/listings/' + id)
       .then(res => res.json())
       .then(data => {
-        if (!data.error) setListing(data);
+        if (!data.error) {
+          setListing(data);
+          setActiveImage(data.allImages && data.allImages.length > 0 ? data.allImages[0] : (data.image || 'https://picsum.photos/seed/default/800/600'));
+        }
       })
       .catch(console.error)
       .finally(() => setLoading(false));
@@ -56,8 +60,35 @@ const ItemDetails: React.FC = () => {
           {/* Gallery */}
           <div className="bg-white p-2 rounded-[2rem] border border-slate-200 overflow-hidden shadow-sm">
             <div className="aspect-video relative rounded-2xl overflow-hidden group">
-              <img src={listing.image || 'https://picsum.photos/seed/default/800/600'} alt="Main" className="w-full h-full object-cover" />
+              <img src={activeImage} alt="Main" className="w-full h-full object-cover" />
+              {listing.allImages && listing.allImages.length > 1 && (
+                <>
+                  <button 
+                    onClick={() => setActiveImage(prev => listing.allImages[(listing.allImages.indexOf(prev) - 1 + listing.allImages.length) % listing.allImages.length])}
+                    className="absolute left-6 top-1/2 -translate-y-1/2 bg-white/90 p-3 rounded-full shadow-xl opacity-0 group-hover:opacity-100 transition-all">
+                    <span className="material-icons">chevron_left</span>
+                  </button>
+                  <button 
+                    onClick={() => setActiveImage(prev => listing.allImages[(listing.allImages.indexOf(prev) + 1) % listing.allImages.length])}
+                    className="absolute right-6 top-1/2 -translate-y-1/2 bg-white/90 p-3 rounded-full shadow-xl opacity-0 group-hover:opacity-100 transition-all">
+                    <span className="material-icons">chevron_right</span>
+                  </button>
+                </>
+              )}
             </div>
+            {listing.allImages && listing.allImages.length > 1 && (
+              <div className="flex gap-3 mt-3 overflow-x-auto pb-2 scrollbar-hide">
+                {listing.allImages.map((img: string, idx: number) => (
+                   <div 
+                     key={idx} 
+                     onClick={() => setActiveImage(img)}
+                     className={`flex-shrink-0 w-28 h-20 rounded-xl overflow-hidden cursor-pointer border-2 transition-all ${activeImage === img ? 'border-primary' : 'border-transparent opacity-60 hover:opacity-100'}`}
+                   >
+                     <img src={img} alt={`Thumb ${idx}`} className="w-full h-full object-cover" />
+                   </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Description */}
