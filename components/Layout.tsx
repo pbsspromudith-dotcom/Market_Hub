@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { CURRENT_USER } from '../constants';
+import logoImg from '../assets/logo.png';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -33,9 +34,7 @@ const Layout: React.FC<LayoutProps> = ({ children, isLoggedIn, isAdmin, onLogout
           <div className="flex justify-between items-center h-20">
             {/* Logo Section */}
             <Link to="/" className="flex items-center gap-3 shrink-0">
-              <div className="w-10 h-10 bg-primary flex items-center justify-center rounded-xl shadow-sm transition-transform hover:scale-105">
-                <span className="material-icons text-white">shopping_bag</span>
-              </div>
+              <img src={logoImg} alt="Logo" className="w-10 h-10 object-contain transition-transform hover:scale-105" />
               <span className="text-xl font-black tracking-tight text-[#0f172a]">
                 MARKET<span className="text-primary-light">{isAdmin ? 'ADMIN' : 'HUB'}</span>
               </span>

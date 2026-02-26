@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import nameLogoImg from '../assets/namelogo.png';
 
 interface LoginProps {
   onLogin: () => void;
@@ -76,8 +77,8 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     <div className="min-h-[calc(100vh-64px)] flex items-center justify-center bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-primary rounded-3xl shadow-xl shadow-primary/20 mb-6">
-            <span className="material-icons text-white text-4xl">shopping_bag</span>
+          <div className="mb-6 flex justify-center">
+            <img src={nameLogoImg} alt="Market Hub Logo" className="h-24 object-contain" />
           </div>
           <h2 className="text-3xl font-black text-slate-900 tracking-tight">{isLoginBlock ? 'Welcome Back' : 'Create an Account'}</h2>
           <p className="mt-2 text-sm text-slate-500 font-medium">

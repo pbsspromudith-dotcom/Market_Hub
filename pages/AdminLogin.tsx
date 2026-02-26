@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import nameLogoImg from '../assets/namelogo.png';
 
 interface AdminLoginProps {
   onLogin?: () => void;
@@ -48,8 +49,8 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin }) => {
     <div className="min-h-[calc(100vh-64px)] flex items-center justify-center bg-slate-900 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-primary rounded-3xl shadow-xl shadow-primary/20 mb-6">
-            <span className="material-icons text-white text-4xl">admin_panel_settings</span>
+          <div className="mb-6 flex justify-center">
+            <img src={nameLogoImg} alt="Market Hub Admin Logo" className="h-24 object-contain brightness-0 invert drop-shadow-md opacity-90" />
           </div>
           <h2 className="text-3xl font-black text-white tracking-tight">Admin Portal</h2>
           <p className="mt-2 text-sm text-slate-400 font-medium">
