@@ -72,7 +72,7 @@ const PostAd: React.FC = () => {
         validFiles.forEach((file: File) => {
           formData.append('images', file);
         });
-        const uploadRes = await fetch('/api/upload', {
+        const uploadRes = await fetch('/api/upload.php', {
           method: 'POST',
           body: formData,
         });
@@ -82,7 +82,7 @@ const PostAd: React.FC = () => {
         }
       }
 
-      const response = await fetch('/api/listings', {
+      const response = await fetch('/api/listings/create.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

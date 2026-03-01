@@ -24,7 +24,7 @@ const SearchResults: React.FC = () => {
 
   useEffect(() => {
     setIsLoading(true);
-    fetch('/api/listings')
+    fetch('/api/listings/read.php')
       .then(res => res.json())
       .then(data => {
         setListings(data);

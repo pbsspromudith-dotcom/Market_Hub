@@ -22,7 +22,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin }) => {
       // In a real application, there would be a dedicated admin table,
       // or an isAdmin column returned from the login endpoint.
       // For demonstration, we simply attempt the auth and then forcibly elevate.
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch('/api/auth/login.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

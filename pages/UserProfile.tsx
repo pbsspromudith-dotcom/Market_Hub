@@ -17,7 +17,7 @@ const UserProfile: React.FC = () => {
     setUser(userData);
 
     // Fetch this user's listings
-    fetch('/api/listings')
+    fetch('/api/listings/read.php')
       .then(res => res.json())
       .then(data => {
         const myListings = data.filter((l: any) => l.user_id === userData.id);

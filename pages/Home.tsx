@@ -54,7 +54,7 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn }) => {
       .then(data => setServerMessage(data.message))
       .catch(err => setServerMessage('Backend is not running: ' + err.message));
 
-    fetch('/api/listings')
+    fetch('/api/listings/read.php')
       .then(res => res.json())
       .then(data => setListings(data.slice(0, 6))) // get top 6 recent
       .catch(err => console.error('DB fetch error', err));

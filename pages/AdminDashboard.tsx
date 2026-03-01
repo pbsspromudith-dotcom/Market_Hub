@@ -6,7 +6,7 @@ const AdminDashboard: React.FC = () => {
   const [adminStats, setAdminStats] = useState<any>(null);
 
   useEffect(() => {
-    fetch('/api/admin/stats')
+    fetch('/api/admin/stats.php')
       .then(res => res.json())
       .then(data => {
         if (data.success) {

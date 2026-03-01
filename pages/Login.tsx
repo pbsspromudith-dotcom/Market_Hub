@@ -23,7 +23,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
     try {
       if (isLoginBlock) {
-        const response = await fetch('/api/auth/login', {
+        const response = await fetch('/api/auth/login.php', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -40,7 +40,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           setError(data.message || 'Invalid email or password.');
         }
       } else {
-        const response = await fetch('/api/auth/register', {
+        const response = await fetch('/api/auth/register.php', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -51,7 +51,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         
         if (data.success) {
           // auto log in
-          const loginRes = await fetch('/api/auth/login', {
+          const loginRes = await fetch('/api/auth/login.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password }),
