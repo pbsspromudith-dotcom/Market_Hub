@@ -19,7 +19,7 @@ const Help: React.FC = () => {
     ],
     Legal: [
       { 
-        q: "Is MarketHub compliant with PIPEDA?", 
+        q: "Is CNMarketHub compliant with PIPEDA?", 
         a: "Yes. We strictly adhere to the Personal Information Protection and Electronic Documents Act (PIPEDA). This means we protect your personal data with high-level encryption and only collect information necessary for the operation of the marketplace." 
       }
     ],
@@ -31,7 +31,7 @@ const Help: React.FC = () => {
     ],
     Business: [
       { 
-        q: "What is the 'MarketHub Business' verified status?", 
+        q: "What is the 'CNMarketHub Business' verified status?", 
         a: "For professional Canadian sellers, we offer a Business Verification badge. This requires proof of a valid Canadian Business Number (BN) and adherence to local municipal licensing requirements for second-hand dealers where applicable." 
       }
     ]
@@ -41,7 +41,7 @@ const Help: React.FC = () => {
     { id: 'Safety', title: 'Trust & Safety', icon: 'shield', count: '12 ARTICLES' },
     { id: 'Legal', title: 'Legal & Privacy', icon: 'gavel', count: '8 ARTICLES' },
     { id: 'Pro', title: 'Pro Accounts', icon: 'star', count: '15 ARTICLES' },
-    { id: 'Business', title: 'MarketHub Business', icon: 'business', count: '24 ARTICLES' },
+    { id: 'Business', title: 'CNMarketHub Business', icon: 'business', count: '24 ARTICLES' },
   ];
 
   return (

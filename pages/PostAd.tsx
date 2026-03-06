@@ -14,6 +14,13 @@ const PostAd: React.FC = () => {
   const [postalCode, setPostalCode] = useState('');
   const [contactEmail, setContactEmail] = useState('');
   const [contactPhone, setContactPhone] = useState('');
+  const [carMake, setCarMake] = useState('');
+  const [carModel, setCarModel] = useState('');
+  const [carYear, setCarYear] = useState('');
+  const [carTransmission, setCarTransmission] = useState('');
+  const [carFuelType, setCarFuelType] = useState('');
+  const [carMileage, setCarMileage] = useState('');
+  const [carVIN, setCarVIN] = useState('');
   const [imageFiles, setImageFiles] = useState<(File | null)[]>([null, null, null, null, null]);
   const [imagePreviews, setImagePreviews] = useState<(string | null)[]>([null, null, null, null, null]);
   const [isPublishing, setIsPublishing] = useState(false);
@@ -82,6 +89,22 @@ const PostAd: React.FC = () => {
         }
       }
 
+      let finalDescription = description;
+      if (category === 'Cars') {
+        const carDetails = [];
+        if (carMake) carDetails.push(`Make: ${carMake}`);
+        if (carModel) carDetails.push(`Model: ${carModel}`);
+        if (carYear) carDetails.push(`Year: ${carYear}`);
+        if (carTransmission) carDetails.push(`Transmission: ${carTransmission}`);
+        if (carFuelType) carDetails.push(`Fuel Type: ${carFuelType}`);
+        if (carMileage) carDetails.push(`Mileage: ${carMileage} km`);
+        if (carVIN) carDetails.push(`VIN: ${carVIN}`);
+        
+        if (carDetails.length > 0) {
+          finalDescription = carDetails.join('\n') + '\n\n' + description;
+        }
+      }
+
       const response = await fetch('/api/listings/create.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -90,7 +113,7 @@ const PostAd: React.FC = () => {
           price: parseFloat(price) || 0,
           category: category || 'Other',
           location: location || 'Unknown',
-          description,
+          description: finalDescription,
           image: imageUrls,
           user_id: user ? user.id : 1, // fallback to 1 if not logged in
           contact_email: contactEmail,
@@ -180,6 +203,58 @@ const PostAd: React.FC = () => {
                     placeholder="e.g. 2018 Honda Civic LX - Excellent Condition" 
                   />
                 </div>
+                
+                {category === 'Cars' && (
+                  <div className="bg-primary/5 p-6 rounded-xl border border-primary/20 space-y-4">
+                     <h3 className="font-bold text-slate-800 flex items-center gap-2 mb-2">
+                       <span className="material-icons text-primary">directions_car</span>
+                       Vehicle Details
+                     </h3>
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                       <div>
+                         <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Make</label>
+                         <input value={carMake} onChange={e => setCarMake(e.target.value)} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm" placeholder="e.g. Toyota" />
+                       </div>
+                       <div>
+                         <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Model</label>
+                         <input value={carModel} onChange={e => setCarModel(e.target.value)} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm" placeholder="e.g. Camry" />
+                       </div>
+                       <div>
+                         <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Year</label>
+                         <input type="number" value={carYear} onChange={e => setCarYear(e.target.value)} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm" placeholder="e.g. 2020" />
+                       </div>
+                       <div>
+                         <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Transmission</label>
+                         <select value={carTransmission} onChange={e => setCarTransmission(e.target.value)} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm text-slate-700">
+                           <option value="">Select...</option>
+                           <option>Automatic</option>
+                           <option>Manual</option>
+                           <option>Other</option>
+                         </select>
+                       </div>
+                       <div>
+                         <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Fuel Type</label>
+                         <select value={carFuelType} onChange={e => setCarFuelType(e.target.value)} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm text-slate-700">
+                           <option value="">Select...</option>
+                           <option>Gas</option>
+                           <option>Diesel</option>
+                           <option>Hybrid</option>
+                           <option>Electric</option>
+                           <option>Other</option>
+                         </select>
+                       </div>
+                       <div>
+                         <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Mileage (km)</label>
+                         <input type="number" value={carMileage} onChange={e => setCarMileage(e.target.value)} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm" placeholder="e.g. 50000" />
+                       </div>
+                       <div className="md:col-span-2">
+                         <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">VIN Number</label>
+                         <input value={carVIN} onChange={e => setCarVIN(e.target.value)} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm uppercase" placeholder="17-character VIN" maxLength={17} />
+                       </div>
+                     </div>
+                  </div>
+                )}
+
                 <div>
                   <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Description</label>
                   <div className="bg-slate-50 border border-slate-100 rounded-xl overflow-hidden">

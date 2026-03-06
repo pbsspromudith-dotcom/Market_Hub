@@ -46,7 +46,7 @@ const Layout: React.FC<LayoutProps> = ({ children, isLoggedIn, isAdmin, onLogout
                 <>
                   <Link to="/search" className="text-sm font-bold text-slate-500 hover:text-primary transition-colors">Browse</Link>
                   <Link 
-                    to={isLoggedIn ? "/post-ad" : "/login"} 
+                    to="/post-ad" 
                     className="bg-primary hover:bg-primary-hover text-white px-6 py-3 rounded-full font-black text-xs uppercase tracking-widest flex items-center gap-2 transition-all shadow-lg shadow-primary/20"
                   >
                     <span className="material-icons text-sm">add</span>
@@ -102,7 +102,7 @@ const Layout: React.FC<LayoutProps> = ({ children, isLoggedIn, isAdmin, onLogout
             <div className="flex md:hidden items-center gap-3">
               {!isLoginPage && (
                 <Link 
-                  to={isLoggedIn ? "/post-ad" : "/login"} 
+                  to="/post-ad" 
                   className="bg-primary text-white p-2 rounded-xl flex items-center justify-center shadow-lg shadow-primary/20"
                 >
                   <span className="material-icons text-lg">add</span>
@@ -213,7 +213,7 @@ const Layout: React.FC<LayoutProps> = ({ children, isLoggedIn, isAdmin, onLogout
 
             <div className="pt-8 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4">
               <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                © 2024 MarketHub Pro. Built with Professional Standards.
+                © 2024 CNMarketHub Pro. Built with Professional Standards.
               </div>
               <div className="flex gap-8 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                 <Link to="/help" className="hover:text-primary transition-colors">Safety Guidelines</Link>

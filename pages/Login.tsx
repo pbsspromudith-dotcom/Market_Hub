@@ -33,7 +33,8 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         const data = await response.json();
         
         if (data.success) {
-          localStorage.setItem('user', JSON.stringify(data.user));
+          const isUserAdmin = data.user.role === 'admin';
+          localStorage.setItem('user', JSON.stringify({ ...data.user, isAdmin: isUserAdmin }));
           onLogin();
           navigate('/');
         } else {
@@ -58,7 +59,8 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           });
           const loginData = await loginRes.json();
           if (loginData.success) {
-            localStorage.setItem('user', JSON.stringify(loginData.user));
+            const isUserAdmin = loginData.user.role === 'admin';
+            localStorage.setItem('user', JSON.stringify({ ...loginData.user, isAdmin: isUserAdmin }));
             onLogin();
             navigate('/');
           }

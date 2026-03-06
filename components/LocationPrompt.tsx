@@ -63,7 +63,7 @@ const LocationPrompt: React.FC = () => {
         
         <h3 className="text-2xl font-black text-slate-900 mb-3 leading-tight">Find items near you</h3>
         <p className="text-sm text-slate-500 mb-8 leading-relaxed font-medium">
-          MarketHub Pro uses your location to show verified local sellers and trending listings right in your community.
+          CNMarketHub Pro uses your location to show verified local sellers and trending listings right in your community.
         </p>
         
         <div className="space-y-3">

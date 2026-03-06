@@ -84,7 +84,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin }) => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="w-full pl-12 pr-4 py-4 bg-slate-900 border-slate-700 text-white rounded-2xl focus:ring-primary focus:border-primary text-sm font-medium transition-all" 
-                    placeholder="admin@markethub.com" 
+                    placeholder="admin@CNMarketHub.com" 
                   />
                 </div>
               </div>

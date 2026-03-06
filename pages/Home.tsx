@@ -84,7 +84,7 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn }) => {
             <span className="text-primary-light">right in your community.</span>
           </h1>
           <p className="text-slate-500 text-lg md:text-xl mb-12 max-w-2xl mx-auto leading-relaxed font-medium">
-            MarketHub Pro connects you with verified local sellers using a secure, professional-grade platform.
+            CNMarketHub Pro connects you with verified local sellers using a secure, professional-grade platform.
           </p>
           
           <div className="max-w-4xl mx-auto bg-white p-2.5 rounded-[2.5rem] shadow-2xl shadow-primary-neutral/40 border border-slate-100 flex flex-col md:flex-row gap-2">
@@ -222,7 +222,7 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn }) => {
             {!isLoggedIn && (
               <div className="bg-primary rounded-[2.5rem] p-10 text-white relative overflow-hidden group">
                  <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-colors"></div>
-                 <h3 className="text-2xl font-black mb-4 relative z-10">Join MarketHub</h3>
+                 <h3 className="text-2xl font-black mb-4 relative z-10">Join CNMarketHub</h3>
                  <p className="text-primary-neutral text-sm mb-8 leading-relaxed relative z-10 font-medium">Create a free account to contact sellers and save your favorite items.</p>
                  <Link to="/login" className="block w-full bg-white text-primary font-black py-4 rounded-2xl text-center transition-all shadow-lg hover:bg-slate-50">
                    Join Free
