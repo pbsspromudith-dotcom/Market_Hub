@@ -29,6 +29,14 @@ try {
     if ($stmt->rowCount() > 0) {
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
+        // Fix /uploads/ paths to /api/uploads/ for production
+        function fixImagePath($path) {
+            if ($path && strpos($path, '/uploads/') === 0) {
+                return '/api' . $path;
+            }
+            return $path;
+        }
+
         // Process image fields
         $image = $row['image'];
         $allImages = $row['image'] ? [$row['image']] : [];
@@ -40,8 +48,8 @@ try {
                 $allImages = $parsed;
             }
         }
-        $row['image'] = $image;
-        $row['allImages'] = $allImages;
+        $row['image'] = fixImagePath($image);
+        $row['allImages'] = array_map('fixImagePath', $allImages);
 
         http_response_code(200);
         echo json_encode($row);

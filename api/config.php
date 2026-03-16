@@ -19,10 +19,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 }
 
 // Database Credentials
-// Update these when deploying to Hostinger!
 $host = "127.0.0.1";
-$db_name = "CNMarketHub";
-$username = "root";
+$db_name = "u153686131_markethub";
+$username = "u153686131_admin";
 $password = "Admin@1234";
 
 try {

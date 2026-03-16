@@ -10,7 +10,7 @@ const ItemDetails: React.FC = () => {
 
   useEffect(() => {
     setLoading(true);
-    fetch('/api/listings/read_single.php?id=/' + id)
+    fetch('/api/listings/read_single.php?id=' + id)
       .then(res => res.json())
       .then(data => {
         if (!data.error) {

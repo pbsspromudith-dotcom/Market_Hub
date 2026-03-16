@@ -13,6 +13,14 @@ try {
     $listings = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     // Process image fields similarly to Node.js
+    // Fix /uploads/ paths to /api/uploads/ for production
+    function fixImagePath($path) {
+        if ($path && strpos($path, '/uploads/') === 0) {
+            return '/api' . $path;
+        }
+        return $path;
+    }
+
     foreach ($listings as &$row) {
         $image = $row['image'];
         $allImages = $row['image'] ? [$row['image']] : [];
@@ -24,8 +32,8 @@ try {
                 $allImages = $parsed;
             }
         }
-        $row['image'] = $image;
-        $row['allImages'] = $allImages;
+        $row['image'] = fixImagePath($image);
+        $row['allImages'] = array_map('fixImagePath', $allImages);
     }
 
     http_response_code(200);

@@ -15,7 +15,22 @@ if (!is_dir($uploadDir)) {
     mkdir($uploadDir, 0755, true);
 }
 
-if (!isset($_FILES['images']) || count($_FILES['images']['name']) === 0 || $_FILES['images']['error'][0] === UPLOAD_ERR_NO_FILE) {
+if (!isset($_FILES['images'])) {
+    http_response_code(400);
+    echo json_encode(["success" => false, "message" => "No files uploaded"]);
+    exit();
+}
+
+// Normalize single file upload to array format
+if (!is_array($_FILES['images']['name'])) {
+    $_FILES['images']['name'] = [$_FILES['images']['name']];
+    $_FILES['images']['tmp_name'] = [$_FILES['images']['tmp_name']];
+    $_FILES['images']['error'] = [$_FILES['images']['error']];
+    $_FILES['images']['size'] = [$_FILES['images']['size']];
+    $_FILES['images']['type'] = [$_FILES['images']['type']];
+}
+
+if (count($_FILES['images']['name']) === 0 || $_FILES['images']['error'][0] === UPLOAD_ERR_NO_FILE) {
     http_response_code(400);
     echo json_encode(["success" => false, "message" => "No files uploaded"]);
     exit();
@@ -42,7 +57,7 @@ for ($i = 0; $i < $limit; $i++) {
         
         if (move_uploaded_file($tmpName, $destination)) {
             // Include api/ so the frontend can reference it correctly if needed, or stick to just /uploads if it maps properly
-            $imageUrls[] = "/uploads/" . $fileName; 
+            $imageUrls[] = "/api/uploads/" . $fileName; 
         }
     }
 }
