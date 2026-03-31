@@ -20,8 +20,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 
 // Database Credentials
 $host = "127.0.0.1";
-$db_name = "u153686131_markethub";
-$username = "u153686131_admin";
+$db_name = "markethub";
+$username = "root";
 $password = "Admin@1234";
 
 try {

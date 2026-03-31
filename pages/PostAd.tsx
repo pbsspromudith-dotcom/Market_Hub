@@ -1,5 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+const CAR_FEATURES_LIST = [
+  'Alloy Wheels', 'Backup Camera',
+  'Bluetooth', 'Leather Seats',
+  'Cruise Control', 'Remote Start',
+  'Navigation System', 'Blind Spot Monitor',
+  'Sunroof/Moonroof', 'Heated Seats'
+];
 
 const PostAd: React.FC = () => {
   const [step, setStep] = useState(1);
@@ -21,9 +28,49 @@ const PostAd: React.FC = () => {
   const [carFuelType, setCarFuelType] = useState('');
   const [carMileage, setCarMileage] = useState('');
   const [carVIN, setCarVIN] = useState('');
+  const [carTrim, setCarTrim] = useState('');
+  const [carBodyType, setCarBodyType] = useState('');
+  const [carDrivetrain, setCarDrivetrain] = useState('');
+  const [carColor, setCarColor] = useState('');
+  const [carDoors, setCarDoors] = useState('');
+  const [carSeatingCapacity, setCarSeatingCapacity] = useState('');
+  const [carFeatures, setCarFeatures] = useState<string[]>([]);
   const [imageFiles, setImageFiles] = useState<(File | null)[]>([null, null, null, null, null]);
   const [imagePreviews, setImagePreviews] = useState<(string | null)[]>([null, null, null, null, null]);
   const [isPublishing, setIsPublishing] = useState(false);
+
+  const handleReset = () => {
+    if (window.confirm('Are you sure you want to clear the entire form?')) {
+      setStep(1);
+      setCategory('');
+      setTitle('');
+      setDescription('');
+      setPrice('');
+      setLocation('');
+      setPostalCode('');
+      setContactEmail('');
+      setContactPhone('');
+      setCarMake('');
+      setCarModel('');
+      setCarYear('');
+      setCarTransmission('');
+      setCarFuelType('');
+      setCarMileage('');
+      setCarVIN('');
+      setCarTrim('');
+      setCarBodyType('');
+      setCarDrivetrain('');
+      setCarColor('');
+      setCarDoors('');
+      setCarSeatingCapacity('');
+      setCarFeatures([]);
+      setImageFiles([null, null, null, null, null]);
+      setImagePreviews(prev => {
+        prev.forEach(p => p && URL.revokeObjectURL(p));
+        return [null, null, null, null, null];
+      });
+    }
+  };
 
   const [locationSuggestions, setLocationSuggestions] = useState<any[]>([]);
   const [isSearchingLocation, setIsSearchingLocation] = useState(false);
@@ -53,9 +100,17 @@ const PostAd: React.FC = () => {
     setShowSuggestions(false);
   };
 
-  const categories = [
+  const categoriesData = [
     { name: 'Cars', icon: 'directions_car' },
-    { name: 'Real Estate', icon: 'home' },
+    { 
+      name: 'Real Estate', 
+      icon: 'home',
+      subcategories: [
+        { name: 'For Rent' },
+        { name: 'For Sale' },
+        { name: 'Real Estate Services', hasSubcategories: true }
+      ]
+    },
     { name: 'Electronics', icon: 'laptop_mac' },
     { name: 'Home & Garden', icon: 'weekend' },
     { name: 'Jobs', icon: 'work' },
@@ -63,6 +118,25 @@ const PostAd: React.FC = () => {
     { name: 'Baby Items', icon: 'child_care' },
     { name: 'Other', icon: 'more_horiz' },
   ];
+
+  const handleCategorySelect = (catName: string) => {
+    // Check if it's a top-level selection
+    const topLevelCat = categoriesData.find(c => c.name === catName);
+    if (topLevelCat) {
+      if (topLevelCat.subcategories) {
+        setCategory(catName); // Set it, but we need more info
+      } else {
+        setCategory(catName);
+      }
+    } else {
+       // It's a subcategory
+       setCategory(category.split(' > ')[0] + ' > ' + catName);
+    }
+  };
+
+  // Helper to find current subcategories
+  const currentTopCategory = categoriesData.find(c => c.name === category.split(' > ')[0]);
+  const currentSubcategories = currentTopCategory?.subcategories;
 
   const handlePublish = async () => {
     setIsPublishing(true);
@@ -99,6 +173,13 @@ const PostAd: React.FC = () => {
         if (carFuelType) carDetails.push(`Fuel Type: ${carFuelType}`);
         if (carMileage) carDetails.push(`Mileage: ${carMileage} km`);
         if (carVIN) carDetails.push(`VIN: ${carVIN}`);
+        if (carTrim) carDetails.push(`Trim: ${carTrim}`);
+        if (carBodyType) carDetails.push(`Body Type: ${carBodyType}`);
+        if (carDrivetrain) carDetails.push(`Drivetrain: ${carDrivetrain}`);
+        if (carColor) carDetails.push(`Color: ${carColor}`);
+        if (carDoors) carDetails.push(`Doors: ${carDoors}`);
+        if (carSeatingCapacity) carDetails.push(`Seating Capacity: ${carSeatingCapacity}`);
+        if (carFeatures.length > 0) carDetails.push(`Features: ${carFeatures.join(', ')}`);
         
         if (carDetails.length > 0) {
           finalDescription = carDetails.join('\n') + '\n\n' + description;
@@ -161,26 +242,73 @@ const PostAd: React.FC = () => {
         </div>
       </div>
 
+      <div className="flex justify-end mb-6 relative z-20">
+        <button onClick={handleReset} type="button" className="flex items-center gap-2 text-slate-500 hover:text-red-500 font-bold text-sm transition-colors bg-white px-5 py-2.5 rounded-xl border border-slate-200 shadow-sm hover:border-red-200 hover:bg-red-50 cursor-pointer">
+          <span className="material-icons text-lg">refresh</span> Reset Form
+        </button>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
         <div className="lg:col-span-8 space-y-8">
           {step === 1 && (
             <div className="bg-white p-10 rounded-[2rem] border border-slate-200 shadow-sm">
               <h2 className="text-2xl font-black mb-8">Select Category</h2>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                {categories.map(cat => (
-                  <button 
-                    key={cat.name} 
-                    onClick={() => setCategory(cat.name)}
-                    className={`flex flex-col items-center justify-center p-6 rounded-2xl border-2 transition-all group ${category === cat.name ? 'border-primary bg-primary/5' : 'bg-slate-50 border-transparent hover:border-primary hover:bg-white'}`}
-                  >
-                    <span className={`material-icons text-3xl mb-3 ${category === cat.name ? 'text-primary' : 'text-slate-400 group-hover:text-primary'}`}>{cat.icon}</span>
-                    <span className="text-xs font-bold text-slate-600 uppercase tracking-widest">{cat.name}</span>
-                  </button>
-                ))}
+              <div className="mb-4">
+                <p className="text-sm text-slate-500 mb-4 tracking-widest uppercase font-bold text-center">Manually select a category</p>
+                
+                {/* Selected Top-Level Category */}
+                {category && (
+                  <div className="flex items-center justify-between p-4 border border-slate-200 rounded-xl mb-4 bg-white shadow-sm">
+                    <span className="font-bold text-slate-800">{category.split(' > ')[0]}</span>
+                    <button 
+                      onClick={() => setCategory('')}
+                      className="text-slate-400 hover:text-slate-600 transition-colors"
+                    >
+                      <span className="material-icons text-xl">close</span>
+                    </button>
+                  </div>
+                )}
+
+                {/* Subcategories or Top-Level Categories */}
+                {!category ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    {categoriesData.map(cat => (
+                      <button 
+                        key={cat.name} 
+                        onClick={() => handleCategorySelect(cat.name)}
+                        className={`flex flex-col items-center justify-center p-6 rounded-2xl border-2 transition-all group bg-slate-50 border-transparent hover:border-primary hover:bg-white`}
+                      >
+                        <span className={`material-icons text-3xl mb-3 text-slate-400 group-hover:text-primary`}>{cat.icon}</span>
+                        <span className="text-xs font-bold text-slate-600 uppercase tracking-widest">{cat.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                ) : currentSubcategories && !category.includes(' > ') ? (
+                  <div className="space-y-2">
+                    {currentSubcategories.map(subcat => (
+                      <button
+                        key={subcat.name}
+                        onClick={() => handleCategorySelect(subcat.name)}
+                        className="w-full flex items-center justify-between p-4 border border-slate-200 rounded-xl bg-white hover:border-primary transition-all text-left group"
+                      >
+                        <span className="font-bold text-slate-700 group-hover:text-primary">{subcat.name}</span>
+                        {subcat.hasSubcategories && (
+                          <span className="material-icons text-slate-400">chevron_right</span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-8 text-center bg-primary/5 rounded-xl border border-primary/20">
+                    <span className="material-icons text-4xl text-primary mb-4 block">check_circle</span>
+                    <p className="font-bold text-slate-800 text-lg">Category Selected</p>
+                    <p className="text-slate-500 text-sm mt-2">{category}</p>
+                  </div>
+                )}
               </div>
               <div className="mt-10 pt-10 border-t border-slate-100 text-right">
                 <button 
-                  disabled={!category}
+                  disabled={!category || (currentSubcategories != null && !category.includes(' > '))}
                   onClick={() => setStep(2)} 
                   className="bg-primary hover:bg-primary-hover text-white px-10 py-4 rounded-xl font-bold transition-all shadow-lg shadow-primary/20 flex items-center gap-2 ml-auto disabled:opacity-50"
                 >
@@ -247,9 +375,79 @@ const PostAd: React.FC = () => {
                          <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Mileage (km)</label>
                          <input type="number" value={carMileage} onChange={e => setCarMileage(e.target.value)} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm" placeholder="e.g. 50000" />
                        </div>
+                       <div>
+                         <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Trim</label>
+                         <input value={carTrim} onChange={e => setCarTrim(e.target.value)} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm" placeholder="e.g. EX-L" />
+                       </div>
+                       <div>
+                         <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Body Type</label>
+                         <select value={carBodyType} onChange={e => setCarBodyType(e.target.value)} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm text-slate-700">
+                           <option value="">Select...</option>
+                           <option>SUV</option>
+                           <option>Sedan</option>
+                           <option>Coupe</option>
+                           <option>Hatchback</option>
+                           <option>Truck</option>
+                           <option>Van</option>
+                           <option>Wagon</option>
+                           <option>Other</option>
+                         </select>
+                       </div>
+                       <div>
+                         <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Drivetrain</label>
+                         <select value={carDrivetrain} onChange={e => setCarDrivetrain(e.target.value)} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm text-slate-700">
+                           <option value="">Select...</option>
+                           <option>FWD</option>
+                           <option>RWD</option>
+                           <option>AWD</option>
+                           <option>4WD</option>
+                         </select>
+                       </div>
+                       <div>
+                         <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Exterior Color</label>
+                         <input value={carColor} onChange={e => setCarColor(e.target.value)} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm" placeholder="e.g. Black" />
+                       </div>
+                       <div>
+                         <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Doors</label>
+                         <select value={carDoors} onChange={e => setCarDoors(e.target.value)} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm text-slate-700">
+                           <option value="">Select...</option>
+                           <option>2</option>
+                           <option>3</option>
+                           <option>4</option>
+                           <option>5</option>
+                           <option>Other</option>
+                         </select>
+                       </div>
+                       <div>
+                         <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Seating Capacity</label>
+                         <input type="number" value={carSeatingCapacity} onChange={e => setCarSeatingCapacity(e.target.value)} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm" placeholder="e.g. 5" />
+                       </div>
                        <div className="md:col-span-2">
                          <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">VIN Number</label>
                          <input value={carVIN} onChange={e => setCarVIN(e.target.value)} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm uppercase" placeholder="17-character VIN" maxLength={17} />
+                       </div>
+                     </div>
+                     <div className="pt-4 mt-2 border-t border-primary/10">
+                       <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">Features</label>
+                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                         {CAR_FEATURES_LIST.map(feature => (
+                           <label key={feature} className="flex items-center gap-3 cursor-pointer group">
+                             <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${carFeatures.includes(feature) ? 'bg-primary border-primary' : 'bg-white border-slate-300 group-hover:border-primary'}`}>
+                               {carFeatures.includes(feature) && <span className="material-icons text-white text-[14px]">check</span>}
+                             </div>
+                             <span className="text-sm font-medium text-slate-700">{feature}</span>
+                             <input 
+                               type="checkbox" 
+                               className="hidden" 
+                               checked={carFeatures.includes(feature)}
+                               onChange={() => {
+                                 setCarFeatures(prev => 
+                                   prev.includes(feature) ? prev.filter(f => f !== feature) : [...prev, feature]
+                                 );
+                               }}
+                             />
+                           </label>
+                         ))}
                        </div>
                      </div>
                   </div>
