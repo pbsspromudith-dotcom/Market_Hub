@@ -65,10 +65,7 @@ const PostAd: React.FC = () => {
       setCarSeatingCapacity('');
       setCarFeatures([]);
       setImageFiles([null, null, null, null, null]);
-      setImagePreviews(prev => {
-        prev.forEach(p => p && URL.revokeObjectURL(p));
-        return [null, null, null, null, null];
-      });
+      setImagePreviews([null, null, null, null, null]);
     }
   };
 
@@ -514,14 +511,20 @@ const PostAd: React.FC = () => {
                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
                         onChange={(e) => {
                           if (e.target.files && e.target.files[0]) {
+                            const file = e.target.files[0];
                             const newFiles = [...imageFiles];
-                            newFiles[index] = e.target.files[0];
+                            newFiles[index] = file;
                             setImageFiles(newFiles);
 
-                            const newPreviews = [...imagePreviews];
-                            newPreviews[index] = URL.createObjectURL(e.target.files[0]);
-                            setImagePreviews(newPreviews);
+                            const reader = new FileReader();
+                            reader.onload = (ev) => {
+                              const newPreviews = [...imagePreviews];
+                              newPreviews[index] = ev.target?.result as string;
+                              setImagePreviews(newPreviews);
+                            };
+                            reader.readAsDataURL(file);
                           }
+                          e.target.value = '';
                         }}
                       />
                       {imagePreviews[index] ? (
@@ -551,8 +554,6 @@ const PostAd: React.FC = () => {
                             setImageFiles(newFiles);
 
                             const newPreviews = [...imagePreviews];
-                            // Revoke safely to avoid memory leaks
-                            if (newPreviews[index]) URL.revokeObjectURL(newPreviews[index]!);
                             newPreviews[index] = null;
                             setImagePreviews(newPreviews);
                           }}

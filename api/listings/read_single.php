@@ -43,9 +43,14 @@ try {
 
         if (!empty($row['image']) && strpos($row['image'], '[') === 0) {
             $parsed = json_decode($row['image']);
-            if (is_array($parsed) && count($parsed) > 0) {
-                $image = $parsed[0];
-                $allImages = $parsed;
+            if (is_array($parsed)) {
+                if (count($parsed) > 0) {
+                    $image = $parsed[0];
+                    $allImages = $parsed;
+                } else {
+                    $image = null;
+                    $allImages = [];
+                }
             }
         }
         $row['image'] = fixImagePath($image);
