@@ -12,10 +12,15 @@ try {
     $stmt = $conn->query("SELECT * FROM listings ORDER BY created_at DESC");
     $listings = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // Process image fields similarly to Node.js
-    // Fix /uploads/ paths to /api/uploads/ for production
+    // Fix image paths: only add /api prefix if not already present
     function fixImagePath($path) {
-        if ($path && strpos($path, '/uploads/') === 0) {
+        if (!$path) return $path;
+        // Already correctly prefixed
+        if (strpos($path, '/api/uploads/') === 0) {
+            return $path;
+        }
+        // Raw /uploads/ path — add /api prefix
+        if (strpos($path, '/uploads/') === 0) {
             return '/api' . $path;
         }
         return $path;

@@ -8,6 +8,8 @@ const AdminDashboard: React.FC = () => {
   const [adminStats, setAdminStats] = useState<any>(null);
   const [listings, setListings] = useState<any[]>([]);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
   const [options, setOptions] = useState<any[]>([]);
   const [newOptionType, setNewOptionType] = useState('category');
   const [newOptionValue, setNewOptionValue] = useState('');
@@ -62,6 +64,7 @@ const AdminDashboard: React.FC = () => {
       const data = await response.json();
       if (data.success) {
         setListings(listings.filter((l: any) => l.id !== id));
+        setSelectedIds(prev => { const next = new Set(prev); next.delete(id); return next; });
       } else {
         alert(data.error || 'Failed to delete listing');
       }
@@ -71,6 +74,29 @@ const AdminDashboard: React.FC = () => {
     } finally {
       setIsDeleting(null);
     }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    if (!window.confirm(`Delete ${selectedIds.size} selected listing${selectedIds.size > 1 ? 's' : ''}? This cannot be undone.`)) return;
+    setIsBulkDeleting(true);
+    const ids = Array.from(selectedIds);
+    let deletedCount = 0;
+    for (const id of ids) {
+      try {
+        const res = await fetch('/api/listings/delete.php', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id }),
+        });
+        const data = await res.json();
+        if (data.success) deletedCount++;
+      } catch {}
+    }
+    setListings(prev => prev.filter((l: any) => !selectedIds.has(String(l.id))));
+    setSelectedIds(new Set());
+    setIsBulkDeleting(false);
+    if (deletedCount < ids.length) alert(`${ids.length - deletedCount} listing(s) could not be deleted.`);
   };
 
   const handleCreateOption = async (e: React.FormEvent) => {
@@ -226,7 +252,7 @@ const AdminDashboard: React.FC = () => {
       </div>
 
       <div className="mt-10 bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
           <div>
             <h2 className="text-xl font-black">Manage Listings</h2>
             <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Add, review, or remove active listings</p>
@@ -240,11 +266,60 @@ const AdminDashboard: React.FC = () => {
           </Link>
         </div>
 
+        {/* Bulk Action Bar */}
+        {selectedIds.size > 0 && (
+          <div className="flex items-center justify-between bg-red-50 border border-red-200 rounded-2xl px-6 py-4 mb-4 animate-in fade-in duration-200">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                <span className="material-icons text-red-500 text-sm">checklist</span>
+              </div>
+              <span className="text-sm font-black text-red-700">
+                {selectedIds.size} listing{selectedIds.size > 1 ? 's' : ''} selected
+              </span>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setSelectedIds(new Set())}
+                className="text-xs font-bold text-slate-500 hover:text-slate-700 px-3 py-1.5 rounded-lg hover:bg-white transition-all"
+              >
+                Clear Selection
+              </button>
+              <button
+                onClick={handleBulkDelete}
+                disabled={isBulkDeleting}
+                className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-red-200 disabled:opacity-60"
+              >
+                {isBulkDeleting ? (
+                  <span className="material-icons text-sm animate-spin">sync</span>
+                ) : (
+                  <span className="material-icons text-sm">delete_sweep</span>
+                )}
+                {isBulkDeleting ? 'Deleting...' : `Delete ${selectedIds.size} Selected`}
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead className="bg-slate-50 border-y border-slate-100 uppercase text-[10px] font-black text-slate-400 tracking-widest">
               <tr>
-                <th className="px-6 py-4 rounded-l-xl">Title</th>
+                <th className="px-6 py-4 rounded-l-xl w-10">
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary cursor-pointer"
+                    checked={listings.length > 0 && selectedIds.size === listings.length}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedIds(new Set(listings.map((l: any) => String(l.id))));
+                      } else {
+                        setSelectedIds(new Set());
+                      }
+                    }}
+                    title="Select All"
+                  />
+                </th>
+                <th className="px-6 py-4">Title</th>
                 <th className="px-6 py-4">Price</th>
                 <th className="px-6 py-4">Category</th>
                 <th className="px-6 py-4">Status</th>
@@ -253,7 +328,28 @@ const AdminDashboard: React.FC = () => {
             </thead>
             <tbody className="text-sm font-medium">
               {listings.map((l: any) => (
-                <tr key={l.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
+                <tr
+                  key={l.id}
+                  className={`border-b border-slate-50 transition-colors ${
+                    selectedIds.has(String(l.id))
+                      ? 'bg-primary/5 hover:bg-primary/10'
+                      : 'hover:bg-slate-50/50'
+                  }`}
+                >
+                  {/* Checkbox */}
+                  <td className="px-6 py-4 w-10">
+                    <input
+                      type="checkbox"
+                      className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary cursor-pointer"
+                      checked={selectedIds.has(String(l.id))}
+                      onChange={(e) => {
+                        const next = new Set(selectedIds);
+                        if (e.target.checked) next.add(String(l.id));
+                        else next.delete(String(l.id));
+                        setSelectedIds(next);
+                      }}
+                    />
+                  </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-lg bg-slate-100 overflow-hidden flex-shrink-0 border border-slate-200">

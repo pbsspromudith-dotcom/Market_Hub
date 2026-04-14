@@ -29,9 +29,13 @@ try {
     if ($stmt->rowCount() > 0) {
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        // Fix /uploads/ paths to /api/uploads/ for production
+        // Fix image paths: only add /api prefix if not already present
         function fixImagePath($path) {
-            if ($path && strpos($path, '/uploads/') === 0) {
+            if (!$path) return $path;
+            if (strpos($path, '/api/uploads/') === 0) {
+                return $path; // Already correct
+            }
+            if (strpos($path, '/uploads/') === 0) {
                 return '/api' . $path;
             }
             return $path;

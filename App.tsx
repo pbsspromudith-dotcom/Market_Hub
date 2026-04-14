@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { HashRouter as Router, Routes, Route } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import Home from './pages/Home';
 import SearchResults from './pages/SearchResults';
@@ -71,7 +71,7 @@ const App: React.FC = () => {
           <Route path="/admin-login" element={<AdminLogin onLogin={handleLogin} />} />
           <Route path="/search" element={<SearchResults />} />
           <Route path="/item/:id" element={<ItemDetails />} />
-          <Route path="/post-ad" element={<PostAd />} />
+          <Route path="/post-ad" element={isLoggedIn ? <PostAd /> : <Navigate to="/login" replace state={{ from: '/post-ad' }} />} />
           <Route path="/profile" element={<UserProfile />} />
           <Route path="/dashboard" element={<AdminRoute isAdmin={isAdmin}><AdminDashboard /></AdminRoute>} />
           <Route path="/admin" element={<AdminRoute isAdmin={isAdmin}><AdminDashboard /></AdminRoute>} />

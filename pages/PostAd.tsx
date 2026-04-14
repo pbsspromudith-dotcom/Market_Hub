@@ -35,6 +35,18 @@ const PostAd: React.FC = () => {
   const [carDoors, setCarDoors] = useState('');
   const [carSeatingCapacity, setCarSeatingCapacity] = useState('');
   const [carFeatures, setCarFeatures] = useState<string[]>([]);
+  // Job-specific fields
+  const [jobType, setJobType] = useState('');
+  const [jobEmploymentType, setJobEmploymentType] = useState('');
+  const [jobExperience, setJobExperience] = useState('');
+  const [jobSalaryMin, setJobSalaryMin] = useState('');
+  const [jobSalaryMax, setJobSalaryMax] = useState('');
+  // Real Estate specific
+  const [reBedrooms, setReBedrooms] = useState('');
+  const [reBathrooms, setReBathrooms] = useState('');
+  const [reSize, setReSize] = useState('');
+  // Shared
+  const [condition, setCondition] = useState('New');
   const [imageFiles, setImageFiles] = useState<(File | null)[]>([null, null, null, null, null]);
   const [imagePreviews, setImagePreviews] = useState<(string | null)[]>([null, null, null, null, null]);
   const [isPublishing, setIsPublishing] = useState(false);
@@ -148,7 +160,7 @@ const PostAd: React.FC = () => {
       if (validFiles.length > 0) {
         const formData = new FormData();
         validFiles.forEach((file: File) => {
-          formData.append('images', file);
+          formData.append('images[]', file);
         });
         const uploadRes = await fetch('/api/upload.php', {
           method: 'POST',
@@ -462,25 +474,120 @@ const PostAd: React.FC = () => {
                     ></textarea>
                   </div>
                 </div>
+                {/* ---- Jobs Category Fields ---- */}
+                {category.startsWith('Jobs') && (
+                  <div className="bg-primary/5 p-6 rounded-xl border border-primary/20 space-y-4">
+                    <h3 className="font-bold text-slate-800 flex items-center gap-2 mb-2">
+                      <span className="material-icons text-primary">work</span>
+                      Job Details
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Job Type / Title</label>
+                        <input value={jobType} onChange={e => setJobType(e.target.value)} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm" placeholder="e.g. Software Engineer" />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Employment Type</label>
+                        <select value={jobEmploymentType} onChange={e => setJobEmploymentType(e.target.value)} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm text-slate-700">
+                          <option value="">Select...</option>
+                          <option>Full-Time</option>
+                          <option>Part-Time</option>
+                          <option>Contract</option>
+                          <option>Freelance</option>
+                          <option>Internship</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Experience Required</label>
+                        <select value={jobExperience} onChange={e => setJobExperience(e.target.value)} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm text-slate-700">
+                          <option value="">Select...</option>
+                          <option>No Experience</option>
+                          <option>1-2 Years</option>
+                          <option>3-5 Years</option>
+                          <option>5+ Years</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Salary Range ($/yr)</label>
+                        <div className="flex gap-2 items-center">
+                          <input type="number" value={jobSalaryMin} onChange={e => setJobSalaryMin(e.target.value)} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm" placeholder="Min" />
+                          <span className="text-slate-300 font-bold">–</span>
+                          <input type="number" value={jobSalaryMax} onChange={e => setJobSalaryMax(e.target.value)} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm" placeholder="Max" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* ---- Real Estate Fields ---- */}
+                {category.startsWith('Real Estate') && (
+                  <div className="bg-primary/5 p-6 rounded-xl border border-primary/20 space-y-4">
+                    <h3 className="font-bold text-slate-800 flex items-center gap-2 mb-2">
+                      <span className="material-icons text-primary">home</span>
+                      Property Details
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Bedrooms</label>
+                        <select value={reBedrooms} onChange={e => setReBedrooms(e.target.value)} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm text-slate-700">
+                          <option value="">Select...</option>
+                          {['Studio', '1', '2', '3', '4', '5+'].map(v => <option key={v}>{v}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Bathrooms</label>
+                        <select value={reBathrooms} onChange={e => setReBathrooms(e.target.value)} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm text-slate-700">
+                          <option value="">Select...</option>
+                          {['1', '2', '3', '4+'].map(v => <option key={v}>{v}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Size (sq ft)</label>
+                        <input type="number" value={reSize} onChange={e => setReSize(e.target.value)} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm" placeholder="e.g. 1200" />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                    <div>
-                      <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Price ($)</label>
+                      <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Price ($) {category.startsWith('Jobs') ? '/ Year' : ''}</label>
                       <input 
                         type="number"
                         value={price}
                         onChange={e => setPrice(e.target.value)}
                         className="w-full px-5 py-4 bg-slate-50 border-slate-100 rounded-xl focus:ring-primary focus:border-primary text-sm font-bold" 
-                        placeholder="0.00" 
+                        placeholder={category.startsWith('Jobs') ? 'Annual salary or 0 for negotiable' : '0.00'} 
                       />
                    </div>
+                   {/* Condition — only for relevant categories */}
+                   {!category.startsWith('Jobs') && !category.startsWith('Real Estate') && (
                    <div>
                       <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Condition</label>
-                      <select className="w-full px-5 py-4 bg-slate-50 border-slate-100 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium">
-                         <option>New</option>
-                         <option>Used - Like New</option>
-                         <option>Used - Good</option>
+                      <select
+                        value={condition}
+                        onChange={e => setCondition(e.target.value)}
+                        className="w-full px-5 py-4 bg-slate-50 border-slate-100 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium"
+                      >
+                        {category === 'Cars' ? (
+                          <>
+                            <option>Excellent</option>
+                            <option>Good</option>
+                            <option>Fair</option>
+                            <option>Parts Only</option>
+                          </>
+                        ) : (
+                          <>
+                            <option>New</option>
+                            <option>Used - Like New</option>
+                            <option>Used - Good</option>
+                            <option>Used - Fair</option>
+                            <option>For Parts</option>
+                          </>
+                        )}
                       </select>
                    </div>
+                   )}
                 </div>
               </div>
               <div className="pt-10 border-t border-slate-100 flex justify-between">
@@ -501,10 +608,48 @@ const PostAd: React.FC = () => {
               <h2 className="text-2xl font-black">Media & Location</h2>
               
               <section>
-                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Add Photos (Up to 5)</label>
+                {/* Header + progress */}
+                <div className="flex items-center justify-between mb-3">
+                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest">
+                    Add Photos (Minimum 5 Required) <span className="text-red-500">*</span>
+                  </label>
+                  <span className={`text-xs font-black px-3 py-1 rounded-full ${
+                    imageFiles.filter(f => f !== null).length === 5
+                      ? 'bg-green-100 text-green-600'
+                      : 'bg-amber-50 text-amber-600'
+                  }`}>
+                    {imageFiles.filter(f => f !== null).length} / 5 photos
+                  </span>
+                </div>
+
+                {/* Progress bar */}
+                <div className="w-full h-1.5 bg-slate-100 rounded-full mb-4 overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{
+                      width: `${(imageFiles.filter(f => f !== null).length / 5) * 100}%`,
+                      background: imageFiles.filter(f => f !== null).length === 5 ? '#22c55e' : '#f59e0b'
+                    }}
+                  />
+                </div>
+
+                {imageFiles.filter(f => f !== null).length < 5 && (
+                  <p className="text-xs text-amber-600 font-bold mb-4 flex items-center gap-1.5">
+                    <span className="material-icons text-sm">info</span>
+                    At least 5 photos are required to publish your ad.
+                  </p>
+                )}
+
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
                   {Array.from({ length: 5 }).map((_, index) => (
-                    <div key={index} className="relative w-full aspect-square border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center bg-slate-50 group hover:border-primary hover:bg-white transition-all overflow-hidden cursor-pointer">
+                    <div
+                      key={index}
+                      className={`relative w-full aspect-square border-2 border-dashed rounded-2xl flex flex-col items-center justify-center group hover:border-primary hover:bg-white transition-all overflow-hidden cursor-pointer ${
+                        imagePreviews[index]
+                          ? 'border-green-400 bg-green-50'
+                          : 'border-slate-200 bg-slate-50'
+                      }`}
+                    >
                       <input
                         type="file"
                         accept="image/*"
@@ -515,7 +660,6 @@ const PostAd: React.FC = () => {
                             const newFiles = [...imageFiles];
                             newFiles[index] = file;
                             setImageFiles(newFiles);
-
                             const reader = new FileReader();
                             reader.onload = (ev) => {
                               const newPreviews = [...imagePreviews];
@@ -530,21 +674,26 @@ const PostAd: React.FC = () => {
                       {imagePreviews[index] ? (
                         <div className="absolute inset-0 z-10 pointer-events-none">
                           <img src={imagePreviews[index]!} className="w-full h-full object-cover" alt={`Image ${index + 1}`} />
+                          {/* Green check badge */}
+                          <div className="absolute bottom-2 left-2 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center shadow">
+                            <span className="material-icons text-white text-[12px]">check</span>
+                          </div>
                         </div>
                       ) : (
                         <>
                           <span className="material-icons text-3xl text-slate-300 group-hover:text-primary mb-1">
-                             {index === 0 ? 'add_a_photo' : 'add'}
+                            {index === 0 ? 'add_a_photo' : 'add'}
                           </span>
                           <span className="text-[10px] font-bold text-slate-400 tracking-widest uppercase">
-                             {index === 0 ? 'Cover' : `Pic ${index + 1}`}
+                            {index === 0 ? 'Cover' : `Pic ${index + 1}`}
                           </span>
+                          <span className="text-[9px] text-red-400 font-bold mt-0.5">Required</span>
                         </>
                       )}
-                      
-                      {/* Delete button if image exists */}
+
+                      {/* Delete button */}
                       {imagePreviews[index] && (
-                        <button 
+                        <button
                           className="absolute top-2 right-2 z-30 w-6 h-6 bg-white/90 rounded-full flex items-center justify-center text-red-500 hover:scale-110 shadow-sm transition-all"
                           onClick={(e) => {
                             e.preventDefault();
@@ -552,7 +701,6 @@ const PostAd: React.FC = () => {
                             const newFiles = [...imageFiles];
                             newFiles[index] = null;
                             setImageFiles(newFiles);
-
                             const newPreviews = [...imagePreviews];
                             newPreviews[index] = null;
                             setImagePreviews(newPreviews);
@@ -648,15 +796,22 @@ const PostAd: React.FC = () => {
                   </div>
                 </div>
               </section>
-              <div className="pt-10 border-t border-slate-100 flex justify-between">
+              <div className="pt-10 border-t border-slate-100 flex justify-between items-center">
                 <button onClick={() => setStep(2)} className="px-10 py-4 font-bold text-slate-400 hover:text-slate-600">Back</button>
-                <button 
-                  disabled={!location || isPublishing}
-                  onClick={handlePublish} 
-                  className="bg-primary hover:bg-primary-hover text-white px-10 py-4 rounded-xl font-bold transition-all shadow-lg shadow-primary/20 flex items-center gap-2 disabled:opacity-50"
-                >
-                  {isPublishing ? 'Publishing...' : 'Publish Ad'} <span className="material-icons">check</span>
-                </button>
+                <div className="flex flex-col items-end gap-2">
+                  {imageFiles.filter(f => f !== null).length < 5 && (
+                    <p className="text-xs text-red-500 font-bold">
+                      {5 - imageFiles.filter(f => f !== null).length} more photo{5 - imageFiles.filter(f => f !== null).length !== 1 ? 's' : ''} needed
+                    </p>
+                  )}
+                  <button
+                    disabled={!location || isPublishing || imageFiles.filter(f => f !== null).length < 5}
+                    onClick={handlePublish}
+                    className="bg-primary hover:bg-primary-hover text-white px-10 py-4 rounded-xl font-bold transition-all shadow-lg shadow-primary/20 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isPublishing ? 'Publishing...' : 'Publish Ad'} <span className="material-icons">check</span>
+                  </button>
+                </div>
               </div>
             </div>
           )}

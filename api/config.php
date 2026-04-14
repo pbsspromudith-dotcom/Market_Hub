@@ -22,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 $host = "127.0.0.1";
 $db_name = "markethub";
 $username = "root";
-$password = "Admin@1234";
+$password = "";
 
 try {
     $conn = new PDO("mysql:host={$host};dbname={$db_name};charset=utf8", $username, $password);

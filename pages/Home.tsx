@@ -71,7 +71,7 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn }) => {
   return (
     <div className="overflow-x-hidden">
       {/* Hero Section */}
-      <section className="bg-gradient-mesh border-b border-slate-100 pt-20 pb-24 relative overflow-hidden">
+      <section className="bg-gradient-mesh border-b border-slate-100 pt-12 pb-16 md:pt-20 md:pb-24 relative overflow-hidden">
         <div className="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 bg-primary-soft/10 rounded-full blur-3xl"></div>
         <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 h-80 bg-primary-light/10 rounded-full blur-3xl"></div>
         
@@ -79,11 +79,11 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn }) => {
           <span className="inline-block py-1.5 px-4 rounded-full bg-primary-soft/20 text-primary text-[10px] font-black uppercase tracking-[0.2em] mb-6">
             Global Standards. Local Trading.
           </span>
-          <h1 className="text-5xl md:text-7xl font-black mb-6 tracking-tight text-slate-900 leading-[1.1]">
+          <h1 className="text-4xl md:text-7xl font-black mb-6 tracking-tight text-slate-900 leading-[1.1]">
             Find what you need,<br/>
             <span className="text-primary-light">right in your community.</span>
           </h1>
-          <p className="text-slate-500 text-lg md:text-xl mb-12 max-w-2xl mx-auto leading-relaxed font-medium">
+          <p className="text-slate-500 text-base md:text-xl mb-10 max-w-2xl mx-auto leading-relaxed font-medium">
             CNMarketHub Pro connects you with verified local sellers using a secure, professional-grade platform.
           </p>
           

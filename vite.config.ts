@@ -10,12 +10,12 @@ export default defineConfig(({ mode }) => {
         host: '0.0.0.0',
         proxy: {
           '/api': {
-            target: 'http://localhost:80/Market_Hub',
+            target: 'http://localhost:8000',
             changeOrigin: true,
             secure: false
           },
           '/uploads': {
-            target: 'http://localhost:80/Market_Hub',
+            target: 'http://localhost:8000',
             changeOrigin: true,
             secure: false
           }

@@ -1,11 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
+const ITEMS_PER_PAGE = 10;
+
 const SearchResults: React.FC = () => {
   const [sliderMaxPrice, setSliderMaxPrice] = useState(100000);
   const [absoluteMaxPrice, setAbsoluteMaxPrice] = useState(100000);
   const [listings, setListings] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
@@ -15,7 +19,8 @@ const SearchResults: React.FC = () => {
   // Filter States
   const [searchQuery, setSearchQuery] = useState(initialQ);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [locationSearch, setLocationSearch] = useState(initialLoc);
+  const [locationSearch, setLocationSearch] = useState('');
+  const [locationFilterActive, setLocationFilterActive] = useState(false);
   const [distance, setDistance] = useState('Within 50 km');
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
@@ -44,8 +49,8 @@ const SearchResults: React.FC = () => {
     // category filter
     if (selectedCategory && item.category !== selectedCategory) return false;
     
-    // location filter (simple text match treating 10km/50km as "within same city")
-    if (distance !== 'Nationwide' && locationSearch && item.location) {
+    // location filter — only active if user explicitly set a location in filter
+    if (locationFilterActive && distance !== 'Nationwide' && locationSearch && item.location) {
       const searchCity = locationSearch.split(',')[0].trim().toLowerCase();
       if (!item.location.toLowerCase().includes(searchCity)) return false;
     }
@@ -67,14 +72,33 @@ const SearchResults: React.FC = () => {
   }).sort((a, b) => {
     if (sortOption === 'Price: Low to High') return Number(a.price) - Number(b.price);
     if (sortOption === 'Price: High to Low') return Number(b.price) - Number(a.price);
-    return b.id - a.id; // Default: Most Recent
+    return b.id - a.id;
   });
+
+  const totalPages = Math.max(1, Math.ceil(filteredListings.length / ITEMS_PER_PAGE));
+  const paginatedListings = filteredListings.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
+  // Reset to page 1 when filters change
+  const resetPage = () => setCurrentPage(1);
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
+
+      {/* Mobile Filter Toggle Bar */}
+      <div className="lg:hidden flex items-center justify-between mb-4 bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
+        <span className="text-sm font-black text-slate-700">{filteredListings.length} Results</span>
+        <button
+          onClick={() => setShowMobileFilters(!showMobileFilters)}
+          className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-xl text-sm font-bold"
+        >
+          <span className="material-icons text-sm">tune</span>
+          {showMobileFilters ? 'Hide Filters' : 'Show Filters'}
+        </button>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Sidebar Filters */}
-        <aside className="col-span-12 lg:col-span-3 space-y-6">
+        {/* Sidebar Filters — hidden on mobile unless toggled */}
+        <aside className={`col-span-12 lg:col-span-3 space-y-6 ${showMobileFilters ? 'block' : 'hidden lg:block'}`}>
           <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm sticky top-24">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-lg font-bold">Filters</h2>
@@ -83,12 +107,14 @@ const SearchResults: React.FC = () => {
                   setSearchQuery('');
                   setSelectedCategory(null);
                   setLocationSearch('');
+                  setLocationFilterActive(false);
                   setDistance('Within 50 km');
                   setMinPrice('');
                   setMaxPrice('');
                   setSortOption('Most Recent');
                   setSelectedConditions([]);
                   setSliderMaxPrice(absoluteMaxPrice);
+                  resetPage();
                 }}
                 className="text-xs font-bold text-primary uppercase tracking-widest hover:underline"
               >
@@ -133,7 +159,11 @@ const SearchResults: React.FC = () => {
                   <span className="material-icons absolute left-3 top-2.5 text-slate-400 text-lg">search</span>
                   <input 
                     value={locationSearch}
-                    onChange={(e) => setLocationSearch(e.target.value)}
+                    onChange={(e) => {
+                      setLocationSearch(e.target.value);
+                      setLocationFilterActive(true);
+                      resetPage();
+                    }}
                     className="w-full pl-10 pr-4 py-2 bg-slate-50 border-slate-200 rounded-xl text-sm focus:ring-primary focus:border-primary" 
                     placeholder="Postal Code or City" 
                     type="text" 
@@ -262,7 +292,7 @@ const SearchResults: React.FC = () => {
                   <div>
                     <div className="flex justify-between items-start gap-4 mb-2">
                       <h3 className="text-xl font-bold group-hover:text-primary transition-colors leading-tight">{item.title}</h3>
-                      <span className="text-2xl font-black text-slate-900">\${Number(item.price).toLocaleString()}</span>
+                      <span className="text-2xl font-black text-slate-900">${Number(item.price).toLocaleString()}</span>
                     </div>
                     <p className="text-sm text-slate-500 line-clamp-2 mb-4">
                       {item.description || "No description provided."}
@@ -283,13 +313,54 @@ const SearchResults: React.FC = () => {
             ))}
           </div>
 
-          <div className="flex justify-center gap-2 pt-10">
-            <button className="w-10 h-10 flex items-center justify-center rounded-xl bg-primary text-white font-bold">1</button>
-            <button className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-slate-100 font-bold transition-colors">2</button>
-            <button className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-slate-100 font-bold transition-colors">3</button>
-            <span className="w-10 h-10 flex items-center justify-center text-slate-300">...</span>
-            <button className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-slate-100 font-bold transition-colors">12</button>
-          </div>
+          {totalPages > 1 && (
+            <div className="flex justify-center items-center gap-2 pt-10 flex-wrap">
+              {/* Prev */}
+              <button
+                onClick={() => { setCurrentPage(p => Math.max(1, p - 1)); window.scrollTo(0, 0); }}
+                disabled={currentPage === 1}
+                className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-slate-100 font-bold transition-colors disabled:opacity-30"
+              >
+                <span className="material-icons text-sm">chevron_left</span>
+              </button>
+
+              {/* Page numbers */}
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => {
+                // Always show first, last, current ±1, and use ellipsis elsewhere
+                const show = page === 1 || page === totalPages || Math.abs(page - currentPage) <= 1;
+                const showEllipsisBefore = page === currentPage - 2 && page > 2;
+                const showEllipsisAfter = page === currentPage + 2 && page < totalPages - 1;
+
+                if (showEllipsisBefore || showEllipsisAfter) {
+                  return <span key={page} className="w-10 h-10 flex items-center justify-center text-slate-300 font-bold">…</span>;
+                }
+                if (!show) return null;
+
+                return (
+                  <button
+                    key={page}
+                    onClick={() => { setCurrentPage(page); window.scrollTo(0, 0); }}
+                    className={`w-10 h-10 flex items-center justify-center rounded-xl font-bold transition-colors ${
+                      currentPage === page
+                        ? 'bg-primary text-white shadow-md shadow-primary/30'
+                        : 'hover:bg-slate-100 text-slate-600'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                );
+              })}
+
+              {/* Next */}
+              <button
+                onClick={() => { setCurrentPage(p => Math.min(totalPages, p + 1)); window.scrollTo(0, 0); }}
+                disabled={currentPage === totalPages}
+                className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-slate-100 font-bold transition-colors disabled:opacity-30"
+              >
+                <span className="material-icons text-sm">chevron_right</span>
+              </button>
+            </div>
+          )}
         </main>
       </div>
     </div>

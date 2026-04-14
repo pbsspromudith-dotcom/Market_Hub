@@ -21,13 +21,14 @@ if (!isset($_FILES['images'])) {
     exit();
 }
 
-// Normalize single file upload to array format
+// When JS uses 'images[]', PHP receives $_FILES['images'] as a proper multi-file array
+// Normalize single file to array format just in case
 if (!is_array($_FILES['images']['name'])) {
-    $_FILES['images']['name'] = [$_FILES['images']['name']];
+    $_FILES['images']['name']     = [$_FILES['images']['name']];
     $_FILES['images']['tmp_name'] = [$_FILES['images']['tmp_name']];
-    $_FILES['images']['error'] = [$_FILES['images']['error']];
-    $_FILES['images']['size'] = [$_FILES['images']['size']];
-    $_FILES['images']['type'] = [$_FILES['images']['type']];
+    $_FILES['images']['error']    = [$_FILES['images']['error']];
+    $_FILES['images']['size']     = [$_FILES['images']['size']];
+    $_FILES['images']['type']     = [$_FILES['images']['type']];
 }
 
 if (count($_FILES['images']['name']) === 0 || $_FILES['images']['error'][0] === UPLOAD_ERR_NO_FILE) {

@@ -17,16 +17,10 @@ if (!isset($data->title) || !isset($data->price) || !isset($data->user_id)) {
 }
 
 $time = "Just now"; // Simplified
-$imageToSave = $data->image ?? null;
+$imageToSave = null;
 
 if (isset($data->image) && is_array($data->image) && count($data->image) > 0) {
     $imageToSave = json_encode($data->image);
-} elseif (isset($data->image) && is_array($data->image) && count($data->image) === 0) {
-    $imageToSave = "https://picsum.photos/seed/new/800/600";
-}
-
-if (!$imageToSave) {
-    $imageToSave = "https://picsum.photos/seed/new/800/600";
 }
 
 try {
