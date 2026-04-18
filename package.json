@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "backend": "C:\\xampp\\php\\php.exe -S localhost:8000 -t api",
+    "setup-db": "C:\\xampp\\php\\php.exe api\\setup_options_table.php",
     "build": "vite build",
     "preview": "vite preview"
   },

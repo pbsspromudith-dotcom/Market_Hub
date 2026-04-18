@@ -20,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 
 // Database Credentials
 $host = "127.0.0.1";
-$db_name = "markethub";
+$db_name = "CNMarketHub";
 $username = "root";
 $password = "";
 

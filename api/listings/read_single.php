@@ -60,6 +60,16 @@ try {
         $row['image'] = fixImagePath($image);
         $row['allImages'] = array_map('fixImagePath', $allImages);
 
+        // Null out placeholder default phone/email so they don't show as real contact info
+        $PLACEHOLDER_PHONE = '+1 (555) 123-4567';
+        if (!empty($row['seller_phone']) && trim($row['seller_phone']) === $PLACEHOLDER_PHONE) {
+            $row['seller_phone'] = null;
+        }
+        // Also null out listing-level contact fields if they equal the placeholder
+        if (!empty($row['contact_phone']) && trim($row['contact_phone']) === $PLACEHOLDER_PHONE) {
+            $row['contact_phone'] = null;
+        }
+
         http_response_code(200);
         echo json_encode($row);
     } else {

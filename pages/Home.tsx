@@ -49,7 +49,7 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn }) => {
   };
 
   useEffect(() => {
-    fetch('/api/status')
+    fetch('/api/status.php')
       .then(res => res.json())
       .then(data => setServerMessage(data.message))
       .catch(err => setServerMessage('Backend is not running: ' + err.message));

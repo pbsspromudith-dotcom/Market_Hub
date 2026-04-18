@@ -2,7 +2,7 @@
 // api/setup_options_table.php
 $host = "127.0.0.1";
 $username = "root";
-$password = "Admin@1234";
+$password = "";
 
 try {
     $conn = new PDO("mysql:host=" . $host, $username, $password);
@@ -13,7 +13,8 @@ try {
     $conn->exec("USE CNMarketHub");
 
     // Read and execute the huge SQL dump
-    $sql_dump = file_get_contents('../database/markethub.sql');
+    $sql_file = __DIR__ . '/../database/markethub.sql';
+    $sql_dump = file_exists($sql_file) ? file_get_contents($sql_file) : false;
     if ($sql_dump) {
         $conn->exec($sql_dump);
         echo "Database imported successfully.<br/>";
@@ -32,7 +33,7 @@ try {
     $checkStmt = $conn->query("SELECT COUNT(*) FROM options");
     if ($checkStmt->fetchColumn() == 0) {
         $defaults = [
-            "('category', 'Cars')",
+            "('category', 'Vehicles')",
             "('category', 'Real Estate')",
             "('category', 'Electronics')",
             "('category', 'Home & Garden')",

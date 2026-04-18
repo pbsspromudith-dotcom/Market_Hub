@@ -12,12 +12,14 @@ export default defineConfig(({ mode }) => {
           '/api': {
             target: 'http://localhost:8000',
             changeOrigin: true,
-            secure: false
+            secure: false,
+            rewrite: (path) => path.replace(/^\/api/, '')
           },
           '/uploads': {
             target: 'http://localhost:8000',
             changeOrigin: true,
-            secure: false
+            secure: false,
+            rewrite: (path) => path.replace(/^\/uploads/, '/uploads')
           }
         }
       },

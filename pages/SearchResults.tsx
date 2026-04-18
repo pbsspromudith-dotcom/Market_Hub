@@ -42,12 +42,21 @@ const SearchResults: React.FC = () => {
       .finally(() => setIsLoading(false));
   }, []);
 
+  // Normalize category aliases: DB has both 'Cars' and 'Vehicles' for the same category
+  const CATEGORY_ALIASES: Record<string, string[]> = {
+    'Vehicles': ['Vehicles', 'Cars'],
+    'Cars': ['Vehicles', 'Cars'],
+  };
+
   const filteredListings = listings.filter(item => {
     // text search query
     if (searchQuery && !item.title.toLowerCase().includes(searchQuery.toLowerCase()) && !item.description?.toLowerCase().includes(searchQuery.toLowerCase())) return false;
     
-    // category filter
-    if (selectedCategory && item.category !== selectedCategory) return false;
+    // category filter — support aliases so 'Vehicles' also matches 'Cars'
+    if (selectedCategory) {
+      const aliases = CATEGORY_ALIASES[selectedCategory] || [selectedCategory];
+      if (!aliases.includes(item.category)) return false;
+    }
     
     // location filter — only active if user explicitly set a location in filter
     if (locationFilterActive && distance !== 'Nationwide' && locationSearch && item.location) {
