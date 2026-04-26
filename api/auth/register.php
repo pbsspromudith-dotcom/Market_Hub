@@ -1,6 +1,7 @@
 <?php
 // api/auth/register.php
 require_once '../config.php';
+require_once '../mailer.php';
 
 // Ensure it's a POST request
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -63,6 +64,10 @@ try {
 
     if ($insertStmt->execute()) {
         $userId = $conn->lastInsertId();
+
+        // Send welcome email (non-blocking — won't fail the registration if email fails)
+        sendWelcomeEmail($email, $name);
+
         http_response_code(201);
         echo json_encode([
             "success" => true,

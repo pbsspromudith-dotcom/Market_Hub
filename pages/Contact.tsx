@@ -24,10 +24,10 @@ const Contact: React.FC = () => {
   };
 
   const departments = [
-    { name: 'Customer Support', email: 'support@CNMarketHub.pro', hours: '24/7 Availability' },
-    { name: 'Billing & Payments', email: 'billing@CNMarketHub.pro', hours: 'Mon-Fri, 9am-5pm EST' },
-    { name: 'Technical Support', email: 'dev@CNMarketHub.pro', hours: 'Mon-Fri, 8am-8pm EST' },
-    { name: 'Media & Press', email: 'press@CNMarketHub.pro', hours: 'Mon-Fri, 10am-4pm EST' },
+    { name: 'Customer Support', email: 'support@hitads.ca', hours: '24/7 Availability' },
+    { name: 'Billing & Payments', email: 'billing@hitads.ca', hours: 'Mon-Fri, 9am-5pm EST' },
+    { name: 'Technical Support', email: 'dev@hitads.ca', hours: 'Mon-Fri, 8am-8pm EST' },
+    { name: 'Media & Press', email: 'press@hitads.ca', hours: 'Mon-Fri, 10am-4pm EST' },
   ];
 
   return (
@@ -41,7 +41,7 @@ const Contact: React.FC = () => {
           </div>
           <h1 className="text-5xl md:text-7xl font-black text-slate-900 tracking-tight mb-8">How can we help?</h1>
           <p className="text-slate-500 text-lg md:text-xl font-medium max-w-2xl mx-auto leading-relaxed">
-            Whether you're a buyer, seller, or developer, we're here to ensure your CNMarketHub experience is exceptional.
+            Whether you're a buyer, seller, or developer, we're here to ensure your HitAds experience is exceptional.
           </p>
         </div>
       </section>
@@ -160,7 +160,7 @@ const Contact: React.FC = () => {
                   <h4 className="text-xl font-black text-slate-900 mb-1">Marcus Rivera</h4>
                   <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-4">Head of Community Experience</p>
                   <p className="text-slate-500 text-sm leading-relaxed max-w-md">
-                    "At CNMarketHub, we don't just solve tickets; we build relationships. Our goal is to make trading locally the highlight of your day."
+                    "At HitAds, we don't just solve tickets; we build relationships. Our goal is to make trading locally the highlight of your day."
                   </p>
                </div>
             </div>
@@ -176,7 +176,7 @@ const Contact: React.FC = () => {
                 {[
                   { label: 'Hotline Support', val: '+1 (800) 450-MARKET', icon: 'headset_mic', desc: 'Toll-free 24/7 priority line' },
                   { label: 'Global WhatsApp', val: '+1 (647) 555-0199', icon: 'chat_bubble', desc: 'Instant text-based support' },
-                  { label: 'General Email', val: 'hello@CNMarketHub.pro', icon: 'mail_outline', desc: 'Standard non-urgent queries' },
+                  { label: 'General Email', val: 'hello@hitads.ca', icon: 'mail_outline', desc: 'Standard non-urgent queries' },
                 ].map((item, i) => (
                   <div key={i} className="bg-white p-6 rounded-[2rem] border border-slate-100 flex items-start gap-5 hover:border-primary/40 hover:shadow-xl transition-all group cursor-pointer">
                     <div className="w-14 h-14 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-primary group-hover:text-white transition-all flex-shrink-0">
@@ -247,7 +247,7 @@ const Contact: React.FC = () => {
         <img 
           src="https://picsum.photos/seed/toronto-map/1920/800" 
           className="w-full h-full object-cover grayscale opacity-40 transition-all duration-[2000ms] group-hover:grayscale-0 group-hover:opacity-100 group-hover:scale-105" 
-          alt="CNMarketHub Toronto Map" 
+          alt="HitAds Toronto Map" 
         />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-50 via-transparent to-transparent"></div>
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
@@ -266,7 +266,7 @@ const Contact: React.FC = () => {
       {/* Final Social Bar */}
       <section className="bg-white py-12 border-t border-slate-100">
         <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-8">
-           <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Follow the CNMarketHub journey</p>
+           <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Follow the HitAds journey</p>
            <div className="flex gap-4">
               {['Facebook', 'Twitter', 'Instagram', 'LinkedIn', 'YouTube', 'Discord'].map(s => (
                 <a key={s} href="#" className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-primary hover:text-white transition-all shadow-sm hover:shadow-primary/20 hover:-translate-y-1">

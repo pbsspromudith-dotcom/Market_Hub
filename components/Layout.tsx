@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { CURRENT_USER } from '../constants';
-import logoImg from '../assets/logo.png';
+import logoImg from '../assets/HitAds.png';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -34,10 +34,7 @@ const Layout: React.FC<LayoutProps> = ({ children, isLoggedIn, isAdmin, onLogout
           <div className="flex justify-between items-center h-20">
             {/* Logo Section */}
             <Link to="/" className="flex items-center gap-1 shrink-0">
-              <img src={logoImg} alt="Logo" className="w-14 h-14 object-contain transition-transform hover:scale-105" />
-              <span className="text-xl font-black tracking-tight text-[#0f172a]">
-                MARKET<span className="text-primary-light">{isAdmin ? 'ADMIN' : 'HUB'}</span>
-              </span>
+              <img src={logoImg} alt="HitAds Logo" className="h-16 object-contain transition-transform hover:scale-105" />
             </Link>
 
             {/* Desktop Navigation */}
@@ -213,7 +210,7 @@ const Layout: React.FC<LayoutProps> = ({ children, isLoggedIn, isAdmin, onLogout
 
             <div className="pt-8 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4">
               <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                © 2024 CNMarketHub Pro. Built with Professional Standards.
+                © 2024 HitAds.ca — Canada's Free Business Classifieds.
               </div>
               <div className="flex gap-8 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                 <Link to="/help" className="hover:text-primary transition-colors">Safety Guidelines</Link>

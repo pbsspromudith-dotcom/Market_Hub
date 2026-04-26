@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import nameLogoImg from '../assets/namelogo.png';
+import logoImg from '../assets/HitAds.png';
 
 interface AdminLoginProps {
   onLogin?: () => void;
@@ -12,6 +12,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin }) => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,7 +51,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin }) => {
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <div className="mb-6 flex justify-center">
-            <img src={nameLogoImg} alt="Market Hub Admin Logo" className="h-24 object-contain brightness-0 invert drop-shadow-md opacity-90" />
+            <img src={logoImg} alt="HitAds Admin Logo" className="h-24 object-contain brightness-0 invert drop-shadow-md opacity-90" />
           </div>
           <h2 className="text-3xl font-black text-white tracking-tight">Admin Portal</h2>
           <p className="mt-2 text-sm text-slate-400 font-medium">
@@ -84,7 +85,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin }) => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="w-full pl-12 pr-4 py-4 bg-slate-900 border-slate-700 text-white rounded-2xl focus:ring-primary focus:border-primary text-sm font-medium transition-all" 
-                    placeholder="admin@CNMarketHub.com" 
+                    placeholder="admin@hitads.ca" 
                   />
                 </div>
               </div>
@@ -95,13 +96,21 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin }) => {
                 <div className="relative">
                   <span className="material-icons absolute left-4 top-3.5 text-slate-500 text-lg">lock_outline</span>
                   <input 
-                    type="password" 
+                    type={showPassword ? 'text' : 'password'} 
                     required 
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-12 pr-4 py-4 bg-slate-900 border-slate-700 text-white rounded-2xl focus:ring-primary focus:border-primary text-sm font-medium transition-all" 
+                    className="w-full pl-12 pr-12 py-4 bg-slate-900 border-slate-700 text-white rounded-2xl focus:ring-primary focus:border-primary text-sm font-medium transition-all" 
                     placeholder="••••••••" 
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-3.5 text-slate-500 hover:text-primary transition-colors"
+                    tabIndex={-1}
+                  >
+                    <span className="material-icons text-lg">{showPassword ? 'visibility_off' : 'visibility'}</span>
+                  </button>
                 </div>
               </div>
             </div>

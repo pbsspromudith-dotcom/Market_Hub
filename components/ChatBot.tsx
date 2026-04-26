@@ -10,7 +10,7 @@ interface Message {
 const ChatBot: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
-    { id: 1, sender: 'bot', text: 'Hi! I am the CNMarketHub Assistant. I can help you find items in our database, or guide you on how to use the site. How can I help?' }
+    { id: 1, sender: 'bot', text: 'Hi! I am the HitAds Assistant. I can help you find items in our database, or guide you on how to use the site. How can I help?' }
   ]);
   const [inputVal, setInputVal] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -76,7 +76,7 @@ const ChatBot: React.FC = () => {
                 <span className="material-icons text-white">smart_toy</span>
               </div>
               <div>
-                <h3 className="font-black text-sm leading-tight">CNMarketHub AI</h3>
+                <h3 className="font-black text-sm leading-tight">HitAds AI</h3>
                 <span className="text-[10px] text-primary-soft font-bold uppercase tracking-widest flex items-center gap-1">
                   <span className="w-1.5 h-1.5 bg-green-400 rounded-full inline-block"></span> Online
                 </span>

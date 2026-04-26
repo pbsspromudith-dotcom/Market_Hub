@@ -29,7 +29,7 @@ try {
         exit();
     }
     if ($m === "hello" || $m === "hi" || $m === "hey") {
-        echo json_encode(["text" => "Hi there! I am your CNMarketHub AI assistant. I can search our live database for items, or guide you on how to use the site. What do you need help with?"]);
+        echo json_encode(["text" => "Hi there! I am your HitAds AI assistant. I can search our live database for items, or guide you on how to use the site. What do you need help with?"]);
         exit();
     }
 
@@ -70,7 +70,7 @@ try {
         exit();
     }
 
-    echo json_encode(["text" => "I'm your friendly CNMarketHub Assistant! Try asking me how to post an ad, how to search, or ask me to check if we have a specific item like 'laptop' or 'car' in our database."]);
+    echo json_encode(["text" => "I'm your friendly HitAds Assistant! Try asking me how to post an ad, how to search, or ask me to check if we have a specific item like 'laptop' or 'car' in our database."]);
 
 } catch(PDOException $e) {
     echo json_encode(["text" => "Oops, my database connection is a bit fuzzy right now. Try again in a moment!"]);

@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import nameLogoImg from '../assets/namelogo.png';
+import logoImg from '../assets/HitAds.png';
 
 interface LoginProps {
   onLogin: () => void;
@@ -15,6 +15,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register' | 'forgot'>('login');
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -116,7 +117,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <div className="mb-6 flex justify-center">
-            <img src={nameLogoImg} alt="Market Hub Logo" className="h-24 object-contain" />
+            <img src={logoImg} alt="HitAds Logo" className="h-24 object-contain" />
           </div>
           <h2 className="text-3xl font-black text-slate-900 tracking-tight">{title}</h2>
           <p className="mt-2 text-sm text-slate-500 font-medium">
@@ -203,13 +204,21 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 <div className="relative">
                   <span className="material-icons absolute left-4 top-3.5 text-slate-400 text-lg">lock_outline</span>
                   <input 
-                    type="password" 
+                    type={showPassword ? 'text' : 'password'} 
                     required 
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-12 pr-4 py-4 bg-slate-50 border-slate-100 rounded-2xl focus:ring-primary focus:border-primary text-sm font-medium transition-all" 
+                    className="w-full pl-12 pr-12 py-4 bg-slate-50 border-slate-100 rounded-2xl focus:ring-primary focus:border-primary text-sm font-medium transition-all" 
                     placeholder="••••••••" 
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-3.5 text-slate-400 hover:text-primary transition-colors"
+                    tabIndex={-1}
+                  >
+                    <span className="material-icons text-lg">{showPassword ? 'visibility_off' : 'visibility'}</span>
+                  </button>
                 </div>
               </div>
             </div>
