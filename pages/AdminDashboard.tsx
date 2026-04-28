@@ -16,6 +16,22 @@ const AdminDashboard: React.FC = () => {
   const [isCreatingOption, setIsCreatingOption] = useState(false);
   const [isDeletingOption, setIsDeletingOption] = useState<number | null>(null);
 
+  // Email Config State
+  const [emailConfig, setEmailConfig] = useState({
+    smtp_host: 'smtp.gmail.com',
+    smtp_port: '587',
+    smtp_username: '',
+    smtp_password: '',
+    smtp_from_email: '',
+    smtp_from_name: 'HitAds.ca',
+    smtp_encryption: 'tls',
+  });
+  const [isSavingEmail, setIsSavingEmail] = useState(false);
+  const [emailSaveMsg, setEmailSaveMsg] = useState<{type: 'success' | 'error', text: string} | null>(null);
+  const [testEmail, setTestEmail] = useState('');
+  const [isSendingTest, setIsSendingTest] = useState(false);
+  const [showSmtpPassword, setShowSmtpPassword] = useState(false);
+
   useEffect(() => {
     fetch('/api/admin/stats.php')
       .then(res => res.json())
@@ -28,6 +44,7 @@ const AdminDashboard: React.FC = () => {
 
     fetchListings();
     fetchOptions();
+    fetchEmailConfig();
   }, []);
 
   const fetchOptions = () => {
@@ -142,6 +159,61 @@ const AdminDashboard: React.FC = () => {
       console.error(err);
     } finally {
       setIsDeletingOption(null);
+    }
+  };
+
+  const fetchEmailConfig = () => {
+    fetch('/api/admin/email_config.php')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.settings) {
+          setEmailConfig(prev => ({ ...prev, ...data.settings }));
+        }
+      })
+      .catch(console.error);
+  };
+
+  const handleSaveEmailConfig = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingEmail(true);
+    setEmailSaveMsg(null);
+    try {
+      const response = await fetch('/api/admin/email_config.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(emailConfig),
+      });
+      const data = await response.json();
+      if (data.success) {
+        setEmailSaveMsg({ type: 'success', text: data.message });
+      } else {
+        setEmailSaveMsg({ type: 'error', text: data.message || 'Failed to save settings' });
+      }
+    } catch (err) {
+      setEmailSaveMsg({ type: 'error', text: 'Network error. Backend not reachable.' });
+    } finally {
+      setIsSavingEmail(false);
+      setTimeout(() => setEmailSaveMsg(null), 5000);
+    }
+  };
+
+  const handleSendTestEmail = async () => {
+    if (!testEmail.trim()) return;
+    setIsSendingTest(true);
+    setEmailSaveMsg(null);
+    try {
+      const response = await fetch('/api/admin/email_config.php', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ test_email: testEmail }),
+      });
+      const data = await response.json();
+      setEmailSaveMsg({ type: data.success ? 'success' : 'error', text: data.message });
+    } catch (err) {
+      setEmailSaveMsg({ type: 'error', text: 'Network error sending test email.' });
+    } finally {
+      setIsSendingTest(false);
+      setTimeout(() => setEmailSaveMsg(null), 8000);
     }
   };
 
@@ -477,6 +549,221 @@ const AdminDashboard: React.FC = () => {
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Email Server Configuration */}
+      <div className="mt-10 bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm">
+        <div className="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-xl font-black flex items-center gap-3">
+              <span className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
+                <span className="material-icons text-primary">email</span>
+              </span>
+              Email Server Configuration
+            </h2>
+            <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-2">Configure SMTP settings for welcome emails and notifications</p>
+          </div>
+          {emailConfig.smtp_username && (
+            <span className="flex items-center gap-2 text-xs font-bold text-green-500 bg-green-50 px-4 py-2 rounded-full">
+              <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+              Configured
+            </span>
+          )}
+        </div>
+
+        {/* Status Messages */}
+        {emailSaveMsg && (
+          <div className={`mb-6 px-5 py-4 rounded-2xl text-sm font-bold flex items-center gap-3 animate-in fade-in duration-200 ${
+            emailSaveMsg.type === 'success' 
+              ? 'bg-green-50 border border-green-100 text-green-700' 
+              : 'bg-red-50 border border-red-100 text-red-700'
+          }`}>
+            <span className="material-icons text-lg">
+              {emailSaveMsg.type === 'success' ? 'check_circle' : 'error'}
+            </span>
+            {emailSaveMsg.text}
+          </div>
+        )}
+
+        <form onSubmit={handleSaveEmailConfig}>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+            {/* Left Column — Server Settings */}
+            <div className="space-y-5">
+              <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest pb-3 border-b border-slate-100 flex items-center gap-2">
+                <span className="material-icons text-sm text-slate-300">dns</span>
+                SMTP Server
+              </h3>
+
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">SMTP Host</label>
+                <div className="relative">
+                  <span className="material-icons absolute left-4 top-3.5 text-slate-300 text-lg">cloud</span>
+                  <input 
+                    type="text"
+                    value={emailConfig.smtp_host}
+                    onChange={e => setEmailConfig({...emailConfig, smtp_host: e.target.value})}
+                    className="w-full pl-12 pr-4 py-4 bg-slate-50 border-slate-100 rounded-2xl focus:ring-primary focus:border-primary text-sm font-medium"
+                    placeholder="smtp.gmail.com"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Port</label>
+                  <input 
+                    type="number"
+                    value={emailConfig.smtp_port}
+                    onChange={e => setEmailConfig({...emailConfig, smtp_port: e.target.value})}
+                    className="w-full px-4 py-4 bg-slate-50 border-slate-100 rounded-2xl focus:ring-primary focus:border-primary text-sm font-medium"
+                    placeholder="587"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Encryption</label>
+                  <select 
+                    value={emailConfig.smtp_encryption}
+                    onChange={e => setEmailConfig({...emailConfig, smtp_encryption: e.target.value})}
+                    className="w-full px-4 py-4 bg-slate-50 border-slate-100 rounded-2xl focus:ring-primary focus:border-primary text-sm font-medium"
+                  >
+                    <option value="tls">TLS (Port 587)</option>
+                    <option value="ssl">SSL (Port 465)</option>
+                    <option value="none">None (Port 25)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column — Credentials */}
+            <div className="space-y-5">
+              <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest pb-3 border-b border-slate-100 flex items-center gap-2">
+                <span className="material-icons text-sm text-slate-300">lock</span>
+                Authentication
+              </h3>
+
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">SMTP Username / Email</label>
+                <div className="relative">
+                  <span className="material-icons absolute left-4 top-3.5 text-slate-300 text-lg">alternate_email</span>
+                  <input 
+                    type="email"
+                    value={emailConfig.smtp_username}
+                    onChange={e => setEmailConfig({...emailConfig, smtp_username: e.target.value})}
+                    className="w-full pl-12 pr-4 py-4 bg-slate-50 border-slate-100 rounded-2xl focus:ring-primary focus:border-primary text-sm font-medium"
+                    placeholder="yourname@gmail.com"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">SMTP Password / App Password</label>
+                <div className="relative">
+                  <span className="material-icons absolute left-4 top-3.5 text-slate-300 text-lg">key</span>
+                  <input 
+                    type={showSmtpPassword ? 'text' : 'password'}
+                    value={emailConfig.smtp_password}
+                    onChange={e => setEmailConfig({...emailConfig, smtp_password: e.target.value})}
+                    className="w-full pl-12 pr-12 py-4 bg-slate-50 border-slate-100 rounded-2xl focus:ring-primary focus:border-primary text-sm font-medium"
+                    placeholder="App password (not your regular password)"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowSmtpPassword(!showSmtpPassword)}
+                    className="absolute right-4 top-3.5 text-slate-400 hover:text-primary transition-colors"
+                    tabIndex={-1}
+                  >
+                    <span className="material-icons text-lg">{showSmtpPassword ? 'visibility_off' : 'visibility'}</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Sender Identity */}
+          <div className="mt-8 pt-6 border-t border-slate-100">
+            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest pb-4 flex items-center gap-2">
+              <span className="material-icons text-sm text-slate-300">badge</span>
+              Sender Identity
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">From Name</label>
+                <input 
+                  type="text"
+                  value={emailConfig.smtp_from_name}
+                  onChange={e => setEmailConfig({...emailConfig, smtp_from_name: e.target.value})}
+                  className="w-full px-4 py-4 bg-slate-50 border-slate-100 rounded-2xl focus:ring-primary focus:border-primary text-sm font-medium"
+                  placeholder="HitAds.ca"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">From Email</label>
+                <input 
+                  type="email"
+                  value={emailConfig.smtp_from_email}
+                  onChange={e => setEmailConfig({...emailConfig, smtp_from_email: e.target.value})}
+                  className="w-full px-4 py-4 bg-slate-50 border-slate-100 rounded-2xl focus:ring-primary focus:border-primary text-sm font-medium"
+                  placeholder="noreply@hitads.ca"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Actions Row */}
+          <div className="mt-8 pt-6 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+            {/* Test Email */}
+            <div className="flex items-center gap-3 flex-grow max-w-md">
+              <div className="relative flex-grow">
+                <span className="material-icons absolute left-4 top-3 text-slate-300 text-lg">send</span>
+                <input 
+                  type="email"
+                  value={testEmail}
+                  onChange={e => setTestEmail(e.target.value)}
+                  className="w-full pl-12 pr-4 py-3 bg-slate-50 border-slate-100 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium"
+                  placeholder="test@example.com"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={handleSendTestEmail}
+                disabled={isSendingTest || !testEmail.trim()}
+                className="px-5 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-xs uppercase tracking-widest transition-all disabled:opacity-50 whitespace-nowrap flex items-center gap-2"
+              >
+                {isSendingTest ? (
+                  <><span className="material-icons text-sm animate-spin">sync</span> Sending...</>
+                ) : (
+                  <><span className="material-icons text-sm">send</span> Send Test</>
+                )}
+              </button>
+            </div>
+
+            {/* Save Button */}
+            <button 
+              type="submit"
+              disabled={isSavingEmail}
+              className="bg-primary hover:bg-primary-hover text-white font-black py-4 px-10 rounded-2xl transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2 disabled:opacity-50 text-xs uppercase tracking-widest"
+            >
+              {isSavingEmail ? (
+                <><span className="material-icons text-sm animate-spin">sync</span> Saving...</>
+              ) : (
+                <><span className="material-icons text-sm">save</span> Save Email Settings</>
+              )}
+            </button>
+          </div>
+        </form>
+
+        {/* Help Tip */}
+        <div className="mt-8 p-5 bg-amber-50 border border-amber-100 rounded-2xl flex items-start gap-4">
+          <span className="material-icons text-amber-500 mt-0.5">tips_and_updates</span>
+          <div>
+            <p className="text-sm font-bold text-amber-800 mb-1">Gmail App Password Setup</p>
+            <p className="text-xs text-amber-700 leading-relaxed">
+              For Gmail: Enable 2-Factor Authentication, then go to 
+              <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener" className="font-bold underline"> myaccount.google.com/apppasswords</a> 
+              to generate a 16-character App Password. Use that instead of your regular Gmail password.
+            </p>
           </div>
         </div>
       </div>

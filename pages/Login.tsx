@@ -240,7 +240,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
             <button 
               type="submit" 
               disabled={isLoading}
-              className="w-full bg-primary hover:bg-primary-hover text-white font-black py-5 rounded-2xl transition-all shadow-xl shadow-primary/25 flex items-center justify-center gap-2 group disabled:opacity-50"
+              className="w-full bg-secondary hover:bg-secondary-hover text-white font-black py-5 rounded-2xl transition-all shadow-xl shadow-secondary/25 flex items-center justify-center gap-2 group disabled:opacity-50"
             >
               {submitText}
               <span className="material-icons text-xl group-hover:translate-x-1 transition-transform">arrow_forward</span>

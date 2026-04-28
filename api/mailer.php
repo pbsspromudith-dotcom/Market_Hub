@@ -1,22 +1,50 @@
 <?php
 // api/mailer.php
 // HitAds Email Service — sends branded HTML emails via SMTP.
+// Reads SMTP config from the database (set via Admin Dashboard).
 
-require_once __DIR__ . '/email_config.php';
 require_once __DIR__ . '/smtp_mailer.php';
 
 /**
- * Get a configured SMTP mailer instance.
+ * Get a configured SMTP mailer instance using DB-stored settings.
  */
 function getMailer() {
-    return new SmtpMailer([
-        'host'      => SMTP_HOST,
-        'port'      => SMTP_PORT,
-        'username'  => SMTP_USERNAME,
-        'password'  => SMTP_PASSWORD,
-        'fromEmail' => SMTP_FROM_EMAIL ?: SMTP_USERNAME,
-        'fromName'  => SMTP_FROM_NAME,
-    ]);
+    // Load settings from database
+    $host = '127.0.0.1';
+    $db_name = 'CNMarketHub';
+    $username = 'root';
+    $password = '';
+
+    try {
+        $mailConn = new PDO("mysql:host={$host};dbname={$db_name};charset=utf8", $username, $password);
+        $mailConn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+        $stmt = $mailConn->query("SELECT setting_key, setting_value FROM email_settings");
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        $cfg = [];
+        foreach ($rows as $row) {
+            $cfg[$row['setting_key']] = $row['setting_value'];
+        }
+
+        if (empty($cfg['smtp_username']) || empty($cfg['smtp_password'])) {
+            error_log("HitAds Mailer: SMTP credentials not configured in admin panel.");
+            return null;
+        }
+
+        return new SmtpMailer([
+            'host'      => $cfg['smtp_host'] ?? 'smtp.gmail.com',
+            'port'      => intval($cfg['smtp_port'] ?? 587),
+            'username'  => $cfg['smtp_username'],
+            'password'  => $cfg['smtp_password'],
+            'fromEmail' => $cfg['smtp_from_email'] ?? $cfg['smtp_username'],
+            'fromName'  => $cfg['smtp_from_name'] ?? 'HitAds.ca',
+        ]);
+
+    } catch (PDOException $e) {
+        error_log("HitAds Mailer DB Error: " . $e->getMessage());
+        return null;
+    }
 }
 
 /**
@@ -24,6 +52,8 @@ function getMailer() {
  */
 function sendWelcomeEmail($toEmail, $userName) {
     $mailer = getMailer();
+    if (!$mailer) return false;
+
     $subject = "Welcome to HitAds.ca — Canada's Free Business Classifieds!";
     $html = buildWelcomeHtml($userName);
     return $mailer->send($toEmail, $subject, $html);

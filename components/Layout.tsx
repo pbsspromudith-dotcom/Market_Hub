@@ -44,7 +44,7 @@ const Layout: React.FC<LayoutProps> = ({ children, isLoggedIn, isAdmin, onLogout
                   <Link to="/search" className="text-sm font-bold text-slate-500 hover:text-primary transition-colors">Browse</Link>
                   <Link 
                     to="/post-ad" 
-                    className="bg-primary hover:bg-primary-hover text-white px-6 py-3 rounded-full font-black text-xs uppercase tracking-widest flex items-center gap-2 transition-all shadow-lg shadow-primary/20"
+                    className="bg-secondary hover:bg-secondary-hover text-white px-6 py-3 rounded-full font-black text-xs uppercase tracking-widest flex items-center gap-2 transition-all shadow-lg shadow-secondary/20"
                   >
                     <span className="material-icons text-sm">add</span>
                     Post an Ad
@@ -100,7 +100,7 @@ const Layout: React.FC<LayoutProps> = ({ children, isLoggedIn, isAdmin, onLogout
               {!isLoginPage && (
                 <Link 
                   to="/post-ad" 
-                  className="bg-primary text-white p-2 rounded-xl flex items-center justify-center shadow-lg shadow-primary/20"
+                  className="bg-secondary text-white p-2 rounded-xl flex items-center justify-center shadow-lg shadow-secondary/20"
                 >
                   <span className="material-icons text-lg">add</span>
                 </Link>

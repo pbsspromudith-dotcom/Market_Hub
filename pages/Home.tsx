@@ -144,7 +144,7 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn }) => {
             </div>
             <Link 
               to={`/search?q=${encodeURIComponent(searchQuery)}&loc=${encodeURIComponent(locationSearch)}`} 
-              className="bg-primary hover:bg-primary-hover text-white px-12 py-5 rounded-[1.8rem] font-black transition-all flex items-center justify-center shadow-lg shadow-primary/25"
+              className="bg-secondary hover:bg-secondary-hover text-white px-12 py-5 rounded-[1.8rem] font-black transition-all flex items-center justify-center shadow-lg shadow-secondary/25"
             >
               Explore
             </Link>
@@ -220,11 +220,11 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn }) => {
           {/* Sidebar */}
           <aside className="lg:w-80 space-y-10 flex-shrink-0">
             {!isLoggedIn && (
-              <div className="bg-primary rounded-[2.5rem] p-10 text-white relative overflow-hidden group">
+              <div className="bg-secondary rounded-[2.5rem] p-10 text-white relative overflow-hidden group">
                  <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-colors"></div>
                  <h3 className="text-2xl font-black mb-4 relative z-10">Join HitAds</h3>
-                 <p className="text-primary-neutral text-sm mb-8 leading-relaxed relative z-10 font-medium">Create a free account to contact sellers and save your favorite items.</p>
-                 <Link to="/login" className="block w-full bg-white text-primary font-black py-4 rounded-2xl text-center transition-all shadow-lg hover:bg-slate-50">
+                 <p className="text-white/80 text-sm mb-8 leading-relaxed relative z-10 font-medium">Create a free account to contact sellers and save your favorite items.</p>
+                 <Link to="/login" className="block w-full bg-white text-secondary font-black py-4 rounded-2xl text-center transition-all shadow-lg hover:bg-slate-50">
                    Join Free
                  </Link>
               </div>
