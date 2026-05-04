@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { CURRENT_USER } from '../constants';
 import logoImg from '../assets/HitAds.png';
+import footerImg from '../assets/Footer.jpeg';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -47,7 +48,7 @@ const Layout: React.FC<LayoutProps> = ({ children, isLoggedIn, isAdmin, onLogout
                     className="bg-secondary hover:bg-secondary-hover text-white px-6 py-3 rounded-full font-black text-xs uppercase tracking-widest flex items-center gap-2 transition-all shadow-lg shadow-secondary/20"
                   >
                     <span className="material-icons text-sm">add</span>
-                    Post an Ad
+                    Post Add
                   </Link>
                 </>
               )}
@@ -183,8 +184,17 @@ const Layout: React.FC<LayoutProps> = ({ children, isLoggedIn, isAdmin, onLogout
       </main>
 
       {!isLoginPage && (
-        <footer className="bg-white pt-24 pb-12 border-t border-slate-100">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <footer className="relative mt-16 md:mt-24 pt-24 pb-12 bg-white border-t border-slate-100 overflow-hidden">
+          {/* Decorative Footer Image */}
+          <div className="absolute right-0 top-0 bottom-0 w-1/2 md:w-1/3 flex items-center justify-end pr-8 pointer-events-none">
+            <img 
+              src={footerImg} 
+              alt="" 
+              className="max-h-[50%] md:max-h-[65%] object-contain" 
+            />
+          </div>
+
+          <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex gap-4 mb-12">
               <a href="#" className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 hover:text-primary hover:border-primary transition-all">
                 <span className="material-icons text-lg">facebook</span>
@@ -197,7 +207,7 @@ const Layout: React.FC<LayoutProps> = ({ children, isLoggedIn, isAdmin, onLogout
               </a>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-20 text-center md:text-left">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16 text-center md:text-left">
               <div className="space-y-6">
                 <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Support Hub</h4>
                 <ul className="space-y-4">
@@ -208,9 +218,9 @@ const Layout: React.FC<LayoutProps> = ({ children, isLoggedIn, isAdmin, onLogout
               </div>
             </div>
 
-            <div className="pt-8 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="pt-8 border-t border-slate-200 flex flex-col md:flex-row justify-between items-center gap-4">
               <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                © 2024 HitAds.ca — Canada's Free Business Classifieds.
+                © 2026 HitAds.ca — Canada's Free Business Classifieds.
               </div>
               <div className="flex gap-8 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                 <Link to="/help" className="hover:text-primary transition-colors">Safety Guidelines</Link>

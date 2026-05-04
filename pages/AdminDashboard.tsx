@@ -15,6 +15,9 @@ const AdminDashboard: React.FC = () => {
   const [newOptionValue, setNewOptionValue] = useState('');
   const [isCreatingOption, setIsCreatingOption] = useState(false);
   const [isDeletingOption, setIsDeletingOption] = useState<number | null>(null);
+  const [users, setUsers] = useState<any[]>([]);
+  const [isDeletingUser, setIsDeletingUser] = useState<number | null>(null);
+  const [editingUser, setEditingUser] = useState<any>(null);
 
   // Email Config State
   const [emailConfig, setEmailConfig] = useState({
@@ -45,7 +48,65 @@ const AdminDashboard: React.FC = () => {
     fetchListings();
     fetchOptions();
     fetchEmailConfig();
+    fetchUsers();
   }, []);
+
+  const fetchUsers = () => {
+    fetch('/api/users/read.php')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && Array.isArray(data.data)) {
+          setUsers(data.data);
+        }
+      })
+      .catch(console.error);
+  };
+
+  const handleDeleteUser = async (id: number) => {
+    if (!window.confirm('Are you sure you want to delete this user?')) return;
+    setIsDeletingUser(id);
+    try {
+      const response = await fetch('/api/users/delete.php', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        setUsers(users.filter((u: any) => u.id !== id));
+      } else {
+        alert(data.message || 'Failed to delete user');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error deleting user');
+    } finally {
+      setIsDeletingUser(null);
+    }
+  };
+
+  const handleUpdateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingUser) return;
+    try {
+      const response = await fetch('/api/users/update.php', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editingUser),
+      });
+      const data = await response.json();
+      if (data.success) {
+        setUsers(users.map((u: any) => u.id === editingUser.id ? data.user : u));
+        setEditingUser(null);
+        alert('User updated successfully');
+      } else {
+        alert(data.message || 'Failed to update user');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error updating user');
+    }
+  };
 
   const fetchOptions = () => {
     fetch('/api/options/read.php')
@@ -473,6 +534,156 @@ const AdminDashboard: React.FC = () => {
           </table>
         </div>
       </div>
+
+      {/* User Management Section */}
+      <div className="mt-10 bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm">
+        <div className="mb-6">
+          <h2 className="text-xl font-black">Manage Users</h2>
+          <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">View, edit, or remove user accounts</p>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead className="bg-slate-50 border-y border-slate-100 uppercase text-[10px] font-black text-slate-400 tracking-widest">
+              <tr>
+                <th className="px-6 py-4 rounded-l-xl">User</th>
+                <th className="px-6 py-4">Role</th>
+                <th className="px-6 py-4">Joined</th>
+                <th className="px-6 py-4 text-right rounded-r-xl">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="text-sm font-medium">
+              {users.map((u: any) => (
+                <tr key={u.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-black">
+                        {u.avatar ? (
+                          <img src={u.avatar} alt={u.name} className="w-full h-full object-cover rounded-full" />
+                        ) : (
+                          u.name.charAt(0).toUpperCase()
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-bold text-slate-800">{u.name}</p>
+                        <p className="text-xs text-slate-400">{u.email}</p>
+                        {u.phone && <p className="text-xs text-slate-400">{u.phone}</p>}
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`px-3 py-1 rounded-full text-[10px] uppercase font-black tracking-widest ${
+                      u.role === 'admin' ? 'bg-purple-100 text-purple-600' : 'bg-slate-100 text-slate-600'
+                    }`}>
+                      {u.role}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-slate-500 text-xs font-bold">
+                    {new Date(u.join_date).toLocaleDateString()}
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <button
+                      onClick={() => setEditingUser(u)}
+                      className="w-8 h-8 rounded-lg bg-blue-50 text-blue-500 hover:bg-blue-500 hover:text-white flex items-center justify-center transition-colors inline-flex mr-2"
+                      title="Edit User"
+                    >
+                      <span className="material-icons text-sm">edit</span>
+                    </button>
+                    <button
+                      onClick={() => handleDeleteUser(u.id)}
+                      disabled={isDeletingUser === u.id}
+                      className="w-8 h-8 rounded-lg bg-red-50 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center transition-colors disabled:opacity-50 inline-flex"
+                      title="Delete User"
+                    >
+                      {isDeletingUser === u.id ? (
+                        <span className="material-icons text-sm animate-spin">sync</span>
+                      ) : (
+                        <span className="material-icons text-sm">delete</span>
+                      )}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {users.length === 0 && (
+                <tr>
+                  <td colSpan={4} className="px-6 py-10 text-center text-slate-400">Loading users...</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Edit User Modal */}
+      {editingUser && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-black">Edit User</h3>
+              <button onClick={() => setEditingUser(null)} className="text-slate-400 hover:text-slate-600">
+                <span className="material-icons">close</span>
+              </button>
+            </div>
+            <form onSubmit={handleUpdateUser} className="space-y-4">
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Name</label>
+                <input
+                  type="text"
+                  required
+                  value={editingUser.name}
+                  onChange={e => setEditingUser({...editingUser, name: e.target.value})}
+                  className="w-full px-4 py-3 bg-slate-50 border-slate-100 rounded-xl focus:ring-primary text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Email</label>
+                <input
+                  type="email"
+                  required
+                  value={editingUser.email}
+                  onChange={e => setEditingUser({...editingUser, email: e.target.value})}
+                  className="w-full px-4 py-3 bg-slate-50 border-slate-100 rounded-xl focus:ring-primary text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Phone</label>
+                <input
+                  type="text"
+                  value={editingUser.phone || ''}
+                  onChange={e => setEditingUser({...editingUser, phone: e.target.value})}
+                  className="w-full px-4 py-3 bg-slate-50 border-slate-100 rounded-xl focus:ring-primary text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Role</label>
+                <select
+                  value={editingUser.role}
+                  onChange={e => setEditingUser({...editingUser, role: e.target.value})}
+                  className="w-full px-4 py-3 bg-slate-50 border-slate-100 rounded-xl focus:ring-primary text-sm"
+                >
+                  <option value="user">User</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+              <div className="pt-4 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setEditingUser(null)}
+                  className="flex-1 px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-sm transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-3 bg-primary hover:bg-primary-hover text-white font-bold rounded-xl text-sm transition-colors shadow-lg shadow-primary/20"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       <div className="mt-10 bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm">
         <div className="mb-8">

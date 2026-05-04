@@ -796,6 +796,64 @@ const PostAd: React.FC = () => {
                   </div>
                 </div>
               </section>
+
+              <section className="pt-6 border-t border-slate-100">
+                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Promote Your Ad (Optional)</label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <label className="flex items-start gap-4 p-4 border border-slate-200 rounded-2xl cursor-pointer hover:border-primary transition-colors bg-slate-50">
+                    <div className="mt-0.5">
+                      <input type="checkbox" className="w-5 h-5 text-primary border-slate-300 rounded focus:ring-primary" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-sm font-black text-slate-800">Top Ad</span>
+                        <span className="text-[10px] font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded uppercase tracking-widest">$9.99</span>
+                      </div>
+                      <p className="text-xs text-slate-500 font-medium">Keep your ad at the top of the category listings for 7 days.</p>
+                    </div>
+                  </label>
+
+                  <label className="flex items-start gap-4 p-4 border border-slate-200 rounded-2xl cursor-pointer hover:border-primary transition-colors bg-slate-50">
+                    <div className="mt-0.5">
+                      <input type="checkbox" className="w-5 h-5 text-primary border-slate-300 rounded focus:ring-primary" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-sm font-black text-slate-800">Highlighted</span>
+                        <span className="text-[10px] font-bold bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded uppercase tracking-widest">$4.99</span>
+                      </div>
+                      <p className="text-xs text-slate-500 font-medium">Make your ad stand out with a bright highlighted background.</p>
+                    </div>
+                  </label>
+
+                  <label className="flex items-start gap-4 p-4 border border-slate-200 rounded-2xl cursor-pointer hover:border-primary transition-colors bg-slate-50">
+                    <div className="mt-0.5">
+                      <input type="checkbox" className="w-5 h-5 text-primary border-slate-300 rounded focus:ring-primary" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-sm font-black text-slate-800">Urgent</span>
+                        <span className="text-[10px] font-bold bg-red-100 text-red-700 px-2 py-0.5 rounded uppercase tracking-widest">$5.99</span>
+                      </div>
+                      <p className="text-xs text-slate-500 font-medium">Add an eye-catching 'Urgent' badge to sell your item faster.</p>
+                    </div>
+                  </label>
+
+                  <label className="flex items-start gap-4 p-4 border border-slate-200 rounded-2xl cursor-pointer hover:border-primary transition-colors bg-slate-50">
+                    <div className="mt-0.5">
+                      <input type="checkbox" className="w-5 h-5 text-primary border-slate-300 rounded focus:ring-primary" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-sm font-black text-slate-800">Home Gallery</span>
+                        <span className="text-[10px] font-bold bg-blue-100 text-blue-700 px-2 py-0.5 rounded uppercase tracking-widest">$14.99</span>
+                      </div>
+                      <p className="text-xs text-slate-500 font-medium">Feature your ad directly on the HitAds homepage gallery.</p>
+                    </div>
+                  </label>
+                </div>
+              </section>
+              
               <div className="pt-10 border-t border-slate-100 flex justify-between items-center">
                 <button onClick={() => setStep(2)} className="px-10 py-4 font-bold text-slate-400 hover:text-slate-600">Back</button>
                 <div className="flex flex-col items-end gap-2">

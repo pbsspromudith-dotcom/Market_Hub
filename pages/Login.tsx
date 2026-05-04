@@ -36,7 +36,8 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         const data = await response.json();
         
         if (data.success) {
-          const isUserAdmin = data.user.role === 'admin';
+          const userRole = data.user && data.user.role ? String(data.user.role).trim().toLowerCase() : '';
+          const isUserAdmin = userRole === 'admin';
           localStorage.setItem('user', JSON.stringify({ ...data.user, isAdmin: isUserAdmin }));
           onLogin();
           navigate('/');
@@ -62,7 +63,8 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           });
           const loginData = await loginRes.json();
           if (loginData.success) {
-            const isUserAdmin = loginData.user.role === 'admin';
+            const userRole = loginData.user && loginData.user.role ? String(loginData.user.role).trim().toLowerCase() : '';
+            const isUserAdmin = userRole === 'admin';
             localStorage.setItem('user', JSON.stringify({ ...loginData.user, isAdmin: isUserAdmin }));
             onLogin();
             navigate('/');

@@ -84,7 +84,7 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn }) => {
             <span className="text-primary-light">right in your community.</span>
           </h1>
           <p className="text-slate-500 text-base md:text-xl mb-10 max-w-2xl mx-auto leading-relaxed font-medium">
-            HitAds.ca connects you with verified local sellers across Canada using a secure, professional-grade classifieds platform.
+            Free Ads. Sell Fast. Buy Local. Canada Wide.
           </p>
           
           <div className="max-w-4xl mx-auto bg-white p-2.5 rounded-[2.5rem] shadow-2xl shadow-primary-neutral/40 border border-slate-100 flex flex-col md:flex-row gap-2">

@@ -6,6 +6,16 @@ const UserProfile: React.FC = () => {
   const [user, setUser] = useState<any>(null);
   const [userListings, setUserListings] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editData, setEditData] = useState<any>({ name: '', phone: '' });
+  const [isPromoteModalOpen, setIsPromoteModalOpen] = useState(false);
+  const [selectedListing, setSelectedListing] = useState<any>(null);
+  const [promotionData, setPromotionData] = useState({
+    is_top_ad: false,
+    is_highlighted: false,
+    is_urgent: false,
+    is_home_gallery: false
+  });
 
   useEffect(() => {
     const userStr = localStorage.getItem('user');
@@ -15,6 +25,7 @@ const UserProfile: React.FC = () => {
     }
     const userData = JSON.parse(userStr);
     setUser(userData);
+    setEditData({ name: userData.name || '', phone: userData.phone || '' });
 
     // Fetch this user's listings
     fetch('/api/listings/read.php')
@@ -26,6 +37,77 @@ const UserProfile: React.FC = () => {
       .catch(console.error)
       .finally(() => setIsLoading(false));
   }, []);
+
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const response = await fetch('/api/users/update.php', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: user.id,
+          name: editData.name,
+          email: user.email,
+          phone: editData.phone
+        }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        // Update local storage and state
+        const updatedUser = { ...user, ...data.user };
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        setUser(updatedUser);
+        setIsEditing(false);
+        // Sync app state if needed
+        window.dispatchEvent(new Event('auth_updated'));
+      } else {
+        alert(data.message || 'Failed to update profile');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error updating profile');
+    }
+  };
+
+  const openPromoteModal = (listing: any) => {
+    setSelectedListing(listing);
+    setPromotionData({
+      is_top_ad: !!listing.is_top_ad,
+      is_highlighted: !!listing.is_highlighted,
+      is_urgent: !!listing.is_urgent,
+      is_home_gallery: !!listing.is_home_gallery
+    });
+    setIsPromoteModalOpen(true);
+  };
+
+  const handlePromoteSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const response = await fetch('/api/listings/promote.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: selectedListing.id,
+          user_id: user.id,
+          ...promotionData
+        }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        setUserListings(userListings.map(l => 
+          l.id === selectedListing.id 
+            ? { ...l, ...promotionData } 
+            : l
+        ));
+        setIsPromoteModalOpen(false);
+      } else {
+        alert(data.message || 'Failed to update promotions');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error updating promotions');
+    }
+  };
 
   if (!user) return null;
 
@@ -60,8 +142,20 @@ const UserProfile: React.FC = () => {
           </div>
 
           {/* Info */}
-          <h1 className="text-2xl font-black text-slate-900 mb-1">{user.name}</h1>
-          <p className="text-sm text-slate-500 font-medium mb-6">{user.email}</p>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <div>
+              <h1 className="text-2xl font-black text-slate-900 mb-1">{user.name}</h1>
+              <p className="text-sm text-slate-500 font-medium">{user.email}</p>
+              {user.phone && <p className="text-sm text-slate-500 font-medium">{user.phone}</p>}
+            </div>
+            <button
+              onClick={() => setIsEditing(true)}
+              className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all self-start sm:self-auto"
+            >
+              <span className="material-icons text-sm">edit</span>
+              Edit Profile
+            </button>
+          </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="bg-slate-50 rounded-2xl p-4">
@@ -117,28 +211,191 @@ const UserProfile: React.FC = () => {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {userListings.map((listing: any) => (
-              <Link key={listing.id} to={`/item/${listing.id}`} className="group bg-slate-50 rounded-2xl overflow-hidden hover:shadow-md transition-all border border-slate-100">
-                <div className="aspect-video bg-slate-200 overflow-hidden">
-                  <img
-                    src={listing.image || 'https://picsum.photos/seed/listing/400/300'}
-                    alt={listing.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
+              <div key={listing.id} className="group bg-slate-50 rounded-2xl overflow-hidden hover:shadow-md transition-all border border-slate-100 flex flex-col">
+                <Link to={`/item/${listing.id}`} className="block">
+                  <div className="aspect-video bg-slate-200 overflow-hidden">
+                    <img
+                      src={listing.image || 'https://picsum.photos/seed/listing/400/300'}
+                      alt={listing.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  </div>
+                  <div className="p-4">
+                    <p className="text-xs font-black text-primary uppercase tracking-widest mb-1">{listing.category}</p>
+                    <h3 className="text-sm font-black text-slate-800 mb-1 line-clamp-1">{listing.title}</h3>
+                    <p className="text-base font-black text-slate-900">${Number(listing.price).toLocaleString()}</p>
+                    <p className="text-[10px] text-slate-400 font-bold mt-1 flex items-center gap-1">
+                      <span className="material-icons text-xs">location_on</span>
+                      {listing.location}
+                    </p>
+                  </div>
+                </Link>
+                
+                <div className="px-4 pb-4 pt-3 border-t border-slate-200 mt-auto bg-slate-100/50">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Ad Promotions</p>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 min-h-[22px] mb-3">
+                    <span className={`text-[9px] font-bold px-2 py-1 rounded border ${listing.is_top_ad ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-slate-100 text-slate-400 border-slate-200 grayscale opacity-50'}`}>Top Ad</span>
+                    <span className={`text-[9px] font-bold px-2 py-1 rounded border ${listing.is_highlighted ? 'bg-yellow-100 text-yellow-700 border-yellow-200' : 'bg-slate-100 text-slate-400 border-slate-200 grayscale opacity-50'}`}>Highlighted</span>
+                    <span className={`text-[9px] font-bold px-2 py-1 rounded border ${listing.is_urgent ? 'bg-red-100 text-red-700 border-red-200' : 'bg-slate-100 text-slate-400 border-slate-200 grayscale opacity-50'}`}>Urgent</span>
+                    <span className={`text-[9px] font-bold px-2 py-1 rounded border ${listing.is_home_gallery ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-slate-100 text-slate-400 border-slate-200 grayscale opacity-50'}`}>Home Gallery</span>
+                  </div>
+                  <button onClick={() => openPromoteModal(listing)} className="w-full bg-primary hover:bg-primary-hover text-white text-[10px] font-black uppercase tracking-widest py-2 rounded-lg flex items-center justify-center gap-1 transition-all shadow-md shadow-primary/20 mt-1">
+                    <span className="material-icons text-xs">campaign</span>
+                    Promote Ad
+                  </button>
                 </div>
-                <div className="p-4">
-                  <p className="text-xs font-black text-primary uppercase tracking-widest mb-1">{listing.category}</p>
-                  <h3 className="text-sm font-black text-slate-800 mb-1 line-clamp-1">{listing.title}</h3>
-                  <p className="text-base font-black text-slate-900">${Number(listing.price).toLocaleString()}</p>
-                  <p className="text-[10px] text-slate-400 font-bold mt-1 flex items-center gap-1">
-                    <span className="material-icons text-xs">location_on</span>
-                    {listing.location}
-                  </p>
-                </div>
-              </Link>
+              </div>
             ))}
           </div>
         )}
       </div>
+
+      {/* Edit Profile Modal */}
+      {isEditing && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-black">Edit Profile</h3>
+              <button onClick={() => setIsEditing(false)} className="text-slate-400 hover:text-slate-600">
+                <span className="material-icons">close</span>
+              </button>
+            </div>
+            <form onSubmit={handleUpdate} className="space-y-4">
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Name</label>
+                <input
+                  type="text"
+                  required
+                  value={editData.name}
+                  onChange={e => setEditData({...editData, name: e.target.value})}
+                  className="w-full px-4 py-3 bg-slate-50 border-slate-100 rounded-xl focus:ring-primary text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Email (Cannot be changed)</label>
+                <input
+                  type="email"
+                  disabled
+                  value={user.email}
+                  className="w-full px-4 py-3 bg-slate-100 border-slate-200 text-slate-400 rounded-xl text-sm cursor-not-allowed"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Phone</label>
+                <input
+                  type="text"
+                  value={editData.phone}
+                  onChange={e => setEditData({...editData, phone: e.target.value})}
+                  className="w-full px-4 py-3 bg-slate-50 border-slate-100 rounded-xl focus:ring-primary text-sm"
+                />
+              </div>
+              <div className="pt-4 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsEditing(false)}
+                  className="flex-1 px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-sm transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-3 bg-primary hover:bg-primary-hover text-white font-bold rounded-xl text-sm transition-colors shadow-lg shadow-primary/20"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {/* Promote Modal */}
+      {isPromoteModalOpen && selectedListing && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-black">Upgrade Ad</h3>
+              <button onClick={() => setIsPromoteModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+                <span className="material-icons">close</span>
+              </button>
+            </div>
+            <div className="mb-6">
+              <p className="text-sm font-bold text-slate-700">{selectedListing.title}</p>
+              <p className="text-xs text-slate-500">Select promotions to make your ad stand out.</p>
+            </div>
+            <form onSubmit={handlePromoteSubmit} className="space-y-4">
+              <label className="flex items-center p-4 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors">
+                <input 
+                  type="checkbox" 
+                  checked={promotionData.is_top_ad} 
+                  onChange={e => setPromotionData({...promotionData, is_top_ad: e.target.checked})}
+                  className="w-5 h-5 text-primary rounded border-slate-300 focus:ring-primary"
+                />
+                <div className="ml-3">
+                  <p className="text-sm font-bold text-slate-800">Top Ad</p>
+                  <p className="text-[10px] text-slate-500">Appears at the very top of search results.</p>
+                </div>
+              </label>
+              
+              <label className="flex items-center p-4 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors">
+                <input 
+                  type="checkbox" 
+                  checked={promotionData.is_highlighted} 
+                  onChange={e => setPromotionData({...promotionData, is_highlighted: e.target.checked})}
+                  className="w-5 h-5 text-yellow-500 rounded border-slate-300 focus:ring-yellow-500"
+                />
+                <div className="ml-3">
+                  <p className="text-sm font-bold text-slate-800">Highlighted</p>
+                  <p className="text-[10px] text-slate-500">Ad stands out with a bright highlighted background.</p>
+                </div>
+              </label>
+
+              <label className="flex items-center p-4 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors">
+                <input 
+                  type="checkbox" 
+                  checked={promotionData.is_urgent} 
+                  onChange={e => setPromotionData({...promotionData, is_urgent: e.target.checked})}
+                  className="w-5 h-5 text-red-500 rounded border-slate-300 focus:ring-red-500"
+                />
+                <div className="ml-3">
+                  <p className="text-sm font-bold text-slate-800">Urgent</p>
+                  <p className="text-[10px] text-slate-500">Mark as urgent to sell faster.</p>
+                </div>
+              </label>
+
+              <label className="flex items-center p-4 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors">
+                <input 
+                  type="checkbox" 
+                  checked={promotionData.is_home_gallery} 
+                  onChange={e => setPromotionData({...promotionData, is_home_gallery: e.target.checked})}
+                  className="w-5 h-5 text-blue-500 rounded border-slate-300 focus:ring-blue-500"
+                />
+                <div className="ml-3">
+                  <p className="text-sm font-bold text-slate-800">Home Gallery</p>
+                  <p className="text-[10px] text-slate-500">Showcase your ad on the homepage gallery.</p>
+                </div>
+              </label>
+
+              <div className="pt-4 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsPromoteModalOpen(false)}
+                  className="flex-1 px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-sm transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-3 bg-primary hover:bg-primary-hover text-white font-bold rounded-xl text-sm transition-colors shadow-lg shadow-primary/20"
+                >
+                  Apply Promotions
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

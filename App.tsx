@@ -25,7 +25,8 @@ const App: React.FC = () => {
     const userStr = localStorage.getItem('user');
     if (userStr) {
       const user = JSON.parse(userStr);
-      return !!user.isAdmin || user.role === 'admin';
+      const userRole = user.role ? String(user.role).trim().toLowerCase() : '';
+      return !!user.isAdmin || userRole === 'admin';
     }
     return false;
   };
