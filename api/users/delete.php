@@ -7,8 +7,7 @@ header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers
 
 include_once '../config.php';
 
-$database = new Database();
-$db = $database->getConnection();
+$db = $conn;
 
 $data = json_decode(file_get_contents("php://input"));
 

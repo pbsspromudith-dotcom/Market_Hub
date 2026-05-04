@@ -209,43 +209,49 @@ const UserProfile: React.FC = () => {
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="flex flex-col gap-5">
             {userListings.map((listing: any) => (
-              <div key={listing.id} className="group bg-slate-50 rounded-2xl overflow-hidden hover:shadow-md transition-all border border-slate-100 flex flex-col">
-                <Link to={`/item/${listing.id}`} className="block">
-                  <div className="aspect-video bg-slate-200 overflow-hidden">
-                    <img
-                      src={listing.image || 'https://picsum.photos/seed/listing/400/300'}
-                      alt={listing.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                  </div>
-                  <div className="p-4">
-                    <p className="text-xs font-black text-primary uppercase tracking-widest mb-1">{listing.category}</p>
-                    <h3 className="text-sm font-black text-slate-800 mb-1 line-clamp-1">{listing.title}</h3>
-                    <p className="text-base font-black text-slate-900">${Number(listing.price).toLocaleString()}</p>
-                    <p className="text-[10px] text-slate-400 font-bold mt-1 flex items-center gap-1">
-                      <span className="material-icons text-xs">location_on</span>
+              <div key={listing.id} className="group bg-white rounded-2xl overflow-hidden hover:shadow-lg transition-all border border-slate-100 flex flex-col sm:flex-row">
+                
+                {/* Image Section */}
+                <Link to={`/item/${listing.id}`} className="block w-full sm:w-72 h-48 sm:h-auto relative shrink-0 overflow-hidden bg-slate-100">
+                  <img
+                    src={listing.image || 'https://picsum.photos/seed/listing/800/600'}
+                    alt={listing.title}
+                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                </Link>
+
+                {/* Details Section */}
+                <div className="flex flex-col flex-1">
+                  <Link to={`/item/${listing.id}`} className="p-6 flex-1 flex flex-col justify-center">
+                    <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">{listing.category}</p>
+                    <h3 className="text-xl font-black text-slate-800 mb-2 line-clamp-2 leading-tight">{listing.title}</h3>
+                    <p className="text-2xl font-black text-slate-900 mb-3">${Number(listing.price).toLocaleString()}</p>
+                    <p className="text-xs text-slate-400 font-bold flex items-center gap-1 mt-auto">
+                      <span className="material-icons text-sm">location_on</span>
                       {listing.location}
                     </p>
-                  </div>
-                </Link>
+                  </Link>
+                </div>
                 
-                <div className="px-4 pb-4 pt-3 border-t border-slate-200 mt-auto bg-slate-100/50">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Ad Promotions</p>
+                {/* Promotions Section */}
+                <div className="w-full sm:w-80 border-t sm:border-t-0 sm:border-l border-slate-100 bg-slate-50/50 p-6 flex flex-col">
+                  <div className="mb-3">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ad Promotions</p>
                   </div>
-                  <div className="flex flex-wrap gap-1.5 min-h-[22px] mb-3">
-                    <span className={`text-[9px] font-bold px-2 py-1 rounded border ${listing.is_top_ad ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-slate-100 text-slate-400 border-slate-200 grayscale opacity-50'}`}>Top Ad</span>
-                    <span className={`text-[9px] font-bold px-2 py-1 rounded border ${listing.is_highlighted ? 'bg-yellow-100 text-yellow-700 border-yellow-200' : 'bg-slate-100 text-slate-400 border-slate-200 grayscale opacity-50'}`}>Highlighted</span>
-                    <span className={`text-[9px] font-bold px-2 py-1 rounded border ${listing.is_urgent ? 'bg-red-100 text-red-700 border-red-200' : 'bg-slate-100 text-slate-400 border-slate-200 grayscale opacity-50'}`}>Urgent</span>
-                    <span className={`text-[9px] font-bold px-2 py-1 rounded border ${listing.is_home_gallery ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-slate-100 text-slate-400 border-slate-200 grayscale opacity-50'}`}>Home Gallery</span>
+                  <div className="flex flex-wrap gap-2 mb-6">
+                    <span className={`text-[10px] font-bold px-2 py-1 rounded border ${listing.is_top_ad ? 'bg-amber-100 text-amber-700 border-amber-200 shadow-sm' : 'bg-white text-slate-400 border-slate-200 grayscale opacity-60'}`}>Top Ad</span>
+                    <span className={`text-[10px] font-bold px-2 py-1 rounded border ${listing.is_highlighted ? 'bg-yellow-100 text-yellow-700 border-yellow-200 shadow-sm' : 'bg-white text-slate-400 border-slate-200 grayscale opacity-60'}`}>Highlighted</span>
+                    <span className={`text-[10px] font-bold px-2 py-1 rounded border ${listing.is_urgent ? 'bg-red-100 text-red-700 border-red-200 shadow-sm' : 'bg-white text-slate-400 border-slate-200 grayscale opacity-60'}`}>Urgent</span>
+                    <span className={`text-[10px] font-bold px-2 py-1 rounded border ${listing.is_home_gallery ? 'bg-blue-100 text-blue-700 border-blue-200 shadow-sm' : 'bg-white text-slate-400 border-slate-200 grayscale opacity-60'}`}>Home Gallery</span>
                   </div>
-                  <button onClick={() => openPromoteModal(listing)} className="w-full bg-primary hover:bg-primary-hover text-white text-[10px] font-black uppercase tracking-widest py-2 rounded-lg flex items-center justify-center gap-1 transition-all shadow-md shadow-primary/20 mt-1">
-                    <span className="material-icons text-xs">campaign</span>
+                  <button onClick={() => openPromoteModal(listing)} className="w-full bg-primary hover:bg-primary-hover text-white text-[11px] font-black uppercase tracking-widest py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-primary/25 mt-auto hover:-translate-y-0.5">
+                    <span className="material-icons text-base">campaign</span>
                     Promote Ad
                   </button>
                 </div>
+
               </div>
             ))}
           </div>

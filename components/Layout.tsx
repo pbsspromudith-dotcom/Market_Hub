@@ -48,7 +48,7 @@ const Layout: React.FC<LayoutProps> = ({ children, isLoggedIn, isAdmin, onLogout
                     className="bg-secondary hover:bg-secondary-hover text-white px-6 py-3 rounded-full font-black text-xs uppercase tracking-widest flex items-center gap-2 transition-all shadow-lg shadow-secondary/20"
                   >
                     <span className="material-icons text-sm">add</span>
-                    Post Add
+                    Post
                   </Link>
                 </>
               )}
