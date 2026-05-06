@@ -83,8 +83,13 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn }) => {
             Find what you need,<br/>
             <span className="text-primary-light">right in your community.</span>
           </h1>
-          <p className="text-slate-500 text-base md:text-xl mb-10 max-w-2xl mx-auto leading-relaxed font-medium">
-            Free Ads. Sell Fast. Buy Local. Canada Wide.
+          <p className="text-base md:text-xl mb-10 max-w-2xl mx-auto leading-relaxed font-bold flex items-center justify-center gap-3">
+            <span className="w-10 h-[2px] bg-slate-300 inline-block"></span>
+            <span className="text-[#1a2e5a]">Free Ads.</span>
+            <span className="text-[#e63946] italic">Sell Fast.</span>
+            <span className="text-[#1a2e5a]">Buy Local.</span>
+            <span className="text-[#1a2e5a]">Canada Wide.</span>
+            <span className="w-10 h-[2px] bg-slate-300 inline-block"></span>
           </p>
           
           <div className="max-w-4xl mx-auto bg-white p-2.5 rounded-[2.5rem] shadow-2xl shadow-primary-neutral/40 border border-slate-100 flex flex-col md:flex-row gap-2">
@@ -271,21 +276,6 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn }) => {
         </div>
       </section>
 
-      {/* Final CTA */}
-      <section className="py-32 px-4">
-        <div className="max-w-5xl mx-auto bg-primary-light rounded-[4rem] p-16 md:p-24 text-center text-white relative overflow-hidden shadow-2xl">
-          <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.2),transparent)]"></div>
-          <h2 className="text-4xl md:text-6xl font-black mb-8 relative z-10 leading-tight">Ready to start<br/>trading better?</h2>
-          <div className="flex flex-col sm:flex-row justify-center gap-6 relative z-10">
-            <Link to="/login" className="bg-white text-primary px-12 py-5 rounded-[2rem] font-black text-lg hover:bg-slate-50 transition-all shadow-xl">
-              Get Started
-            </Link>
-            <Link to="/search" className="bg-primary/20 backdrop-blur-md text-white border border-white/30 px-12 py-5 rounded-[2rem] font-black text-lg hover:bg-white/10 transition-all">
-              Browse All
-            </Link>
-          </div>
-        </div>
-      </section>
     </div>
   );
 };
