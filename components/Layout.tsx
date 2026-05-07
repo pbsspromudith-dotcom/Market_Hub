@@ -86,7 +86,7 @@ const Layout: React.FC<LayoutProps> = ({ children, isLoggedIn, isAdmin, onLogout
                     <Link to="/login" className="text-xs font-black uppercase tracking-widest text-slate-400 hover:text-primary transition-colors">
                       Sign In
                     </Link>
-                    <Link to="/login" className="px-6 py-3 border-2 border-primary text-primary rounded-full text-xs font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-all">
+                    <Link to="/login" state={{ mode: 'register' }} className="px-6 py-3 border-2 border-primary text-primary rounded-full text-xs font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-all">
                       Join Free
                     </Link>
                   </div>
@@ -166,6 +166,7 @@ const Layout: React.FC<LayoutProps> = ({ children, isLoggedIn, isAdmin, onLogout
                     </Link>
                     <Link 
                       to="/login" 
+                      state={{ mode: 'register' }}
                       onClick={() => setIsMobileMenuOpen(false)}
                       className="block w-full text-center py-4 bg-primary text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl"
                     >

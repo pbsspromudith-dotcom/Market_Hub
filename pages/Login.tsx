@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import logoImg from '../assets/HitAds.png';
 
 interface LoginProps {
@@ -9,6 +9,7 @@ interface LoginProps {
 
 const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -16,7 +17,13 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [successMsg, setSuccessMsg] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [authMode, setAuthMode] = useState<'login' | 'register' | 'forgot'>('login');
+  const [authMode, setAuthMode] = useState<'login' | 'register' | 'forgot'>(location.state?.mode || 'login');
+
+  useEffect(() => {
+    if (location.state?.mode) {
+      setAuthMode(location.state.mode);
+    }
+  }, [location.state]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -119,7 +126,9 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <div className="mb-6 flex justify-center">
-            <img src={logoImg} alt="HitAds Logo" className="h-24 object-contain" />
+            <Link to="/">
+              <img src={logoImg} alt="HitAds Logo" className="h-24 object-contain transition-transform hover:scale-105" />
+            </Link>
           </div>
           <h2 className="text-3xl font-black text-slate-900 tracking-tight">{title}</h2>
           <p className="mt-2 text-sm text-slate-500 font-medium">

@@ -54,19 +54,23 @@ try {
     // Default avatar if needed
     $avatar = "https://api.dicebear.com/7.x/avataaars/svg?seed=" . urlencode($name);
 
+    // Generate verification token
+    $verificationToken = bin2hex(random_bytes(32));
+
     // Insert user
-    $query = "INSERT INTO users (name, email, password, avatar) VALUES (:name, :email, :password, :avatar)";
+    $query = "INSERT INTO users (name, email, password, avatar, verification_token, is_verified) VALUES (:name, :email, :password, :avatar, :token, 0)";
     $insertStmt = $conn->prepare($query);
     $insertStmt->bindParam(':name', $name);
     $insertStmt->bindParam(':email', $email);
     $insertStmt->bindParam(':password', $hashedPassword);
     $insertStmt->bindParam(':avatar', $avatar);
+    $insertStmt->bindParam(':token', $verificationToken);
 
     if ($insertStmt->execute()) {
         $userId = $conn->lastInsertId();
 
-        // Send welcome email (non-blocking — won't fail the registration if email fails)
-        sendWelcomeEmail($email, $name);
+        // Send verification email
+        sendVerificationEmail($email, $name, $verificationToken);
 
         http_response_code(201);
         echo json_encode([
