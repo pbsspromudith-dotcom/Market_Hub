@@ -44,8 +44,23 @@ try {
 
     // Verify password against stored hash
     if (password_verify($password, $user['password'])) {
-        // Remove password hash from the response
+        // Check if email is verified
+        if (isset($user['is_verified']) && $user['is_verified'] == 0) {
+            http_response_code(403);
+            echo json_encode([
+                "success" => false,
+                "message" => "Please verify your email before logging in. Check your inbox for the verification link.",
+                "needsVerification" => true,
+                "email" => $user['email']
+            ]);
+            exit();
+        }
+
+        // Remove sensitive fields from the response
         unset($user['password']);
+        unset($user['verification_token']);
+        unset($user['reset_token']);
+        unset($user['reset_token_expiry']);
         
         http_response_code(200);
         echo json_encode([

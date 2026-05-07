@@ -16,6 +16,8 @@ const UserProfile: React.FC = () => {
     is_urgent: false,
     is_home_gallery: false
   });
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const userStr = localStorage.getItem('user');
@@ -37,6 +39,51 @@ const UserProfile: React.FC = () => {
       .catch(console.error)
       .finally(() => setIsLoading(false));
   }, []);
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate client-side
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      alert('Please select a JPG, PNG, GIF, or WebP image.');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image must be under 5MB.');
+      return;
+    }
+
+    setIsUploadingAvatar(true);
+    try {
+      const formData = new FormData();
+      formData.append('avatar', file);
+      formData.append('user_id', user.id.toString());
+
+      const response = await fetch('/api/users/upload-avatar.php', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await response.json();
+
+      if (data.success) {
+        const updatedUser = { ...user, ...data.user };
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        setUser(updatedUser);
+        window.dispatchEvent(new Event('auth_updated'));
+      } else {
+        alert(data.message || 'Failed to upload avatar');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error uploading avatar');
+    } finally {
+      setIsUploadingAvatar(false);
+      // Reset input so the same file can be selected again
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -124,14 +171,32 @@ const UserProfile: React.FC = () => {
         </div>
 
         <div className="px-8 pb-8">
-          {/* Avatar */}
+          {/* Avatar with upload */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/gif,image/webp"
+            className="hidden"
+            onChange={handleAvatarUpload}
+          />
           <div className="-mt-12 mb-4 flex justify-between items-end">
-            <div className="w-24 h-24 rounded-[1.5rem] bg-primary flex items-center justify-center text-white text-3xl font-black border-4 border-white shadow-xl">
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              className="w-24 h-24 rounded-[1.5rem] bg-primary flex items-center justify-center text-white text-3xl font-black border-4 border-white shadow-xl relative group cursor-pointer overflow-hidden"
+            >
               {user.avatar ? (
-                <img src={user.avatar} alt="Avatar" className="w-full h-full object-cover rounded-[1.2rem]" />
+                <img src={user.avatar.startsWith('/uploads') ? `/api${user.avatar}` : user.avatar} alt="Avatar" className="w-full h-full object-cover" />
               ) : (
                 avatarInitials
               )}
+              {/* Camera overlay */}
+              <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                {isUploadingAvatar ? (
+                  <div className="w-8 h-8 border-3 border-white border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  <span className="material-icons text-white text-2xl">photo_camera</span>
+                )}
+              </div>
             </div>
             {user.isAdmin && (
               <span className="inline-flex items-center gap-1.5 bg-primary/10 text-primary text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-full">
@@ -267,6 +332,23 @@ const UserProfile: React.FC = () => {
               <button onClick={() => setIsEditing(false)} className="text-slate-400 hover:text-slate-600">
                 <span className="material-icons">close</span>
               </button>
+            </div>
+            {/* Avatar change in modal */}
+            <div className="flex justify-center mb-6">
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                className="w-20 h-20 rounded-2xl bg-primary flex items-center justify-center text-white text-2xl font-black relative group cursor-pointer overflow-hidden shadow-lg"
+              >
+                {user.avatar ? (
+                  <img src={user.avatar.startsWith('/uploads') ? `/api${user.avatar}` : user.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                ) : (
+                  avatarInitials
+                )}
+                <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <span className="material-icons text-white text-lg">photo_camera</span>
+                  <span className="text-white text-[8px] font-bold uppercase tracking-wider mt-0.5">Change</span>
+                </div>
+              </div>
             </div>
             <form onSubmit={handleUpdate} className="space-y-4">
               <div>

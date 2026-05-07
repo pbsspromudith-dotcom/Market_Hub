@@ -7,10 +7,21 @@ require_once __DIR__ . '/smtp_mailer.php';
 
 /**
  * Get a configured SMTP mailer instance using DB-stored settings.
+ * Falls back to hardcoded Hostinger credentials if DB settings are missing.
  */
 function getMailer($overrideConfig = [])
 {
-  // Load settings from database
+  // Hardcoded fallback SMTP settings (Hostinger)
+  $fallback = [
+    'host'      => 'smtp.hostinger.com',
+    'port'      => 465,
+    'username'  => 'hello@hitads.ca',
+    'password'  => 'Lanka@@1234',
+    'fromEmail' => 'hello@hitads.ca',
+    'fromName'  => 'HitAds.ca',
+  ];
+
+  // Try loading settings from database
   $host = '127.0.0.1';
   $db_name = 'CNMarketHub';
   $username = 'root';
@@ -28,25 +39,26 @@ function getMailer($overrideConfig = [])
       $cfg[$row['setting_key']] = $row['setting_value'];
     }
 
-    if (empty($cfg['smtp_username']) || empty($cfg['smtp_password'])) {
-      error_log("HitAds Mailer: SMTP credentials not configured in admin panel.");
-      return null;
+    // Use DB settings if available, otherwise fallback
+    if (!empty($cfg['smtp_username']) && !empty($cfg['smtp_password'])) {
+      $defaultConfig = [
+        'host'      => $cfg['smtp_host'] ?? $fallback['host'],
+        'port'      => intval($cfg['smtp_port'] ?? $fallback['port']),
+        'username'  => $cfg['smtp_username'],
+        'password'  => $cfg['smtp_password'],
+        'fromEmail' => $cfg['smtp_from_email'] ?? $cfg['smtp_username'],
+        'fromName'  => $cfg['smtp_from_name'] ?? 'HitAds.ca',
+      ];
+      return new SmtpMailer(array_merge($defaultConfig, $overrideConfig));
     }
 
-    $defaultConfig = [
-      'host' => $cfg['smtp_host'] ?? 'smtp.gmail.com',
-      'port' => intval($cfg['smtp_port'] ?? 587),
-      'username' => $cfg['smtp_username'],
-      'password' => $cfg['smtp_password'],
-      'fromEmail' => $cfg['smtp_from_email'] ?? $cfg['smtp_username'],
-      'fromName' => $cfg['smtp_from_name'] ?? 'HitAds.ca',
-    ];
-
-    return new SmtpMailer(array_merge($defaultConfig, $overrideConfig));
+    // DB settings empty — use fallback
+    error_log("HitAds Mailer: DB credentials empty, using fallback SMTP config.");
+    return new SmtpMailer(array_merge($fallback, $overrideConfig));
 
   } catch (PDOException $e) {
-    error_log("HitAds Mailer DB Error: " . $e->getMessage());
-    return null;
+    error_log("HitAds Mailer DB Error: " . $e->getMessage() . " — using fallback.");
+    return new SmtpMailer(array_merge($fallback, $overrideConfig));
   }
 }
 
@@ -55,7 +67,7 @@ function getMailer($overrideConfig = [])
  */
 function sendWelcomeEmail($toEmail, $userName)
 {
-  $mailer = getMailer(['fromEmail' => 'customerservice@hitads.ca']);
+  $mailer = getMailer();
   if (!$mailer)
     return false;
 
@@ -153,7 +165,7 @@ HTML;
  * Send verification email to newly registered users.
  */
 function sendVerificationEmail($toEmail, $userName, $token) {
-    $mailer = getMailer(['fromEmail' => 'customerservice@hitads.ca']);
+    $mailer = getMailer();
     if (!$mailer) return false;
 
     $subject = "Verify Your Account — HitAds.ca";
@@ -167,8 +179,7 @@ function sendVerificationEmail($toEmail, $userName, $token) {
 function buildVerificationHtml($userName, $token) {
     $year = date('Y');
     $safeName = htmlspecialchars($userName);
-    // Assuming backend is at localhost:8000 for local dev or a real domain in production
-    $verifyLink = "http://localhost:8000/api/auth/verify.php?token=" . urlencode($token);
+    $verifyLink = "https://hitads.ca/api/auth/verify.php?token=" . urlencode($token);
     
     return <<<HTML
 <!DOCTYPE html>

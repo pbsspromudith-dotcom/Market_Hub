@@ -75,7 +75,7 @@ try {
         http_response_code(201);
         echo json_encode([
             "success" => true,
-            "message" => "Registered successfully",
+            "message" => "Registration successful! Please check your email to verify your account.",
             "userId" => $userId
         ]);
     } else {
