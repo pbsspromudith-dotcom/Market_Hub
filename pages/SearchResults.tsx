@@ -55,7 +55,8 @@ const SearchResults: React.FC = () => {
     // category filter — support aliases so 'Vehicles' also matches 'Cars'
     if (selectedCategory) {
       const aliases = CATEGORY_ALIASES[selectedCategory] || [selectedCategory];
-      if (!aliases.includes(item.category)) return false;
+      const match = aliases.some(alias => item.category === alias || item.category.startsWith(alias + ' > '));
+      if (!match) return false;
     }
     
     // location filter — only active if user explicitly set a location in filter
@@ -91,7 +92,7 @@ const SearchResults: React.FC = () => {
   const resetPage = () => setCurrentPage(1);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
+    <div className="w-full px-4 sm:px-6 lg:px-10 py-8">
 
       {/* Mobile Filter Toggle Bar */}
       <div className="lg:hidden flex items-center justify-between mb-4 bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
@@ -106,9 +107,8 @@ const SearchResults: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Sidebar Filters — hidden on mobile unless toggled */}
         <aside className={`col-span-12 lg:col-span-3 space-y-6 ${showMobileFilters ? 'block' : 'hidden lg:block'}`}>
-          <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm sticky top-24">
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-lg font-bold">Filters</h2>
               <button 
@@ -149,7 +149,7 @@ const SearchResults: React.FC = () => {
               <section>
                 <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Category</h3>
                 <ul className="space-y-3">
-                  {['Vehicles', 'Electronics', 'Furniture', 'Real Estate', 'Jobs', 'Pets', 'Baby Items', 'Other'].map((cat) => (
+                  {['Vehicles', 'Real Estate', 'Jobs', 'Local Services', 'Buy & Sell', 'Business & Industrial', 'Community', 'Pets', 'Home & Garden', 'Electronics & Computers', 'Fashion & Beauty', 'Events & Entertainment'].map((cat) => (
                     <li 
                       key={cat} 
                       onClick={() => setSelectedCategory(selectedCategory === cat ? null : cat)}

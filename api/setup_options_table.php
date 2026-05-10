@@ -28,6 +28,31 @@ try {
     )";
 
     $conn->exec($sql);
+
+    // Create Main Menu Items table
+    $sql_main_menu = "CREATE TABLE IF NOT EXISTS main_menu_master (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        icon VARCHAR(100) DEFAULT NULL,
+        url VARCHAR(255) DEFAULT NULL,
+        status TINYINT(1) DEFAULT 1,
+        display_order INT DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )";
+    $conn->exec($sql_main_menu);
+
+    // Create Sub Menu Items table
+    $sql_sub_menu = "CREATE TABLE IF NOT EXISTS sub_menu_master (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        main_menu_id INT NOT NULL,
+        name VARCHAR(255) NOT NULL,
+        url VARCHAR(255) DEFAULT NULL,
+        status TINYINT(1) DEFAULT 1,
+        display_order INT DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (main_menu_id) REFERENCES main_menu_master(id) ON DELETE CASCADE
+    )";
+    $conn->exec($sql_sub_menu);
     
     // Insert some defaults if table is empty
     $checkStmt = $conn->query("SELECT COUNT(*) FROM options");
@@ -35,9 +60,16 @@ try {
         $defaults = [
             "('category', 'Vehicles')",
             "('category', 'Real Estate')",
-            "('category', 'Electronics')",
-            "('category', 'Home & Garden')",
             "('category', 'Jobs')",
+            "('category', 'Local Services')",
+            "('category', 'Buy & Sell')",
+            "('category', 'Business & Industrial')",
+            "('category', 'Community')",
+            "('category', 'Pets')",
+            "('category', 'Home & Garden')",
+            "('category', 'Electronics & Computers')",
+            "('category', 'Fashion & Beauty')",
+            "('category', 'Events & Entertainment')",
             "('car_make', 'Toyota')",
             "('car_make', 'Honda')",
             "('car_make', 'Ford')",

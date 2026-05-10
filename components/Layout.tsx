@@ -1,9 +1,8 @@
-
-import React, { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { CURRENT_USER } from '../constants';
-import logoImg from '../assets/HitAds.png';
-import footerImg from '../assets/Footer.jpeg';
+import React, { useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { CURRENT_USER } from "../constants";
+import logoImg from "../assets/HitAds.png";
+import footerImg from "../assets/Footer.jpeg";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -12,17 +11,25 @@ interface LayoutProps {
   onLogout: () => void;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children, isLoggedIn, isAdmin, onLogout }) => {
+const Layout: React.FC<LayoutProps> = ({
+  children,
+  isLoggedIn,
+  isAdmin,
+  onLogout,
+}) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const isAdminPage = location.pathname.startsWith('/admin') || location.pathname.startsWith('/dashboard');
-  const isLoginPage = location.pathname === '/login' || location.pathname === '/admin-login';
+  const isAdminPage =
+    location.pathname.startsWith("/admin") ||
+    location.pathname.startsWith("/dashboard");
+  const isLoginPage =
+    location.pathname === "/login" || location.pathname === "/admin-login";
 
   const handleLogoutClick = () => {
     onLogout();
-    navigate('/');
+    navigate("/");
     setIsMobileMenuOpen(false);
   };
 
@@ -31,20 +38,29 @@ const Layout: React.FC<LayoutProps> = ({ children, isLoggedIn, isAdmin, onLogout
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
       <header className="sticky top-0 z-50 bg-white border-b border-slate-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full px-4 sm:px-6 lg:px-10">
           <div className="flex justify-between items-center h-20">
             {/* Logo Section */}
             <Link to="/" className="flex items-center gap-1 shrink-0">
-              <img src={logoImg} alt="HitAds Logo" className="h-16 object-contain transition-transform hover:scale-105" />
+              <img
+                src={logoImg}
+                alt="HitAds Logo"
+                className="h-16 object-contain transition-transform hover:scale-105"
+              />
             </Link>
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center gap-8">
               {!isLoginPage && (
                 <>
-                  <Link to="/search" className="text-sm font-bold text-slate-500 hover:text-primary transition-colors">Browse</Link>
-                  <Link 
-                    to="/post-ad" 
+                  <Link
+                    to="/search"
+                    className="text-sm font-bold text-slate-500 hover:text-primary transition-colors"
+                  >
+                    Browse
+                  </Link>
+                  <Link
+                    to="/post-ad"
                     className="bg-secondary hover:bg-secondary-hover text-white px-6 py-3 rounded-full font-black text-xs uppercase tracking-widest flex items-center gap-2 transition-all shadow-lg shadow-secondary/20"
                   >
                     <span className="material-icons text-sm">add</span>
@@ -63,15 +79,21 @@ const Layout: React.FC<LayoutProps> = ({ children, isLoggedIn, isAdmin, onLogout
                         to="/dashboard"
                         className="bg-slate-900 hover:bg-slate-700 text-white px-5 py-2.5 rounded-full font-black text-xs uppercase tracking-widest flex items-center gap-2 transition-all shadow-lg"
                       >
-                        <span className="material-icons text-sm">admin_panel_settings</span>
+                        <span className="material-icons text-sm">
+                          admin_panel_settings
+                        </span>
                         Admin Panel
                       </Link>
                     )}
                     <Link
-                      to={isAdmin ? '/dashboard' : '/profile'}
+                      to={isAdmin ? "/dashboard" : "/profile"}
                       className="w-9 h-9 rounded-full border-2 border-primary overflow-hidden ring-2 ring-transparent hover:ring-primary/30 transition-all flex-shrink-0"
                     >
-                      <img src={CURRENT_USER.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                      <img
+                        src={CURRENT_USER.avatar}
+                        alt="Avatar"
+                        className="w-full h-full object-cover"
+                      />
                     </Link>
                     <button
                       onClick={handleLogoutClick}
@@ -83,15 +105,27 @@ const Layout: React.FC<LayoutProps> = ({ children, isLoggedIn, isAdmin, onLogout
                   </div>
                 ) : !isLoginPage ? (
                   <div className="flex items-center gap-6">
-                    <Link to="/login" className="text-xs font-black uppercase tracking-widest text-slate-400 hover:text-primary transition-colors">
+                    <Link
+                      to="/login"
+                      className="text-xs font-black uppercase tracking-widest text-slate-400 hover:text-primary transition-colors"
+                    >
                       Sign In
                     </Link>
-                    <Link to="/login" state={{ mode: 'register' }} className="px-6 py-3 border-2 border-primary text-primary rounded-full text-xs font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-all">
+                    <Link
+                      to="/login"
+                      state={{ mode: "register" }}
+                      className="px-6 py-3 border-2 border-primary text-primary rounded-full text-xs font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-all"
+                    >
                       Join Free
                     </Link>
                   </div>
                 ) : (
-                  <Link to="/" className="text-xs font-black uppercase tracking-widest text-slate-400 hover:text-primary">Cancel</Link>
+                  <Link
+                    to="/"
+                    className="text-xs font-black uppercase tracking-widest text-slate-400 hover:text-primary"
+                  >
+                    Cancel
+                  </Link>
                 )}
               </div>
             </div>
@@ -99,18 +133,20 @@ const Layout: React.FC<LayoutProps> = ({ children, isLoggedIn, isAdmin, onLogout
             {/* Mobile Actions */}
             <div className="flex md:hidden items-center gap-3">
               {!isLoginPage && (
-                <Link 
-                  to="/post-ad" 
+                <Link
+                  to="/post-ad"
                   className="bg-secondary text-white p-2 rounded-xl flex items-center justify-center shadow-lg shadow-secondary/20"
                 >
                   <span className="material-icons text-lg">add</span>
                 </Link>
               )}
-              <button 
+              <button
                 onClick={toggleMobileMenu}
                 className="w-10 h-10 flex items-center justify-center text-slate-900 rounded-xl hover:bg-slate-50 transition-colors"
               >
-                <span className="material-icons">{isMobileMenuOpen ? 'close' : 'menu'}</span>
+                <span className="material-icons">
+                  {isMobileMenuOpen ? "close" : "menu"}
+                </span>
               </button>
             </div>
           </div>
@@ -121,20 +157,22 @@ const Layout: React.FC<LayoutProps> = ({ children, isLoggedIn, isAdmin, onLogout
           <div className="md:hidden absolute top-full left-0 w-full bg-white border-b border-slate-100 shadow-2xl py-6 px-4 space-y-4 animate-in slide-in-from-top-4 duration-200">
             {!isLoginPage && (
               <>
-                <Link 
-                  to="/search" 
+                <Link
+                  to="/search"
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="block px-4 py-3 text-lg font-black text-slate-900 hover:bg-slate-50 rounded-2xl transition-all"
                 >
                   Browse
                 </Link>
                 {isLoggedIn && isAdmin && (
-                  <Link 
-                    to="/dashboard" 
+                  <Link
+                    to="/dashboard"
                     onClick={() => setIsMobileMenuOpen(false)}
                     className="mx-4 px-4 py-3 text-sm font-black text-white bg-slate-900 rounded-2xl flex items-center gap-2 transition-all"
                   >
-                    <span className="material-icons text-sm">admin_panel_settings</span>
+                    <span className="material-icons text-sm">
+                      admin_panel_settings
+                    </span>
                     Admin Panel
                   </Link>
                 )}
@@ -149,7 +187,7 @@ const Layout: React.FC<LayoutProps> = ({ children, isLoggedIn, isAdmin, onLogout
                 )}
                 <div className="h-px bg-slate-50 mx-4"></div>
                 {isLoggedIn ? (
-                  <button 
+                  <button
                     onClick={handleLogoutClick}
                     className="w-full text-left px-4 py-3 text-lg font-black text-red-500 hover:bg-red-50 rounded-2xl transition-all"
                   >
@@ -157,16 +195,16 @@ const Layout: React.FC<LayoutProps> = ({ children, isLoggedIn, isAdmin, onLogout
                   </button>
                 ) : (
                   <div className="space-y-4 pt-2">
-                    <Link 
-                      to="/login" 
+                    <Link
+                      to="/login"
                       onClick={() => setIsMobileMenuOpen(false)}
                       className="block px-4 py-3 text-lg font-black text-slate-900 hover:bg-slate-50 rounded-2xl transition-all"
                     >
                       Sign In
                     </Link>
-                    <Link 
-                      to="/login" 
-                      state={{ mode: 'register' }}
+                    <Link
+                      to="/login"
+                      state={{ mode: "register" }}
                       onClick={() => setIsMobileMenuOpen(false)}
                       className="block w-full text-center py-4 bg-primary text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl"
                     >
@@ -180,52 +218,107 @@ const Layout: React.FC<LayoutProps> = ({ children, isLoggedIn, isAdmin, onLogout
         )}
       </header>
 
-      <main className="flex-grow">
-        {children}
-      </main>
+      <main className="flex-grow">{children}</main>
 
       {!isLoginPage && (
         <footer className="relative mt-16 md:mt-24 pt-24 pb-12 bg-white border-t border-slate-100 overflow-hidden">
           {/* Decorative Footer Image */}
           <div className="absolute right-0 top-0 bottom-0 w-1/2 md:w-1/3 flex items-center justify-end pr-8 pointer-events-none">
-            <img 
-              src={footerImg} 
-              alt="" 
-              className="max-h-[50%] md:max-h-[65%] object-contain" 
+            <img
+              src={footerImg}
+              alt=""
+              className="max-h-[50%] md:max-h-[65%] object-contain"
             />
           </div>
 
-          <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="relative z-10 w-full px-4 sm:px-6 lg:px-10">
             <div className="flex gap-4 mb-12">
-              <a href="#" className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 hover:text-primary hover:border-primary transition-all">
+              <a
+                href="#"
+                className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 hover:text-primary hover:border-primary transition-all"
+              >
                 <span className="material-icons text-lg">facebook</span>
               </a>
-              <a href="#" className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 hover:text-primary hover:border-primary transition-all font-black text-xs">
+              <a
+                href="#"
+                className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 hover:text-primary hover:border-primary transition-all font-black text-xs"
+              >
                 X
               </a>
-              <a href="#" className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 hover:text-primary hover:border-primary transition-all">
+              <a
+                href="#"
+                className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 hover:text-primary hover:border-primary transition-all"
+              >
                 <span className="material-icons text-lg">tag</span>
               </a>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16 text-center md:text-left">
               <div className="space-y-6">
-                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Support Hub</h4>
+                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+                  Support Hub
+                </h4>
                 <ul className="space-y-4">
-                  <li><Link to="/help" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="text-sm font-bold text-slate-600 hover:text-primary transition-colors">Help Center</Link></li>
-                  <li><Link to="/contact" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="text-sm font-bold text-slate-600 hover:text-primary transition-colors">Contact Us</Link></li>
-                  <li><Link to="/help" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="text-sm font-bold text-slate-600 hover:text-primary transition-colors">Trust & Safety</Link></li>
+                  <li>
+                    <Link
+                      to="/help"
+                      onClick={() =>
+                        window.scrollTo({ top: 0, behavior: "smooth" })
+                      }
+                      className="text-sm font-bold text-slate-600 hover:text-primary transition-colors"
+                    >
+                      Help Center
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/contact"
+                      onClick={() =>
+                        window.scrollTo({ top: 0, behavior: "smooth" })
+                      }
+                      className="text-sm font-bold text-slate-600 hover:text-primary transition-colors"
+                    >
+                      Contact Us
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/help"
+                      onClick={() =>
+                        window.scrollTo({ top: 0, behavior: "smooth" })
+                      }
+                      className="text-sm font-bold text-slate-600 hover:text-primary transition-colors"
+                    >
+                      Trust & Safety
+                    </Link>
+                  </li>
                 </ul>
               </div>
             </div>
 
             <div className="pt-8 border-t border-slate-200 flex flex-col md:flex-row justify-between items-center gap-4">
               <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                © 2026 HitAds.ca — Canada's Free Business Classifieds.
+                © 2026 HitAds.ca — Free Ads. Sell Fast. Buy Local. Canada Wide.
               </div>
               <div className="flex gap-8 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                <Link to="/help" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="hover:text-primary transition-colors">Safety Guidelines</Link>
-                <Link to="/contact" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="hover:text-primary transition-colors">Contact</Link>
+                <Link
+                  to="/help"
+                  onClick={() =>
+                    window.scrollTo({ top: 0, behavior: "smooth" })
+                  }
+                  className="hover:text-primary transition-colors"
+                >
+                  Safety Guidelines
+                </Link>
+                <Link
+                  to="/contact"
+                  onClick={() =>
+                    window.scrollTo({ top: 0, behavior: "smooth" })
+                  }
+                  className="hover:text-primary transition-colors"
+                >
+                  Contact
+                </Link>
               </div>
             </div>
           </div>

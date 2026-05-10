@@ -110,22 +110,114 @@ const PostAd: React.FC = () => {
   };
 
   const categoriesData = [
-    { name: 'Cars', icon: 'directions_car' },
+    { 
+      name: 'Vehicles', 
+      icon: 'directions_car',
+      subcategories: [
+        { name: 'Cars & Trucks' }, { name: 'SUVs' }, { name: 'Pickup Trucks' }, { name: 'Vans' }, 
+        { name: 'Commercial Vehicles' }, { name: 'Auto Parts' }, { name: 'Tires & Rims' }, 
+        { name: 'Motorcycles' }, { name: 'ATVs' }, { name: 'Boats' }, { name: 'RVs' }, 
+        { name: 'Trailers' }, { name: 'Heavy Equipment' }, { name: 'Vehicle Services' }
+      ]
+    },
     { 
       name: 'Real Estate', 
       icon: 'home',
       subcategories: [
-        { name: 'For Rent' },
-        { name: 'For Sale' },
-        { name: 'Real Estate Services', hasSubcategories: true }
+        { name: 'Houses for Sale' }, { name: 'Condos for Sale' }, { name: 'Townhouses' }, 
+        { name: 'Commercial Property' }, { name: 'Land for Sale' }, { name: 'Apartments for Rent' }, 
+        { name: 'Basements for Rent' }, { name: 'Office Space' }, { name: 'Retail Space' }, 
+        { name: 'Vacation Rentals' }, { name: 'Room Rentals' }
       ]
     },
-    { name: 'Electronics', icon: 'laptop_mac' },
-    { name: 'Home & Garden', icon: 'weekend' },
-    { name: 'Jobs', icon: 'work' },
-    { name: 'Pets', icon: 'pets' },
-    { name: 'Baby Items', icon: 'child_care' },
-    { name: 'Other', icon: 'more_horiz' },
+    { 
+      name: 'Jobs', 
+      icon: 'work',
+      subcategories: [
+        { name: 'General Labour' }, { name: 'Construction' }, { name: 'Driving' }, { name: 'Delivery' }, 
+        { name: 'Office Admin' }, { name: 'Accounting' }, { name: 'IT & Tech' }, { name: 'Sales' }, 
+        { name: 'Healthcare' }, { name: 'Hospitality' }, { name: 'Security' }, { name: 'Cleaning' }, 
+        { name: 'Customer Service' }, { name: 'Remote Jobs' }
+      ]
+    },
+    { 
+      name: 'Local Services', 
+      icon: 'handyman',
+      subcategories: [
+        { name: 'Movers' }, { name: 'Roofing' }, { name: 'Plumbing' }, { name: 'Electrical' }, 
+        { name: 'Renovation' }, { name: 'Landscaping' }, { name: 'Cleaning' }, { name: 'Marketing Services' }, 
+        { name: 'Web Design' }, { name: 'Printing' }, { name: 'Photography' }, { name: 'Tutors' }, 
+        { name: 'Legal Services' }, { name: 'Immigration' }, { name: 'Towing' }, { name: 'Appliance Repair' }
+      ]
+    },
+    { 
+      name: 'Buy & Sell', 
+      icon: 'shopping_cart',
+      subcategories: [
+        { name: 'Furniture' }, { name: 'Electronics' }, { name: 'TVs' }, { name: 'Phones' }, 
+        { name: 'Computers' }, { name: 'Laptops' }, { name: 'Tools' }, { name: 'Appliances' }, 
+        { name: 'Home Décor' }, { name: 'Office Furniture' }, { name: 'Baby Items' }, 
+        { name: 'Musical Instruments' }, { name: 'Cameras' }, { name: 'Collectibles' }, { name: 'Jewelry' }
+      ]
+    },
+    { 
+      name: 'Business & Industrial', 
+      icon: 'business',
+      subcategories: [
+        { name: 'Restaurant Equipment' }, { name: 'Office Equipment' }, { name: 'Commercial Supplies' }, 
+        { name: 'Warehouse Equipment' }, { name: 'POS Systems' }, { name: 'Retail Fixtures' }, 
+        { name: 'Manufacturing' }, { name: 'Packaging Supplies' }, { name: 'Forklifts' }, 
+        { name: 'Construction Equipment' }
+      ]
+    },
+    { 
+      name: 'Community', 
+      icon: 'people',
+      subcategories: [
+        { name: 'Events' }, { name: 'Volunteers' }, { name: 'Lost & Found' }, { name: 'Local News' }, 
+        { name: 'Networking' }, { name: 'Artists' }, { name: 'Musicians' }, { name: 'Activity Partners' }
+      ]
+    },
+    { 
+      name: 'Pets', 
+      icon: 'pets',
+      subcategories: [
+        { name: 'Dogs' }, { name: 'Cats' }, { name: 'Fish' }, { name: 'Birds' }, 
+        { name: 'Pet Services' }, { name: 'Pet Accessories' }, { name: 'Pet Adoption' }
+      ]
+    },
+    { 
+      name: 'Home & Garden', 
+      icon: 'yard',
+      subcategories: [
+        { name: 'Furniture' }, { name: 'Gardening' }, { name: 'Kitchen' }, { name: 'Lighting' }, 
+        { name: 'Outdoor' }, { name: 'Renovation Materials' }, { name: 'Home Improvement' }
+      ]
+    },
+    { 
+      name: 'Electronics & Computers', 
+      icon: 'computer',
+      subcategories: [
+        { name: 'Laptops' }, { name: 'Desktop Computers' }, { name: 'Gaming PCs' }, { name: 'Phones' }, 
+        { name: 'Tablets' }, { name: 'Networking' }, { name: 'Cameras' }, { name: 'Smart Home' }
+      ]
+    },
+    { 
+      name: 'Fashion & Beauty', 
+      icon: 'checkroom',
+      subcategories: [
+        { name: 'Men’s Clothing' }, { name: 'Women’s Clothing' }, { name: 'Shoes' }, { name: 'Bags' }, 
+        { name: 'Jewelry' }, { name: 'Beauty Products' }, { name: 'Salons' }, { name: 'Watches' }
+      ]
+    },
+    { 
+      name: 'Events & Entertainment', 
+      icon: 'celebration',
+      subcategories: [
+        { name: 'Concerts' }, { name: 'Business Events' }, { name: 'Wedding Services' }, { name: 'DJs' }, 
+        { name: 'Party Rentals' }, { name: 'Tickets' }, { name: 'Catering' }
+      ]
+    }
   ];
 
   const handleCategorySelect = (catName: string) => {
@@ -173,7 +265,7 @@ const PostAd: React.FC = () => {
       }
 
       let finalDescription = description;
-      if (category === 'Cars') {
+      if (category.startsWith('Vehicles')) {
         const carDetails = [];
         if (carMake) carDetails.push(`Make: ${carMake}`);
         if (carModel) carDetails.push(`Model: ${carModel}`);
@@ -226,7 +318,7 @@ const PostAd: React.FC = () => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-12">
+    <div className="w-full px-4 sm:px-6 lg:px-10 py-12">
       {/* Header Stepper */}
       <div className="flex items-center justify-center mb-16 relative">
         <div className="flex flex-col items-center z-10">
@@ -341,7 +433,7 @@ const PostAd: React.FC = () => {
                   />
                 </div>
                 
-                {category === 'Cars' && (
+                {category.startsWith('Vehicles') && (
                   <div className="bg-primary/5 p-6 rounded-xl border border-primary/20 space-y-4">
                      <h3 className="font-bold text-slate-800 flex items-center gap-2 mb-2">
                        <span className="material-icons text-primary">directions_car</span>
@@ -569,7 +661,7 @@ const PostAd: React.FC = () => {
                         onChange={e => setCondition(e.target.value)}
                         className="w-full px-5 py-4 bg-slate-50 border-slate-100 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium"
                       >
-                        {category === 'Cars' ? (
+                        {category.startsWith('Vehicles') ? (
                           <>
                             <option>Excellent</option>
                             <option>Good</option>

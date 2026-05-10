@@ -61,7 +61,7 @@ const Help: React.FC = () => {
         </div>
       </section>
 
-      <main className="max-w-7xl mx-auto px-4 py-20">
+      <main className="w-full px-4 sm:px-6 lg:px-10 py-20">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-24">
           {categories.map((cat) => (
             <div 

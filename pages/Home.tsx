@@ -11,9 +11,15 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn }) => {
     { name: 'Vehicles', icon: 'directions_car' },
     { name: 'Real Estate', icon: 'home' },
     { name: 'Jobs', icon: 'work' },
+    { name: 'Local Services', icon: 'handyman' },
+    { name: 'Buy & Sell', icon: 'shopping_cart' },
+    { name: 'Business & Industrial', icon: 'business' },
+    { name: 'Community', icon: 'people' },
     { name: 'Pets', icon: 'pets' },
-    { name: 'Electronics', icon: 'laptop_mac' },
-    { name: 'More', icon: 'more_horiz' },
+    { name: 'Home & Garden', icon: 'yard' },
+    { name: 'Electronics & Computers', icon: 'computer' },
+    { name: 'Fashion & Beauty', icon: 'checkroom' },
+    { name: 'Events & Entertainment', icon: 'celebration' },
   ];
 
   const [serverMessage, setServerMessage] = useState<string>('Checking backend connection...');
@@ -75,7 +81,7 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn }) => {
         <div className="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 bg-primary-soft/10 rounded-full blur-3xl"></div>
         <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 h-80 bg-primary-light/10 rounded-full blur-3xl"></div>
         
-        <div className="max-w-7xl mx-auto px-4 text-center relative z-10">
+        <div className="w-full px-4 sm:px-6 lg:px-10 text-center relative z-10">
           <span className="inline-block py-1.5 px-4 rounded-full bg-primary-soft/20 text-primary text-[10px] font-black uppercase tracking-[0.2em] mb-6">
             Global Standards. Local Trading.
           </span>
@@ -84,12 +90,12 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn }) => {
             <span className="text-primary-light">right in your community.</span>
           </h1>
           <p className="text-base md:text-xl mb-10 max-w-2xl mx-auto leading-relaxed font-bold flex items-center justify-center gap-3">
-            <span className="w-10 h-[2px] bg-slate-300 inline-block"></span>
-            <span className="text-[#1a2e5a]">Free Ads.</span>
-            <span className="text-[#e63946] italic">Sell Fast.</span>
+            <span className="w-10 h-[2px] bg-[#e63946] inline-block"></span>
+            <span className="text-slate-800">Free Ads.</span>
+            <span className="text-[#e63946]">Sell Fast.</span>
             <span className="text-[#1a2e5a]">Buy Local.</span>
-            <span className="text-[#1a2e5a]">Canada Wide.</span>
-            <span className="w-10 h-[2px] bg-slate-300 inline-block"></span>
+            <span className="text-[#e63946]">Canada Wide.</span>
+            <span className="w-10 h-[2px] bg-[#e63946] inline-block"></span>
           </p>
           
           <div className="max-w-4xl mx-auto bg-white p-2.5 rounded-[2.5rem] shadow-2xl shadow-primary-neutral/40 border border-slate-100 flex flex-col md:flex-row gap-2">
@@ -163,7 +169,7 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn }) => {
         </div>
       </section>
 
-      <main className="max-w-7xl mx-auto px-4 py-20">
+      <main className="w-full px-4 sm:px-6 lg:px-10 py-20">
         {/* Categories */}
         <section className="mb-32">
           <div className="flex justify-between items-end mb-10">
@@ -259,7 +265,7 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn }) => {
 
       {/* Stats Section */}
       <section className="bg-white py-24 border-y border-slate-100">
-        <div className="max-w-7xl mx-auto px-4">
+        <div className="w-full px-4 sm:px-6 lg:px-10">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-12 text-center">
             {[
               { label: 'Listings', value: '120K+' },

@@ -27,7 +27,7 @@ const ItemDetails: React.FC = () => {
   if (!listing) return <div className="p-20 text-center font-bold text-red-500">Listing not found.</div>;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6 lg:py-10">
+    <div className="w-full px-4 sm:px-6 lg:px-10 py-6 lg:py-10">
       <nav className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest mb-6">
         <Link to="/" className="hover:text-primary">Home</Link>
         <span className="material-icons text-xs">chevron_right</span>

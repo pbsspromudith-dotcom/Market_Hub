@@ -46,7 +46,7 @@ const Contact: React.FC = () => {
         </div>
       </section>
 
-      <main className="max-w-7xl mx-auto px-4 py-20">
+      <main className="w-full px-4 sm:px-6 lg:px-10 py-20">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
           {/* Contact Form Container */}
           <div className="lg:col-span-7">
@@ -182,7 +182,7 @@ const Contact: React.FC = () => {
 
       {/* Final Social Bar */}
       <section className="bg-white py-12 border-t border-slate-100">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-8">
+        <div className="w-full px-4 sm:px-6 lg:px-10 flex flex-col md:flex-row justify-between items-center gap-8">
            <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Follow the HitAds journey</p>
            <div className="flex gap-4">
               {['Facebook', 'Twitter', 'Instagram', 'LinkedIn', 'YouTube', 'Discord'].map(s => (

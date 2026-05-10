@@ -162,7 +162,7 @@ const UserProfile: React.FC = () => {
   const joinDate = user.join_date ? new Date(user.join_date).toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A';
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-12">
+    <div className="w-full px-4 sm:px-6 lg:px-10 py-12">
       {/* Profile Header Card */}
       <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden mb-8">
         {/* Banner */}
