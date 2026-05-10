@@ -24,7 +24,7 @@ try {
 
     if ($user['is_verified'] == 1) {
         // Already verified, just redirect
-        header("Location: http://localhost:3000/#/login?verified=already");
+        header("Location: https://hitads.ca/#/login?verified=already");
         exit();
     }
 
@@ -33,7 +33,7 @@ try {
     $updateStmt->bindParam(':id', $user['id']);
 
     if ($updateStmt->execute()) {
-        header("Location: http://localhost:3000/#/login?verified=true");
+        header("Location: https://hitads.ca:3000/#/login?verified=true");
         exit();
     } else {
         http_response_code(500);
