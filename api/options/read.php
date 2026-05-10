@@ -11,16 +11,48 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 try {
     $optionType = isset($_GET['type']) ? $_GET['type'] : null;
 
+    $queries = [
+        "SELECT id, 'category' AS option_type, name AS option_value, NULL as parent_id FROM categories",
+        "SELECT id, 'car_make' AS option_type, name AS option_value, NULL as parent_id FROM car_makes",
+        "SELECT id, 'car_model' AS option_type, name AS option_value, make_id as parent_id FROM car_models",
+        "SELECT id, 'car_type' AS option_type, name AS option_value, NULL as parent_id FROM car_types",
+        "SELECT id, 'vehicle_type' AS option_type, name AS option_value, NULL as parent_id FROM vehicle_types",
+        "SELECT id, 'fuel_type' AS option_type, name AS option_value, NULL as parent_id FROM fuel_types",
+        "SELECT id, 'drivetrain' AS option_type, name AS option_value, NULL as parent_id FROM drivetrains"
+    ];
+
     if ($optionType) {
-        $stmt = $conn->prepare("SELECT * FROM options WHERE option_type = :type ORDER BY option_value ASC");
-        $stmt->bindParam(':type', $optionType);
-        $stmt->execute();
+        $tableMap = [
+            'category' => 'categories',
+            'car_make' => 'car_makes',
+            'car_model' => 'car_models',
+            'car_type' => 'car_types',
+            'vehicle_type' => 'vehicle_types',
+            'fuel_type' => 'fuel_types',
+            'drivetrain' => 'drivetrains'
+        ];
+        
+        if (array_key_exists($optionType, $tableMap)) {
+            $table = $tableMap[$optionType];
+            if ($optionType === 'car_model') {
+                $stmt = $conn->prepare("SELECT id, 'car_model' AS option_type, name AS option_value, make_id as parent_id FROM {$table} ORDER BY name ASC");
+            } else {
+                $stmt = $conn->prepare("SELECT id, :type AS option_type, name AS option_value, NULL as parent_id FROM {$table} ORDER BY name ASC");
+                $stmt->bindParam(':type', $optionType);
+            }
+            $stmt->execute();
+        } else {
+            $options = [];
+            goto respond;
+        }
     } else {
-        $stmt = $conn->query("SELECT * FROM options ORDER BY option_type ASC, option_value ASC");
+        $fullQuery = implode(" UNION ALL ", $queries);
+        $stmt = $conn->query($fullQuery);
     }
 
     $options = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+    respond:
     http_response_code(200);
     echo json_encode(["success" => true, "data" => $options]);
 } catch(PDOException $e) {

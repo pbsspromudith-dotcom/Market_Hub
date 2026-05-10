@@ -50,6 +50,18 @@ const PostAd: React.FC = () => {
   const [imageFiles, setImageFiles] = useState<(File | null)[]>([null, null, null, null, null]);
   const [imagePreviews, setImagePreviews] = useState<(string | null)[]>([null, null, null, null, null]);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [dbOptions, setDbOptions] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch('/api/options/read.php')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && Array.isArray(data.data)) {
+          setDbOptions(data.data);
+        }
+      })
+      .catch(console.error);
+  }, []);
 
   const handleReset = () => {
     if (window.confirm('Are you sure you want to clear the entire form?')) {
@@ -442,11 +454,38 @@ const PostAd: React.FC = () => {
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                        <div>
                          <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Make</label>
-                         <input value={carMake} onChange={e => setCarMake(e.target.value)} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm" placeholder="e.g. Toyota" />
+                         <select 
+                           value={carMake} 
+                           onChange={e => {
+                             setCarMake(e.target.value);
+                             setCarModel(''); // reset model when make changes
+                           }} 
+                           className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm text-slate-700"
+                         >
+                           <option value="">Select Make...</option>
+                           {dbOptions.filter(o => o.option_type === 'car_make').map(make => (
+                             <option key={make.id} value={make.option_value}>{make.option_value}</option>
+                           ))}
+                         </select>
                        </div>
                        <div>
                          <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Model</label>
-                         <input value={carModel} onChange={e => setCarModel(e.target.value)} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm" placeholder="e.g. Camry" />
+                         <select 
+                           value={carModel} 
+                           onChange={e => setCarModel(e.target.value)} 
+                           className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm text-slate-700"
+                           disabled={!carMake}
+                         >
+                           <option value="">Select Model...</option>
+                           {dbOptions
+                             .filter(o => {
+                               const selectedMakeObj = dbOptions.find(m => m.option_type === 'car_make' && m.option_value === carMake);
+                               return o.option_type === 'car_model' && (!selectedMakeObj || o.parent_id === selectedMakeObj.id);
+                             })
+                             .map(model => (
+                               <option key={model.id} value={model.option_value}>{model.option_value}</option>
+                             ))}
+                         </select>
                        </div>
                        <div>
                          <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Year</label>
@@ -465,11 +504,9 @@ const PostAd: React.FC = () => {
                          <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Fuel Type</label>
                          <select value={carFuelType} onChange={e => setCarFuelType(e.target.value)} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm text-slate-700">
                            <option value="">Select...</option>
-                           <option>Gas</option>
-                           <option>Diesel</option>
-                           <option>Hybrid</option>
-                           <option>Electric</option>
-                           <option>Other</option>
+                           {dbOptions.filter(o => o.option_type === 'fuel_type').map(opt => (
+                             <option key={opt.id} value={opt.option_value}>{opt.option_value}</option>
+                           ))}
                          </select>
                        </div>
                        <div>
@@ -498,10 +535,9 @@ const PostAd: React.FC = () => {
                          <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Drivetrain</label>
                          <select value={carDrivetrain} onChange={e => setCarDrivetrain(e.target.value)} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm text-slate-700">
                            <option value="">Select...</option>
-                           <option>FWD</option>
-                           <option>RWD</option>
-                           <option>AWD</option>
-                           <option>4WD</option>
+                           {dbOptions.filter(o => o.option_type === 'drivetrain').map(opt => (
+                             <option key={opt.id} value={opt.option_value}>{opt.option_value}</option>
+                           ))}
                          </select>
                        </div>
                        <div>

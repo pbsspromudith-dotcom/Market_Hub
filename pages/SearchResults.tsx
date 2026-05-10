@@ -14,11 +14,13 @@ const SearchResults: React.FC = () => {
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const initialQ = queryParams.get('q') || '';
-  const initialLoc = queryParams.get('loc') || localStorage.getItem('user_location') || '';
+  const initialCat = queryParams.get('cat') || null;
+  const initialSub = queryParams.get('sub') || null;
 
   // Filter States
   const [searchQuery, setSearchQuery] = useState(initialQ);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(initialCat);
+  const [selectedSubCategory, setSelectedSubCategory] = useState<string | null>(initialSub);
   const [locationSearch, setLocationSearch] = useState('');
   const [locationFilterActive, setLocationFilterActive] = useState(false);
   const [distance, setDistance] = useState('Within 50 km');
@@ -26,6 +28,19 @@ const SearchResults: React.FC = () => {
   const [maxPrice, setMaxPrice] = useState('');
   const [sortOption, setSortOption] = useState('Most Recent');
   const [selectedConditions, setSelectedConditions] = useState<string[]>([]);
+
+  // Sub-master Category States
+  const [makes, setMakes] = useState<any[]>([]);
+  const [models, setModels] = useState<any[]>([]);
+  const [selectedMakeId, setSelectedMakeId] = useState('');
+  const [selectedModelId, setSelectedModelId] = useState('');
+
+  // Update states if URL changes
+  useEffect(() => {
+    setSearchQuery(queryParams.get('q') || '');
+    setSelectedCategory(queryParams.get('cat') || null);
+    setSelectedSubCategory(queryParams.get('sub') || null);
+  }, [location.search]);
 
   useEffect(() => {
     setIsLoading(true);
@@ -40,6 +55,17 @@ const SearchResults: React.FC = () => {
       })
       .catch(console.error)
       .finally(() => setIsLoading(false));
+
+    // Fetch options for dropdowns
+    fetch('/api/options/read.php')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          setMakes(data.filter((opt: any) => opt.option_type === 'car_make'));
+          setModels(data.filter((opt: any) => opt.option_type === 'car_model'));
+        }
+      })
+      .catch(console.error);
   }, []);
 
   // Normalize category aliases: DB has both 'Cars' and 'Vehicles' for the same category
@@ -55,7 +81,12 @@ const SearchResults: React.FC = () => {
     // category filter — support aliases so 'Vehicles' also matches 'Cars'
     if (selectedCategory) {
       const aliases = CATEGORY_ALIASES[selectedCategory] || [selectedCategory];
-      const match = aliases.some(alias => item.category === alias || item.category.startsWith(alias + ' > '));
+      const match = aliases.some(alias => {
+        if (selectedSubCategory) {
+          return item.category === `${alias} > ${selectedSubCategory}` || item.category.startsWith(`${alias} > ${selectedSubCategory} >`);
+        }
+        return item.category === alias || item.category.startsWith(alias + ' > ');
+      });
       if (!match) return false;
     }
     
@@ -92,7 +123,95 @@ const SearchResults: React.FC = () => {
   const resetPage = () => setCurrentPage(1);
 
   return (
-    <div className="w-full px-4 sm:px-6 lg:px-10 py-8">
+    <div className="w-full bg-slate-50 min-h-screen">
+      {selectedCategory === 'Vehicles' && (
+        <div className="w-full bg-slate-900 relative flex flex-col items-center justify-center pt-24 pb-48 mb-20 overflow-visible">
+          <div className="absolute inset-0 opacity-40 z-0">
+            <img src="https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&q=80" alt="Cars" className="w-full h-full object-cover" />
+          </div>
+          
+          <div className="relative z-10 text-center text-white mb-8 px-4">
+            <h1 className="text-4xl md:text-5xl font-black mb-3 drop-shadow-lg">Find Cars for Sale</h1>
+            <p className="text-lg md:text-xl font-medium drop-shadow-md">Search thousands of ads on the local motors marketplace</p>
+          </div>
+
+          {/* Floating Filter Card */}
+          <div className="absolute -bottom-24 w-full max-w-5xl z-20 px-4">
+            <div className="bg-white rounded-xl shadow-2xl p-6 border border-slate-100">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                <div>
+                  <label className="block text-[11px] uppercase tracking-widest font-black text-slate-400 mb-2">Make</label>
+                  <select 
+                    value={selectedMakeId}
+                    onChange={(e) => { setSelectedMakeId(e.target.value); setSelectedModelId(''); }}
+                    className="w-full border-slate-200 rounded-lg text-sm bg-slate-50 py-2.5 px-3 focus:ring-primary focus:border-primary font-bold text-slate-700"
+                  >
+                    <option value="">Select make</option>
+                    {makes.map(make => (
+                      <option key={make.id} value={make.id}>{make.option_value}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[11px] uppercase tracking-widest font-black text-slate-400 mb-2">Model</label>
+                  <select 
+                    value={selectedModelId}
+                    onChange={(e) => setSelectedModelId(e.target.value)}
+                    className="w-full border-slate-200 rounded-lg text-sm bg-slate-50 py-2.5 px-3 focus:ring-primary focus:border-primary font-bold text-slate-700 disabled:opacity-50"
+                    disabled={!selectedMakeId}
+                  >
+                    <option value="">Select model</option>
+                    {models
+                      .filter(model => model.parent_id === Number(selectedMakeId))
+                      .map(model => (
+                        <option key={model.id} value={model.id}>{model.option_value}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[11px] uppercase tracking-widest font-black text-slate-400 mb-2">Min Price</label>
+                  <select className="w-full border-slate-200 rounded-lg text-sm bg-slate-50 py-2.5 px-3 focus:ring-primary focus:border-primary font-bold text-slate-700">
+                    <option>No min</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[11px] uppercase tracking-widest font-black text-slate-400 mb-2">Max Price</label>
+                  <select className="w-full border-slate-200 rounded-lg text-sm bg-slate-50 py-2.5 px-3 focus:ring-primary focus:border-primary font-bold text-slate-700">
+                    <option>No max</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                <div className="md:col-span-2">
+                  <label className="block text-[11px] uppercase tracking-widest font-black text-slate-400 mb-2">Location</label>
+                  <div className="relative">
+                    <span className="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">location_on</span>
+                    <input 
+                      type="text" 
+                      placeholder="Canada" 
+                      className="w-full border-slate-200 rounded-lg text-sm bg-slate-50 py-2.5 pl-10 pr-4 focus:ring-primary focus:border-primary font-bold text-slate-700" 
+                    />
+                  </div>
+                </div>
+                <div>
+                  <button className="w-full bg-[#62b914] hover:bg-[#52a10d] text-white font-bold py-3 rounded-lg transition-colors shadow-md">
+                    Search Cars ({filteredListings.length.toLocaleString()})
+                  </button>
+                </div>
+              </div>
+              
+              <div className="mt-4 border-t border-slate-100 pt-3">
+                <button className="text-xs font-bold text-slate-500 flex items-center gap-1 hover:text-primary transition-colors">
+                  More options <span className="material-icons text-sm">expand_more</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className={`w-full px-4 sm:px-6 lg:px-10 ${selectedCategory === 'Vehicles' ? 'pt-24 pb-8' : 'py-8'}`}>
 
       {/* Mobile Filter Toggle Bar */}
       <div className="lg:hidden flex items-center justify-between mb-4 bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
@@ -106,159 +225,9 @@ const SearchResults: React.FC = () => {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <aside className={`col-span-12 lg:col-span-3 space-y-6 ${showMobileFilters ? 'block' : 'hidden lg:block'}`}>
-          <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-lg font-bold">Filters</h2>
-              <button 
-                onClick={() => {
-                  setSearchQuery('');
-                  setSelectedCategory(null);
-                  setLocationSearch('');
-                  setLocationFilterActive(false);
-                  setDistance('Within 50 km');
-                  setMinPrice('');
-                  setMaxPrice('');
-                  setSortOption('Most Recent');
-                  setSelectedConditions([]);
-                  setSliderMaxPrice(absoluteMaxPrice);
-                  resetPage();
-                }}
-                className="text-xs font-bold text-primary uppercase tracking-widest hover:underline"
-              >
-                Clear All
-              </button>
-            </div>
-
-            <div className="space-y-8">
-              <section>
-                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Search</h3>
-                <div className="relative">
-                  <span className="material-icons absolute left-3 top-2.5 text-slate-400 text-lg">search</span>
-                  <input 
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 bg-slate-50 border-slate-200 rounded-xl text-sm focus:ring-primary focus:border-primary" 
-                    placeholder="Keywords..." 
-                    type="text" 
-                  />
-                </div>
-              </section>
-
-              <section>
-                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Category</h3>
-                <ul className="space-y-3">
-                  {['Vehicles', 'Real Estate', 'Jobs', 'Local Services', 'Buy & Sell', 'Business & Industrial', 'Community', 'Pets', 'Home & Garden', 'Electronics & Computers', 'Fashion & Beauty', 'Events & Entertainment'].map((cat) => (
-                    <li 
-                      key={cat} 
-                      onClick={() => setSelectedCategory(selectedCategory === cat ? null : cat)}
-                      className={`flex justify-between items-center text-sm font-medium cursor-pointer transition-colors ${selectedCategory === cat ? 'text-primary' : 'text-slate-600 hover:text-primary'}`}
-                    >
-                      {cat}
-                      {selectedCategory === cat && <span className="material-icons text-xs">check</span>}
-                    </li>
-                  ))}
-                </ul>
-              </section>
-
-              <section>
-                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Location</h3>
-                <div className="relative mb-3">
-                  <span className="material-icons absolute left-3 top-2.5 text-slate-400 text-lg">search</span>
-                  <input 
-                    value={locationSearch}
-                    onChange={(e) => {
-                      setLocationSearch(e.target.value);
-                      setLocationFilterActive(true);
-                      resetPage();
-                    }}
-                    className="w-full pl-10 pr-4 py-2 bg-slate-50 border-slate-200 rounded-xl text-sm focus:ring-primary focus:border-primary" 
-                    placeholder="Postal Code or City" 
-                    type="text" 
-                  />
-                </div>
-                <select 
-                  value={distance}
-                  onChange={e => setDistance(e.target.value)}
-                  className="w-full py-2 bg-slate-50 border-slate-200 rounded-xl text-sm focus:ring-primary focus:border-primary"
-                >
-                  <option value="Within 10 km">Within 10 km</option>
-                  <option value="Within 50 km">Within 50 km</option>
-                  <option value="Nationwide">Nationwide</option>
-                </select>
-              </section>
-
-              <section>
-                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Price Range</h3>
-                <div className="flex items-center gap-2">
-                  <input 
-                    value={minPrice}
-                    onChange={(e) => setMinPrice(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-50 border-slate-200 rounded-xl text-sm focus:border-primary focus:ring-primary" 
-                    placeholder="Min" 
-                    type="number" 
-                  />
-                  <span className="text-slate-300">-</span>
-                  <input 
-                    value={maxPrice}
-                    onChange={(e) => setMaxPrice(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-50 border-slate-200 rounded-xl text-sm focus:border-primary focus:ring-primary" 
-                    placeholder="Max" 
-                    type="number" 
-                  />
-                </div>
-              </section>
-
-              <section>
-                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Condition</h3>
-                <div className="space-y-3">
-                  {['New', 'Used', 'Certified'].map(cond => (
-                    <label key={cond} className="flex items-center gap-3 cursor-pointer group">
-                      <input 
-                        type="checkbox" 
-                        checked={selectedConditions.includes(cond)}
-                        onChange={(e) => {
-                          if (e.target.checked) setSelectedConditions([...selectedConditions, cond]);
-                          else setSelectedConditions(selectedConditions.filter(c => c !== cond));
-                        }}
-                        className="w-5 h-5 rounded border-slate-200 text-primary focus:ring-primary" 
-                      />
-                      <span className="text-sm font-medium text-slate-600 group-hover:text-primary transition-colors">{cond}</span>
-                    </label>
-                  ))}
-                </div>
-              </section>
-
-              <section>
-                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Max Price: ${sliderMaxPrice === absoluteMaxPrice ? `${Math.floor(absoluteMaxPrice/1000)}k+` : sliderMaxPrice.toLocaleString()}</h3>
-                <input 
-                  type="range" 
-                  min="0" 
-                  max={absoluteMaxPrice} 
-                  step="1000"
-                  value={sliderMaxPrice} 
-                  onChange={(e) => setSliderMaxPrice(parseInt(e.target.value))}
-                  className="w-full accent-primary" 
-                />
-                <div className="flex justify-between text-[10px] font-bold text-slate-400 mt-2">
-                  <span>$0</span>
-                  <span>${Math.floor(absoluteMaxPrice/1000)}k+</span>
-                </div>
-              </section>
-            </div>
-          </div>
-
-          <div className="bg-primary/5 rounded-2xl p-6 text-center border border-primary/10">
-            <span className="text-[10px] font-black text-primary uppercase tracking-widest mb-2 block">Sponsored</span>
-            <h4 className="font-bold mb-2">Sell your car today!</h4>
-            <p className="text-xs text-slate-500 mb-4 leading-relaxed">Get a free instant quote and sell in 24 hours.</p>
-            <button className="bg-slate-900 text-white font-bold py-2 px-6 rounded-lg text-xs shadow-md">Get Quote</button>
-          </div>
-        </aside>
-
+      <div className="flex flex-col gap-8">
         {/* Results Content */}
-        <main className="col-span-12 lg:col-span-9 space-y-6">
+        <main className="w-full space-y-6">
           <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <nav className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
@@ -280,42 +249,39 @@ const SearchResults: React.FC = () => {
             </div>
           </div>
 
-            <div className="space-y-4">
-              {isLoading && <p className="text-center p-10 font-bold">Loading listings...</p>}
-              {!isLoading && filteredListings.length === 0 && <p className="text-center p-10 font-bold text-slate-500">No matching listings found.</p>}
-              {filteredListings.map((item) => (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {isLoading && <p className="text-center p-10 font-bold col-span-full">Loading listings...</p>}
+              {!isLoading && filteredListings.length === 0 && <p className="text-center p-10 font-bold text-slate-500 col-span-full">No matching listings found.</p>}
+              {paginatedListings.map((item) => (
               <Link 
                 to={`/item/${item.id}`} 
                 key={item.id} 
-                className={`group flex flex-col md:flex-row bg-white rounded-2xl border overflow-hidden hover:shadow-lg transition-all ${item.is_featured ? 'border-primary/30 ring-1 ring-primary/10' : 'border-slate-200'}`}
+                className={`group flex flex-col bg-white rounded-2xl border overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all ${item.is_featured ? 'border-primary/30 ring-1 ring-primary/10' : 'border-slate-200'}`}
               >
-                <div className="w-full md:w-64 aspect-video md:aspect-square flex-shrink-0 relative bg-slate-100 flex items-center justify-center">
-                  <img src={item.image || 'https://picsum.photos/seed/default/800/600'} alt={item.title} className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-500" />
+                <div className="w-full aspect-[4/3] flex-shrink-0 relative bg-slate-100 flex items-center justify-center overflow-hidden">
+                  <img src={item.image || 'https://picsum.photos/seed/default/800/600'} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                   {item.is_featured ? (
                     <div className="absolute top-3 left-3 bg-primary text-white text-[10px] font-black px-2 py-0.5 rounded-md flex items-center gap-1 shadow-sm">
                       <span className="material-icons text-xs">star</span> FEATURED
                     </div>
                   ) : null}
                 </div>
-                <div className="p-6 flex-grow flex flex-col justify-between">
+                <div className="p-5 flex-grow flex flex-col justify-between">
                   <div>
-                    <div className="flex justify-between items-start gap-4 mb-2">
-                      <h3 className="text-xl font-bold group-hover:text-primary transition-colors leading-tight">{item.title}</h3>
-                      <span className="text-2xl font-black text-slate-900">${Number(item.price).toLocaleString()}</span>
+                    <div className="flex justify-between items-start gap-2 mb-2">
+                      <h3 className="text-base font-bold group-hover:text-primary transition-colors leading-tight line-clamp-2">{item.title}</h3>
                     </div>
-                    <p className="text-sm text-slate-500 line-clamp-2 mb-4">
-                      {item.description || "No description provided."}
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      <span className="px-3 py-1 bg-slate-100 rounded-full text-[10px] font-bold text-slate-500 uppercase tracking-wide">{item.category}</span>
+                    <span className="text-xl font-black text-slate-900 mb-2 block">${Number(item.price).toLocaleString()}</span>
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      <span className="px-2 py-1 bg-slate-100 rounded-md text-[10px] font-bold text-slate-500 uppercase tracking-wide truncate max-w-full">{item.category}</span>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-50">
-                    <div className="flex items-center gap-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                      <span className="flex items-center gap-1"><span className="material-icons text-sm">location_on</span> {item.location}</span>
-                      <span className="flex items-center gap-1"><span className="material-icons text-sm">schedule</span> {item.time || 'Recently'}</span>
+                  <div className="flex items-center justify-between mt-auto pt-4 border-t border-slate-50">
+                    <div className="flex flex-col gap-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                      <span className="flex items-center gap-1 truncate"><span className="material-icons text-[12px]">location_on</span> {item.location}</span>
+                      <span className="flex items-center gap-1"><span className="material-icons text-[12px]">schedule</span> {item.time || 'Recently'}</span>
                     </div>
-                    <button className="material-icons text-slate-300 hover:text-red-500 transition-colors">favorite_border</button>
+                    <button className="material-icons text-slate-300 hover:text-red-500 transition-colors bg-slate-50 p-1.5 rounded-full hover:bg-red-50">favorite_border</button>
                   </div>
                 </div>
               </Link>
@@ -372,6 +338,7 @@ const SearchResults: React.FC = () => {
           )}
         </main>
       </div>
+    </div>
     </div>
   );
 };

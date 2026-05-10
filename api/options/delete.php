@@ -10,14 +10,32 @@ if ($_SERVER['REQUEST_METHOD'] !== 'DELETE') {
 
 $data = json_decode(file_get_contents("php://input"));
 
-if (!isset($data->id)) {
+if (!isset($data->id) || !isset($data->option_type)) {
     http_response_code(400);
-    echo json_encode(["success" => false, "error" => "Option ID required"]);
+    echo json_encode(["success" => false, "error" => "Option ID and type required"]);
     exit();
 }
 
+$tableMap = [
+    'category' => 'categories',
+    'car_make' => 'car_makes',
+    'car_model' => 'car_models',
+    'car_type' => 'car_types',
+    'vehicle_type' => 'vehicle_types',
+    'fuel_type' => 'fuel_types',
+    'drivetrain' => 'drivetrains'
+];
+
+$type = $data->option_type;
+if (!array_key_exists($type, $tableMap)) {
+    http_response_code(400);
+    echo json_encode(["success" => false, "error" => "Invalid option type"]);
+    exit();
+}
+$table = $tableMap[$type];
+
 try {
-    $query = "DELETE FROM options WHERE id = :id";
+    $query = "DELETE FROM {$table} WHERE id = :id";
     $stmt = $conn->prepare($query);
     $stmt->bindParam(':id', $data->id);
 

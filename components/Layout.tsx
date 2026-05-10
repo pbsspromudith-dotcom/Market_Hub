@@ -20,6 +20,34 @@ const Layout: React.FC<LayoutProps> = ({
   const location = useLocation();
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [globalSearch, setGlobalSearch] = useState('');
+  const [globalLocation, setGlobalLocation] = useState('');
+  const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
+
+  const MEGA_MENU_DATA: Record<string, string[]> = {
+    'Vehicles': ['Cars & Trucks', 'SUVs', 'Pickup Trucks', 'Vans', 'Commercial Vehicles', 'Auto Parts', 'Tires & Rims', 'Motorcycles', 'ATVs', 'Boats', 'RVs', 'Trailers', 'Heavy Equipment', 'Vehicle Services'],
+    'Real Estate': ['Houses for Sale', 'Condos for Sale', 'Townhouses', 'Commercial Property', 'Land for Sale', 'Apartments for Rent', 'Basements for Rent', 'Office Space', 'Retail Space', 'Vacation Rentals', 'Room Rentals'],
+    'Jobs': ['General Labour', 'Construction', 'Driving', 'Delivery', 'Office Admin', 'Accounting', 'IT & Tech', 'Sales', 'Healthcare', 'Hospitality', 'Security', 'Cleaning', 'Customer Service', 'Remote Jobs'],
+    'Local Services': ['Movers', 'Roofing', 'Plumbing', 'Electrical', 'Renovation', 'Landscaping', 'Cleaning', 'Marketing Services', 'Web Design', 'Printing', 'Photography', 'Tutors', 'Legal Services', 'Immigration', 'Towing', 'Appliance Repair'],
+    'Buy & Sell': ['Furniture', 'Electronics', 'TVs', 'Phones', 'Computers', 'Laptops', 'Tools', 'Appliances', 'Home Décor', 'Office Furniture', 'Baby Items', 'Musical Instruments', 'Cameras', 'Collectibles', 'Jewelry'],
+    'Business & Industrial': ['Restaurant Equipment', 'Office Equipment', 'Commercial Supplies', 'Warehouse Equipment', 'POS Systems', 'Retail Fixtures', 'Manufacturing', 'Packaging Supplies', 'Forklifts', 'Construction Equipment'],
+    'Community': ['Events', 'Volunteers', 'Lost & Found', 'Local News', 'Networking', 'Artists', 'Musicians', 'Activity Partners'],
+    'Pets': ['Dogs', 'Cats', 'Fish', 'Birds', 'Pet Services', 'Pet Accessories', 'Pet Adoption'],
+    'Home & Garden': ['Furniture', 'Gardening', 'Kitchen', 'Lighting', 'Outdoor', 'Renovation Materials', 'Home Improvement'],
+    'Electronics & Computers': ['Laptops', 'Desktop Computers', 'Gaming PCs', 'Phones', 'Tablets', 'Networking', 'Cameras', 'Smart Home'],
+    'Fashion & Beauty': ['Men’s Clothing', 'Women’s Clothing', 'Shoes', 'Bags', 'Jewelry', 'Beauty Products', 'Salons', 'Watches'],
+    'Events & Entertainment': ['Concerts', 'Business Events', 'Wedding Services', 'DJs', 'Party Rentals', 'Tickets', 'Catering']
+  };
+
+  const CATEGORIES = Object.keys(MEGA_MENU_DATA);
+
+  const handleGlobalSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    let url = '/search?';
+    if (globalSearch.trim()) url += `q=${encodeURIComponent(globalSearch.trim())}&`;
+    if (globalLocation.trim()) url += `loc=${encodeURIComponent(globalLocation.trim())}&`;
+    navigate(url.replace(/&$/, ''));
+  };
 
   const isAdminPage =
     location.pathname.startsWith("/admin") ||
@@ -39,95 +67,88 @@ const Layout: React.FC<LayoutProps> = ({
     <div className="min-h-screen flex flex-col bg-slate-50">
       <header className="sticky top-0 z-50 bg-white border-b border-slate-100">
         <div className="w-full px-4 sm:px-6 lg:px-10">
-          <div className="flex justify-between items-center h-20">
+          <div className="flex justify-between items-center h-24 gap-4 lg:gap-8">
             {/* Logo Section */}
-            <Link to="/" className="flex items-center gap-1 shrink-0">
-              <img
-                src={logoImg}
-                alt="HitAds Logo"
-                className="h-16 object-contain transition-transform hover:scale-105"
-              />
-            </Link>
+            <div className="flex-1 shrink-0 flex items-center justify-start">
+              <Link to="/" className="flex items-center gap-1">
+                <img
+                  src={logoImg}
+                  alt="HitAds Logo"
+                  className="h-20 object-contain transition-transform hover:scale-105"
+                />
+              </Link>
+            </div>
+
+            {/* Desktop Search */}
+            <div className="hidden lg:flex items-center justify-center flex-[2] max-w-3xl">
+              {!isLoginPage && (
+                <form onSubmit={handleGlobalSearch} className="w-full relative flex items-center bg-white border border-slate-200 rounded-full p-1.5 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.08)] hover:shadow-[0_4px_25px_-4px_rgba(0,0,0,0.12)] focus-within:ring-4 focus-within:ring-primary/10 focus-within:border-primary transition-all duration-300">
+                  <div className="flex-1 relative flex items-center group">
+                    <span className="material-icons absolute left-4 text-slate-400 text-xl group-focus-within:text-primary transition-colors">search</span>
+                    <input
+                      type="text"
+                      value={globalSearch}
+                      onChange={(e) => setGlobalSearch(e.target.value)}
+                      placeholder="What are you looking for?"
+                      className="w-full bg-transparent border-none focus:ring-0 text-sm font-bold text-slate-800 placeholder:text-slate-400 placeholder:font-medium pl-12 pr-4 py-2.5 outline-none"
+                    />
+                  </div>
+                  <div className="w-px h-6 bg-slate-200 mx-1"></div>
+                  <div className="flex-1 relative flex items-center group">
+                    <span className="material-icons absolute left-4 text-slate-400 text-xl group-focus-within:text-primary transition-colors">location_on</span>
+                    <input
+                      type="text"
+                      value={globalLocation}
+                      onChange={(e) => setGlobalLocation(e.target.value)}
+                      placeholder="Any Location..."
+                      className="w-full bg-transparent border-none focus:ring-0 text-sm font-bold text-slate-800 placeholder:text-slate-400 placeholder:font-medium pl-12 pr-4 py-2.5 outline-none"
+                    />
+                  </div>
+                  <button type="submit" className="bg-primary hover:bg-primary-hover text-white px-8 py-3 rounded-full transition-all flex items-center justify-center font-black text-[11px] uppercase tracking-widest shadow-sm hover:shadow-md hover:-translate-y-[1px] active:translate-y-0 ml-1">
+                    Search
+                  </button>
+                </form>
+              )}
+            </div>
 
             {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center gap-8">
+            <div className="hidden md:flex items-center gap-6 flex-1 justify-end shrink-0">
               {!isLoginPage && (
-                <>
-                  <Link
-                    to="/search"
-                    className="text-sm font-bold text-slate-500 hover:text-primary transition-colors"
-                  >
-                    Browse
-                  </Link>
-                  <Link
-                    to="/post-ad"
-                    className="bg-secondary hover:bg-secondary-hover text-white px-6 py-3 rounded-full font-black text-xs uppercase tracking-widest flex items-center gap-2 transition-all shadow-lg shadow-secondary/20"
-                  >
-                    <span className="material-icons text-sm">add</span>
-                    Post
-                  </Link>
-                </>
+                <Link to="/post-ad" className="flex flex-col items-center justify-center text-slate-600 hover:text-primary transition-colors group">
+                  <span className="material-icons text-[26px] group-hover:scale-110 transition-transform">add_circle_outline</span>
+                  <span className="text-[11px] font-bold mt-1">Post an ad</span>
+                </Link>
               )}
 
-              <div className="h-8 w-px bg-slate-100 mx-2"></div>
-
-              <div className="flex items-center gap-3">
-                {isLoggedIn ? (
-                  <div className="flex items-center gap-3">
-                    {isAdmin && (
-                      <Link
-                        to="/dashboard"
-                        className="bg-slate-900 hover:bg-slate-700 text-white px-5 py-2.5 rounded-full font-black text-xs uppercase tracking-widest flex items-center gap-2 transition-all shadow-lg"
-                      >
-                        <span className="material-icons text-sm">
-                          admin_panel_settings
-                        </span>
-                        Admin Panel
-                      </Link>
-                    )}
-                    <Link
-                      to={isAdmin ? "/dashboard" : "/profile"}
-                      className="w-9 h-9 rounded-full border-2 border-primary overflow-hidden ring-2 ring-transparent hover:ring-primary/30 transition-all flex-shrink-0"
-                    >
-                      <img
-                        src={CURRENT_USER.avatar}
-                        alt="Avatar"
-                        className="w-full h-full object-cover"
-                      />
-                    </Link>
-                    <button
-                      onClick={handleLogoutClick}
-                      className="text-slate-400 hover:text-red-500 transition-colors"
-                      title="Logout"
-                    >
-                      <span className="material-icons text-lg">logout</span>
-                    </button>
-                  </div>
-                ) : !isLoginPage ? (
-                  <div className="flex items-center gap-6">
-                    <Link
-                      to="/login"
-                      className="text-xs font-black uppercase tracking-widest text-slate-400 hover:text-primary transition-colors"
-                    >
-                      Sign In
-                    </Link>
-                    <Link
-                      to="/login"
-                      state={{ mode: "register" }}
-                      className="px-6 py-3 border-2 border-primary text-primary rounded-full text-xs font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-all"
-                    >
-                      Join Free
-                    </Link>
-                  </div>
-                ) : (
-                  <Link
-                    to="/"
-                    className="text-xs font-black uppercase tracking-widest text-slate-400 hover:text-primary"
-                  >
-                    Cancel
+              {!isLoggedIn && !isLoginPage ? (
+                <>
+                  <Link to="/login" state={{ mode: "register" }} className="flex flex-col items-center justify-center text-slate-600 hover:text-primary transition-colors group">
+                    <span className="material-icons text-[26px] group-hover:scale-110 transition-transform">person_add</span>
+                    <span className="text-[11px] font-bold mt-1">Sign up</span>
                   </Link>
-                )}
-              </div>
+                  <Link to="/login" className="flex flex-col items-center justify-center text-slate-600 hover:text-primary transition-colors group">
+                    <span className="material-icons text-[26px] group-hover:scale-110 transition-transform">person</span>
+                    <span className="text-[11px] font-bold mt-1">Login</span>
+                  </Link>
+                </>
+              ) : isLoggedIn && (
+                <>
+                  {isAdmin && (
+                    <Link to="/dashboard" className="flex flex-col items-center justify-center text-slate-600 hover:text-primary transition-colors group">
+                      <span className="material-icons text-[26px] group-hover:scale-110 transition-transform">admin_panel_settings</span>
+                      <span className="text-[11px] font-bold mt-1">Admin</span>
+                    </Link>
+                  )}
+                  <Link to={isAdmin ? "/dashboard" : "/profile"} className="flex flex-col items-center justify-center text-slate-600 hover:text-primary transition-colors group">
+                    <span className="material-icons text-[26px] group-hover:scale-110 transition-transform">account_circle</span>
+                    <span className="text-[11px] font-bold mt-1">Profile</span>
+                  </Link>
+                  <button onClick={handleLogoutClick} className="flex flex-col items-center justify-center text-slate-600 hover:text-red-500 transition-colors group">
+                    <span className="material-icons text-[26px] group-hover:scale-110 transition-transform">logout</span>
+                    <span className="text-[11px] font-bold mt-1">Logout</span>
+                  </button>
+                </>
+              )}
             </div>
 
             {/* Mobile Actions */}
@@ -214,6 +235,77 @@ const Layout: React.FC<LayoutProps> = ({
                 )}
               </>
             )}
+          </div>
+        )}
+
+        {/* Secondary Navigation - Categories */}
+        {!isLoginPage && (
+          <div 
+            className="hidden md:block w-full border-t border-slate-200 bg-white shadow-sm relative z-40"
+            onMouseLeave={() => setHoveredCategory(null)}
+          >
+            <div className="w-full px-4 sm:px-6 lg:px-10 overflow-x-auto custom-scrollbar relative z-50 bg-white">
+              <ul className="flex items-center justify-center min-w-max mx-auto">
+                {CATEGORIES.map((cat, index) => (
+                  <React.Fragment key={cat}>
+                    <li onMouseEnter={() => setHoveredCategory(cat)}>
+                      <Link 
+                        to={`/search?cat=${encodeURIComponent(cat)}`}
+                        className={`block px-4 lg:px-6 py-3 text-sm font-bold transition-all whitespace-nowrap border-b-2 ${hoveredCategory === cat ? 'border-primary text-primary' : 'border-transparent text-slate-700 hover:text-primary hover:border-primary/50'}`}
+                      >
+                        {cat}
+                      </Link>
+                    </li>
+                    {index < CATEGORIES.length - 1 && (
+                      <div className="h-6 w-px bg-slate-200 shrink-0"></div>
+                    )}
+                  </React.Fragment>
+                ))}
+              </ul>
+            </div>
+
+            {/* Mega Menu Dropdown */}
+            <div 
+              className={`absolute top-full left-0 w-full bg-slate-50 border-t border-slate-200 shadow-2xl transition-all duration-300 origin-top z-40 ${hoveredCategory ? 'opacity-100 scale-y-100 visible' : 'opacity-0 scale-y-0 invisible'}`}
+            >
+              <div className="w-full max-w-[1400px] px-4 sm:px-6 lg:px-10 py-8 mx-auto flex">
+                {/* Subcategories Grid */}
+                <div className="flex-1 pr-8">
+                  <h3 className="text-sm font-black text-slate-800 mb-6 uppercase tracking-widest border-b border-slate-200 pb-3">Browse {hoveredCategory} by</h3>
+                  {hoveredCategory && MEGA_MENU_DATA[hoveredCategory] && (
+                    <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-y-5 gap-x-8">
+                      {MEGA_MENU_DATA[hoveredCategory].map((subCat) => (
+                        <Link 
+                          key={subCat}
+                          to={`/search?cat=${encodeURIComponent(hoveredCategory)}&sub=${encodeURIComponent(subCat)}`}
+                          className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors flex items-center gap-2 group"
+                        >
+                          <span className="w-1.5 h-1.5 rounded-full bg-slate-300 group-hover:bg-primary transition-colors shrink-0"></span>
+                          <span className="truncate">{subCat}</span>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                
+                {/* Discover Guides (Right Side Pane) */}
+                <div className="w-80 shrink-0 border-l border-slate-200 pl-8 hidden xl:block">
+                  <h3 className="text-sm font-black text-slate-800 mb-6 uppercase tracking-widest border-b border-slate-200 pb-3">Discover more in our guides</h3>
+                  <div className="flex flex-col gap-4 mb-8">
+                    <Link to="#" className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Buying Guides</Link>
+                    <Link to="#" className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Selling Advice</Link>
+                    <Link to="#" className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Market Trends</Link>
+                    <Link to="#" className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Safety Tips</Link>
+                  </div>
+                  <div className="rounded-xl overflow-hidden shadow-md relative group cursor-pointer">
+                    <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&q=80" alt="Guides" className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-500" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end p-4">
+                      <span className="text-white font-bold text-sm">Read the {hoveredCategory} guide</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </header>

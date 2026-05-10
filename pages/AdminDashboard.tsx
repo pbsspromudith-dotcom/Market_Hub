@@ -13,11 +13,27 @@ const AdminDashboard: React.FC = () => {
   const [options, setOptions] = useState<any[]>([]);
   const [newOptionType, setNewOptionType] = useState('category');
   const [newOptionValue, setNewOptionValue] = useState('');
+  const [newOptionParentId, setNewOptionParentId] = useState('');
   const [isCreatingOption, setIsCreatingOption] = useState(false);
   const [isDeletingOption, setIsDeletingOption] = useState<number | null>(null);
   const [users, setUsers] = useState<any[]>([]);
   const [isDeletingUser, setIsDeletingUser] = useState<number | null>(null);
   const [editingUser, setEditingUser] = useState<any>(null);
+
+  // Sub Master specific states
+  const [activeSubMaster, setActiveSubMaster] = useState('category');
+  const [subMasterSearch, setSubMasterSearch] = useState('');
+  const [isAddingOption, setIsAddingOption] = useState(false);
+
+  const subMasterTypes = [
+    { id: 'category', label: 'Categories', icon: 'category' },
+    { id: 'car_make', label: 'Car Makes', icon: 'directions_car' },
+    { id: 'car_model', label: 'Car Models', icon: 'commute' },
+    { id: 'car_type', label: 'Car Types', icon: 'local_taxi' },
+    { id: 'vehicle_type', label: 'Vehicle Types', icon: 'two_wheeler' },
+    { id: 'fuel_type', label: 'Fuel Types', icon: 'local_gas_station' },
+    { id: 'drivetrain', label: 'Drivetrains', icon: 'settings' }
+  ];
 
   // Email Config State
   const [emailConfig, setEmailConfig] = useState({
@@ -185,11 +201,19 @@ const AdminDashboard: React.FC = () => {
       const response = await fetch('/api/options/create.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ option_type: newOptionType, option_value: newOptionValue.trim() }),
+        body: JSON.stringify({ 
+          option_type: activeSubMaster, 
+          option_value: newOptionValue.trim(),
+          parent_id: activeSubMaster === 'car_model' ? newOptionParentId : null
+        }),
       });
       const data = await response.json();
       if (data.success) {
         setNewOptionValue('');
+        if (activeSubMaster !== 'car_model') {
+           setNewOptionParentId('');
+        }
+        setIsAddingOption(false);
         fetchOptions();
       } else {
         alert(data.error || 'Failed to create option');
@@ -201,14 +225,33 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
-  const handleDeleteOption = async (id: number) => {
+  const handleUpdateParentId = async (id: number, optionType: string, parentId: string) => {
+    try {
+      const response = await fetch('/api/options/update.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, option_type: optionType, parent_id: parentId }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        fetchOptions();
+      } else {
+        alert(data.error || 'Failed to update mapping');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error updating mapping');
+    }
+  };
+
+  const handleDeleteOption = async (id: number, optionType: string) => {
     if (!window.confirm('Are you sure you want to delete this option?')) return;
     setIsDeletingOption(id);
     try {
       const response = await fetch('/api/options/delete.php', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id }),
+        body: JSON.stringify({ id, option_type: optionType }),
       });
       const data = await response.json();
       if (data.success) {
@@ -685,81 +728,163 @@ const AdminDashboard: React.FC = () => {
         </div>
       )}
 
-      <div className="mt-10 bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm">
-        <div className="mb-8">
-          <h2 className="text-xl font-black">System Configuration</h2>
-          <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Manage global categories, car makes, models, and types</p>
+      {/* System Configuration - Redesigned Sub Masters */}
+      <div className="mt-10 bg-white p-6 sm:p-8 rounded-[2rem] border border-slate-200 shadow-sm flex flex-col md:flex-row gap-8">
+        {/* Sidebar for Sub Masters */}
+        <div className="w-full md:w-64 flex-shrink-0">
+          <div className="mb-6">
+            <h2 className="text-xl font-black">Sub Masters</h2>
+            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Manage global lookups</p>
+          </div>
+          <ul className="space-y-1">
+            {subMasterTypes.map(type => (
+              <li key={type.id}>
+                <button
+                  onClick={() => {
+                    setActiveSubMaster(type.id);
+                    setIsAddingOption(false);
+                    setSubMasterSearch('');
+                  }}
+                  className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold transition-all flex items-center gap-3 ${activeSubMaster === type.id ? 'bg-primary text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'}`}
+                >
+                  <span className="material-icons text-[18px] opacity-75">{type.icon}</span>
+                  {type.label}
+                </button>
+              </li>
+            ))}
+          </ul>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-          <div className="lg:col-span-1 border-r border-slate-100 pr-0 lg:pr-8">
-            <h3 className="font-bold text-slate-800 mb-6 flex items-center gap-2">
-              <span className="material-icons text-primary text-sm">add_circle</span>
-              Add New Option
+        {/* Main Content Area */}
+        <div className="flex-1 min-w-0 flex flex-col">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-100">
+            <h3 className="font-black text-lg text-slate-800 flex items-center gap-2">
+              {subMasterTypes.find(t => t.id === activeSubMaster)?.label} List
             </h3>
-            <form onSubmit={handleCreateOption} className="space-y-4">
-              <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Option Type</label>
-                <select 
-                  value={newOptionType}
-                  onChange={e => setNewOptionType(e.target.value)}
-                  className="w-full px-4 py-3 bg-slate-50 border-slate-100 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium"
-                >
-                  <option value="category">Category</option>
-                  <option value="car_make">Car Make</option>
-                  <option value="car_model">Car Model</option>
-                  <option value="car_type">Car Type</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Option Value</label>
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <span className="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">search</span>
                 <input 
-                  type="text"
-                  required
-                  value={newOptionValue}
-                  onChange={e => setNewOptionValue(e.target.value)}
-                  className="w-full px-4 py-3 bg-slate-50 border-slate-100 rounded-xl focus:ring-primary focus:border-primary text-sm"
-                  placeholder="e.g. Real Estate, Toyota, Sedan..."
+                  type="text" 
+                  placeholder="Search..." 
+                  value={subMasterSearch}
+                  onChange={(e) => setSubMasterSearch(e.target.value)}
+                  className="pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm w-48 transition-all focus:w-64"
                 />
               </div>
               <button 
-                type="submit"
-                disabled={!newOptionValue.trim() || isCreatingOption}
-                className="w-full bg-slate-900 hover:bg-slate-800 text-white font-black py-4 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 text-xs uppercase tracking-widest"
+                onClick={() => setIsAddingOption(!isAddingOption)}
+                className="bg-slate-900 hover:bg-slate-800 text-white p-2 sm:px-4 sm:py-2 rounded-lg font-bold text-sm transition-all flex items-center gap-2"
               >
-                {isCreatingOption ? 'Saving...' : 'Save Option'}
+                <span className="material-icons text-[18px]">{isAddingOption ? 'close' : 'add'}</span>
+                <span className="hidden sm:inline">{isAddingOption ? 'Cancel' : 'Add New'}</span>
               </button>
-            </form>
+            </div>
           </div>
 
-          <div className="lg:col-span-2">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-              {['category', 'car_make', 'car_model', 'car_type'].map(type => (
-                <div key={type}>
-                  <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2 pb-2 border-b border-slate-100">
-                    <span className="w-2 h-2 rounded-full bg-slate-300"></span> 
-                    {type.replace('_', ' ')}s
-                  </h4>
-                  <ul className="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
-                    {options.filter(o => o.option_type === type).length === 0 && (
-                      <li className="text-xs text-slate-400 italic">No items found</li>
-                    )}
-                    {options.filter(o => o.option_type === type).map((opt) => (
-                      <li key={opt.id} className="group flex items-center justify-between px-4 py-2 bg-slate-50 hover:bg-primary/5 rounded-lg border border-transparent hover:border-primary/10 transition-all">
-                        <span className="text-sm font-bold text-slate-700">{opt.option_value}</span>
-                        <button 
-                          onClick={() => handleDeleteOption(opt.id)}
-                          disabled={isDeletingOption === opt.id}
-                          className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-600 transition-all disabled:opacity-50"
-                        >
-                          <span className="material-icons text-[16px]">remove_circle</span>
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
+          {/* Add Form */}
+          {isAddingOption && (
+            <div className="mb-6 p-5 bg-slate-50 rounded-xl border border-slate-200">
+              <form onSubmit={handleCreateOption} className="flex flex-col sm:flex-row gap-4 items-end">
+                {activeSubMaster === 'car_model' && (
+                  <div className="w-full sm:w-1/3">
+                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Car Make <span className="text-red-500">*</span></label>
+                    <select 
+                      required
+                      value={newOptionParentId}
+                      onChange={e => setNewOptionParentId(e.target.value)}
+                      className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm font-medium"
+                    >
+                      <option value="">-- Choose --</option>
+                      {options.filter(o => o.option_type === 'car_make').map(make => (
+                        <option key={make.id} value={make.id}>{make.option_value}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+                <div className="flex-1 w-full">
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 px-1">{subMasterTypes.find(t => t.id === activeSubMaster)?.label.slice(0,-1)} Name <span className="text-red-500">*</span></label>
+                  <input 
+                    type="text"
+                    required
+                    value={newOptionValue}
+                    onChange={e => setNewOptionValue(e.target.value)}
+                    className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm"
+                    placeholder="Enter value..."
+                  />
                 </div>
-              ))}
+                <button 
+                  type="submit"
+                  disabled={!newOptionValue.trim() || isCreatingOption}
+                  className="w-full sm:w-auto bg-primary hover:bg-primary-hover text-white px-6 py-2 rounded-lg font-bold text-sm transition-all shadow-md disabled:opacity-50"
+                >
+                  {isCreatingOption ? 'Saving...' : 'Save'}
+                </button>
+              </form>
             </div>
+          )}
+
+          {/* Data Grid Table */}
+          <div className="overflow-x-auto rounded-xl border border-slate-200">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-200">
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-16">ID</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{subMasterTypes.find(t => t.id === activeSubMaster)?.label.slice(0,-1)} Name</th>
+                  {activeSubMaster === 'car_model' && (
+                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Mapped Make</th>
+                  )}
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-24 text-center">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {options
+                  .filter(o => o.option_type === activeSubMaster)
+                  .filter(o => subMasterSearch ? o.option_value.toLowerCase().includes(subMasterSearch.toLowerCase()) : true)
+                  .map(opt => {
+                    const parentOpt = activeSubMaster === 'car_model' && opt.parent_id ? options.find(p => p.id === opt.parent_id) : null;
+                    return (
+                      <tr key={opt.id} className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors group">
+                        <td className="px-6 py-4 text-xs font-bold text-slate-400">#{opt.id}</td>
+                        <td className="px-6 py-4 text-sm font-bold text-slate-700">{opt.option_value}</td>
+                        {activeSubMaster === 'car_model' && (
+                          <td className="px-6 py-4 text-sm font-medium text-slate-500">
+                            <select 
+                              value={opt.parent_id || ''} 
+                              onChange={(e) => handleUpdateParentId(opt.id, opt.option_type, e.target.value)}
+                              className="px-3 py-1 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-xs text-slate-700 w-32"
+                            >
+                              <option value="">-- Unmapped --</option>
+                              {options.filter(o => o.option_type === 'car_make').map(make => (
+                                <option key={make.id} value={make.id}>{make.option_value}</option>
+                              ))}
+                            </select>
+                          </td>
+                        )}
+                        <td className="px-6 py-4 text-center">
+                          <button 
+                            onClick={() => handleDeleteOption(opt.id, opt.option_type)}
+                            disabled={isDeletingOption === opt.id}
+                            className="text-slate-300 hover:text-red-500 transition-colors p-1 rounded-md hover:bg-red-50 disabled:opacity-50"
+                            title="Delete"
+                          >
+                            <span className="material-icons text-[18px]">delete_outline</span>
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
+                }
+                {options.filter(o => o.option_type === activeSubMaster && (!subMasterSearch || o.option_value.toLowerCase().includes(subMasterSearch.toLowerCase()))).length === 0 && (
+                  <tr>
+                    <td colSpan={activeSubMaster === 'car_model' ? 4 : 3} className="px-6 py-12 text-center text-slate-400">
+                      <span className="material-icons text-4xl mb-2 opacity-50">search_off</span>
+                      <p className="text-sm font-medium">No items found</p>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>

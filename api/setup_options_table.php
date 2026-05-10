@@ -1,95 +1,123 @@
 <?php
 // api/setup_options_table.php
-$host = "127.0.0.1";
-$username = "root";
-$password = "";
+require_once 'config.php';
 
 try {
-    $conn = new PDO("mysql:host=" . $host, $username, $password);
-    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-    // Create database if it doesn't exist
-    $conn->exec("CREATE DATABASE IF NOT EXISTS CNMarketHub CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
-    $conn->exec("USE CNMarketHub");
-
-    // Read and execute the huge SQL dump
-    $sql_file = __DIR__ . '/../database/markethub.sql';
-    $sql_dump = file_exists($sql_file) ? file_get_contents($sql_file) : false;
-    if ($sql_dump) {
-        $conn->exec($sql_dump);
-        echo "Database imported successfully.<br/>";
-    }
-
-    $sql = "CREATE TABLE IF NOT EXISTS options (
+    // 1. Categories Table
+    $conn->exec("CREATE TABLE IF NOT EXISTS categories (
         id INT AUTO_INCREMENT PRIMARY KEY,
-        option_type VARCHAR(100) NOT NULL,
-        option_value VARCHAR(255) NOT NULL,
+        name VARCHAR(255) NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )";
-
-    $conn->exec($sql);
+    )");
+    
+    // 2. Car Makes Table
+    $conn->exec("CREATE TABLE IF NOT EXISTS car_makes (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )");
+    
+    // 3. Car Models Table (with foreign key to car_makes)
+    $conn->exec("CREATE TABLE IF NOT EXISTS car_models (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        make_id INT DEFAULT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (make_id) REFERENCES car_makes(id) ON DELETE CASCADE
+    )");
+    
+    // 4. Car Types Table
+    $conn->exec("CREATE TABLE IF NOT EXISTS car_types (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )");
+    
+    // 5. Vehicle Types Table
+    $conn->exec("CREATE TABLE IF NOT EXISTS vehicle_types (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )");
+    
+    // 6. Fuel Types Table
+    $conn->exec("CREATE TABLE IF NOT EXISTS fuel_types (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )");
+    
+    // 7. Drivetrains Table
+    $conn->exec("CREATE TABLE IF NOT EXISTS drivetrains (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )");
 
     // Create Main Menu Items table
     $sql_main_menu = "CREATE TABLE IF NOT EXISTS main_menu_master (
         id INT AUTO_INCREMENT PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
         icon VARCHAR(100) DEFAULT NULL,
-        url VARCHAR(255) DEFAULT NULL,
-        status TINYINT(1) DEFAULT 1,
-        display_order INT DEFAULT 0,
+        sort_order INT DEFAULT 0,
+        is_active BOOLEAN DEFAULT TRUE,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )";
     $conn->exec($sql_main_menu);
 
-    // Create Sub Menu Items table
-    $sql_sub_menu = "CREATE TABLE IF NOT EXISTS sub_menu_master (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        main_menu_id INT NOT NULL,
-        name VARCHAR(255) NOT NULL,
-        url VARCHAR(255) DEFAULT NULL,
-        status TINYINT(1) DEFAULT 1,
-        display_order INT DEFAULT 0,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (main_menu_id) REFERENCES main_menu_master(id) ON DELETE CASCADE
-    )";
-    $conn->exec($sql_sub_menu);
+    // Insert Default Values (Only if tables are empty)
     
-    // Insert some defaults if table is empty
-    $checkStmt = $conn->query("SELECT COUNT(*) FROM options");
-    if ($checkStmt->fetchColumn() == 0) {
-        $defaults = [
-            "('category', 'Vehicles')",
-            "('category', 'Real Estate')",
-            "('category', 'Jobs')",
-            "('category', 'Local Services')",
-            "('category', 'Buy & Sell')",
-            "('category', 'Business & Industrial')",
-            "('category', 'Community')",
-            "('category', 'Pets')",
-            "('category', 'Home & Garden')",
-            "('category', 'Electronics & Computers')",
-            "('category', 'Fashion & Beauty')",
-            "('category', 'Events & Entertainment')",
-            "('car_make', 'Toyota')",
-            "('car_make', 'Honda')",
-            "('car_make', 'Ford')",
-            "('car_make', 'BMW')",
-            "('car_model', 'Civic')",
-            "('car_model', 'Corolla')",
-            "('car_model', 'F-150')",
-            "('car_model', 'M4')",
-            "('car_type', 'Sedan')",
-            "('car_type', 'SUV')",
-            "('car_type', 'Truck')"
-        ];
-        
-        $conn->exec("INSERT INTO options (option_type, option_value) VALUES " . implode(",", $defaults));
-        echo "Table created and populated with defaults successfully.";
-    } else {
-        echo "Table already exists and has data.";
+    $check_cat = $conn->query("SELECT COUNT(*) FROM categories")->fetchColumn();
+    if ($check_cat == 0) {
+        $conn->exec("INSERT INTO categories (name) VALUES ('Cars'), ('Real Estate'), ('Electronics'), ('Home & Garden'), ('Jobs')");
     }
 
+    $check_makes = $conn->query("SELECT COUNT(*) FROM car_makes")->fetchColumn();
+    if ($check_makes == 0) {
+        $conn->exec("INSERT INTO car_makes (name) VALUES ('Toyota'), ('Honda'), ('Ford'), ('BMW')");
+    }
+
+    $check_models = $conn->query("SELECT COUNT(*) FROM car_models")->fetchColumn();
+    if ($check_models == 0) {
+        $conn->exec("INSERT INTO car_models (name) VALUES ('Civic'), ('Corolla'), ('F-150'), ('M4')");
+    }
+
+    $check_types = $conn->query("SELECT COUNT(*) FROM car_types")->fetchColumn();
+    if ($check_types == 0) {
+        $conn->exec("INSERT INTO car_types (name) VALUES ('Sedan'), ('SUV'), ('Truck')");
+    }
+
+    $check_vtypes = $conn->query("SELECT COUNT(*) FROM vehicle_types")->fetchColumn();
+    if ($check_vtypes == 0) {
+        $conn->exec("INSERT INTO vehicle_types (name) VALUES ('Car'), ('Motorcycle'), ('Van'), ('Bus'), ('Heavy Equipment')");
+    }
+
+    $check_ftypes = $conn->query("SELECT COUNT(*) FROM fuel_types")->fetchColumn();
+    if ($check_ftypes == 0) {
+        $conn->exec("INSERT INTO fuel_types (name) VALUES ('Gas'), ('Diesel'), ('Hybrid'), ('Electric'), ('Other')");
+    }
+
+    $check_drivetrains = $conn->query("SELECT COUNT(*) FROM drivetrains")->fetchColumn();
+    if ($check_drivetrains == 0) {
+        $conn->exec("INSERT INTO drivetrains (name) VALUES ('FWD'), ('RWD'), ('AWD'), ('4WD')");
+    }
+
+    $check_menus = $conn->query("SELECT COUNT(*) FROM main_menu_master")->fetchColumn();
+    if ($check_menus == 0) {
+        $menus = [
+            "('Home', 'home', 1)",
+            "('Vehicles', 'directions_car', 2)",
+            "('Properties', 'real_estate_agent', 3)",
+            "('Electronics', 'devices', 4)",
+            "('Jobs', 'work', 5)"
+        ];
+        $conn->exec("INSERT INTO main_menu_master (name, icon, sort_order) VALUES " . implode(",", $menus));
+    }
+
+    echo "<h3>System Configuration Tables Created & Initialized Successfully!</h3>";
+    
 } catch(PDOException $e) {
-    echo "Error creating table: " . $e->getMessage();
+    echo "<h3>Error Initializing Tables</h3>";
+    echo "<p>" . $e->getMessage() . "</p>";
 }
 ?>
