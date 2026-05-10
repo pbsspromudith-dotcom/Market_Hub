@@ -60,9 +60,9 @@ const SearchResults: React.FC = () => {
     fetch('/api/options/read.php')
       .then(res => res.json())
       .then(data => {
-        if (Array.isArray(data)) {
-          setMakes(data.filter((opt: any) => opt.option_type === 'car_make'));
-          setModels(data.filter((opt: any) => opt.option_type === 'car_model'));
+        if (data && data.success && Array.isArray(data.data)) {
+          setMakes(data.data.filter((opt: any) => opt.option_type === 'car_make'));
+          setModels(data.data.filter((opt: any) => opt.option_type === 'car_model'));
         }
       })
       .catch(console.error);
