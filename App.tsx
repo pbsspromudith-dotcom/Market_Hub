@@ -12,6 +12,14 @@ import Login from './pages/Login';
 import AdminLogin from './pages/AdminLogin';
 import Help from './pages/Help';
 import Contact from './pages/Contact';
+import BuyingGuides from './pages/BuyingGuides';
+import SafetyTips from './pages/SafetyTips';
+import SellingAdvice from './pages/SellingAdvice';
+import MarketTrends from './pages/MarketTrends';
+
+
+
+
 import LocationPrompt from './components/LocationPrompt';
 import ChatBot from './components/ChatBot';
 import AdminRoute from './components/AdminRoute';
@@ -78,6 +86,14 @@ const App: React.FC = () => {
           <Route path="/admin" element={<AdminRoute isAdmin={isAdmin}><AdminDashboard /></AdminRoute>} />
           <Route path="/help" element={<Help />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/buying-guides" element={<BuyingGuides />} />
+          <Route path="/safety-tips" element={<SafetyTips />} />
+          <Route path="/selling-advice" element={<SellingAdvice />} />
+          <Route path="/market-trends" element={<MarketTrends />} />
+
+
+
+
         </Routes>
       </Layout>
     </Router>

@@ -292,10 +292,14 @@ const Layout: React.FC<LayoutProps> = ({
                 <div className="w-80 shrink-0 border-l border-slate-200 pl-8 hidden xl:block">
                   <h3 className="text-sm font-black text-slate-800 mb-6 uppercase tracking-widest border-b border-slate-200 pb-3">Discover more in our guides</h3>
                   <div className="flex flex-col gap-4 mb-8">
-                    <Link to="#" className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Buying Guides</Link>
-                    <Link to="#" className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Selling Advice</Link>
-                    <Link to="#" className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Market Trends</Link>
-                    <Link to="#" className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Safety Tips</Link>
+                    <Link to="/buying-guides" className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Buying Guides</Link>
+
+                    <Link to="/selling-advice" className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Selling Advice</Link>
+
+                    <Link to="/market-trends" className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Market Trends</Link>
+
+                    <Link to="/safety-tips" className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Safety Tips</Link>
+
                   </div>
                   <div className="rounded-xl overflow-hidden shadow-md relative group cursor-pointer">
                     <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&q=80" alt="Guides" className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-500" />
@@ -384,6 +388,18 @@ const Layout: React.FC<LayoutProps> = ({
                       Trust & Safety
                     </Link>
                   </li>
+                  <li>
+                    <Link
+                      to="/buying-guides"
+                      onClick={() =>
+                        window.scrollTo({ top: 0, behavior: "smooth" })
+                      }
+                      className="text-sm font-bold text-slate-600 hover:text-primary transition-colors"
+                    >
+                      Buying Guides
+                    </Link>
+                  </li>
+
                 </ul>
               </div>
             </div>
@@ -394,7 +410,7 @@ const Layout: React.FC<LayoutProps> = ({
               </div>
               <div className="flex gap-8 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                 <Link
-                  to="/help"
+                  to="/safety-tips"
                   onClick={() =>
                     window.scrollTo({ top: 0, behavior: "smooth" })
                   }
@@ -402,6 +418,7 @@ const Layout: React.FC<LayoutProps> = ({
                 >
                   Safety Guidelines
                 </Link>
+
                 <Link
                   to="/contact"
                   onClick={() =>
