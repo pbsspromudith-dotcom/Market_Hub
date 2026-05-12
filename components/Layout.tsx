@@ -74,8 +74,9 @@ const Layout: React.FC<LayoutProps> = ({
                 <img
                   src={logoImg}
                   alt="HitAds Logo"
-                  className="h-20 object-contain transition-transform hover:scale-105"
+                  className="h-20 object-contain transition-transform hover:scale-105 mix-blend-multiply"
                 />
+
               </Link>
             </div>
 
@@ -323,8 +324,9 @@ const Layout: React.FC<LayoutProps> = ({
             <img
               src={footerImg}
               alt=""
-              className="max-h-[50%] md:max-h-[65%] object-contain"
+              className="max-h-[50%] md:max-h-[65%] object-contain mix-blend-multiply opacity-50"
             />
+
           </div>
 
           <div className="relative z-10 w-full px-4 sm:px-6 lg:px-10">
@@ -349,57 +351,75 @@ const Layout: React.FC<LayoutProps> = ({
               </a>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16 text-center md:text-left">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-8 mb-16">
+              {/* Column 1: Tips & Help */}
               <div className="space-y-6">
-                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
-                  Support Hub
-                </h4>
-                <ul className="space-y-4">
-                  <li>
-                    <Link
-                      to="/help"
-                      onClick={() =>
-                        window.scrollTo({ top: 0, behavior: "smooth" })
-                      }
-                      className="text-sm font-bold text-slate-600 hover:text-primary transition-colors"
-                    >
-                      Help Center
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      to="/contact"
-                      onClick={() =>
-                        window.scrollTo({ top: 0, behavior: "smooth" })
-                      }
-                      className="text-sm font-bold text-slate-600 hover:text-primary transition-colors"
-                    >
-                      Contact Us
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      to="/help"
-                      onClick={() =>
-                        window.scrollTo({ top: 0, behavior: "smooth" })
-                      }
-                      className="text-sm font-bold text-slate-600 hover:text-primary transition-colors"
-                    >
-                      Trust & Safety
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      to="/buying-guides"
-                      onClick={() =>
-                        window.scrollTo({ top: 0, behavior: "smooth" })
-                      }
-                      className="text-sm font-bold text-slate-600 hover:text-primary transition-colors"
-                    >
-                      Buying Guides
-                    </Link>
-                  </li>
+                <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em]">Tips & Help</h4>
+                <ul className="space-y-3">
+                  <li><Link to="/help" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Help Center</Link></li>
+                  <li><Link to="/contact" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Contact Us</Link></li>
+                  <li><Link to="/buying-guides" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Buying Guides</Link></li>
+                  <li><Link to="/safety-tips" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Safety Guidelines</Link></li>
 
+                  <li><Link to="/selling-advice" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Selling Advice</Link></li>
+                  <li><Link to="/market-trends" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Market Trends</Link></li>
+                </ul>
+              </div>
+
+              {/* Column 2: Legal */}
+              <div className="space-y-6">
+                <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em]">Legal</h4>
+                <ul className="space-y-3">
+                  <li><Link to="/terms" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Terms & Conditions</Link></li>
+
+                  <li><Link to="#" className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Privacy Policy</Link></li>
+                  <li><Link to="#" className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Posting Policy</Link></li>
+                  <li><Link to="#" className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Cookie Policy</Link></li>
+                </ul>
+              </div>
+
+              {/* Column 3: For Business */}
+              <div className="space-y-6">
+                <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em]">For Business</h4>
+                <ul className="space-y-3">
+                  <li><Link to="#" className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Business Advertising</Link></li>
+                  <li><Link to="#" className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Promote Your Service</Link></li>
+                  <li><Link to="/search?q=Business%20Equipment" className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Business Equipment</Link></li>
+                </ul>
+              </div>
+
+              {/* Column 4: Explore */}
+              <div className="space-y-6">
+                <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em]">Explore</h4>
+                <ul className="space-y-3">
+                  <li><Link to="/search" className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">All Categories</Link></li>
+                  <li><Link to="#" className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">All Locations</Link></li>
+                  <li><Link to="/search?q=Free" className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Free Stuff</Link></li>
+                  <li><Link to="#" className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Blog & News</Link></li>
+                </ul>
+              </div>
+
+              {/* Column 5: HitAds Vehicles */}
+              <div className="space-y-6">
+                <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em]">HitAds Vehicles</h4>
+                <ul className="space-y-3">
+                  <li><Link to="/search?q=Cars" className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Cars & Trucks</Link></li>
+                  <li><Link to="/search?q=SUV" className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">SUVs</Link></li>
+                  <li><Link to="/search?q=Pickup" className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Pickup Trucks</Link></li>
+                  <li><Link to="/search?q=Vans" className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Vans</Link></li>
+                  <li><Link to="/search?q=Parts" className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Auto Parts</Link></li>
+                </ul>
+              </div>
+
+              {/* Column 6: Top Categories */}
+              <div className="space-y-6">
+                <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em]">Top Categories</h4>
+                <ul className="space-y-3">
+                  <li><Link to="/search?q=Real%20Estate" className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Real Estate</Link></li>
+                  <li><Link to="/search?q=Jobs" className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Jobs</Link></li>
+                  <li><Link to="/search?q=Services" className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Local Services</Link></li>
+                  <li><Link to="/search?q=Buy" className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Buy & Sell</Link></li>
+                  <li><Link to="/search?q=Pets" className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Pets</Link></li>
                 </ul>
               </div>
             </div>
@@ -410,16 +430,6 @@ const Layout: React.FC<LayoutProps> = ({
               </div>
               <div className="flex gap-8 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                 <Link
-                  to="/safety-tips"
-                  onClick={() =>
-                    window.scrollTo({ top: 0, behavior: "smooth" })
-                  }
-                  className="hover:text-primary transition-colors"
-                >
-                  Safety Guidelines
-                </Link>
-
-                <Link
                   to="/contact"
                   onClick={() =>
                     window.scrollTo({ top: 0, behavior: "smooth" })
@@ -428,6 +438,7 @@ const Layout: React.FC<LayoutProps> = ({
                 >
                   Contact
                 </Link>
+
               </div>
             </div>
           </div>

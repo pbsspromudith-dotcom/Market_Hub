@@ -16,6 +16,8 @@ import BuyingGuides from './pages/BuyingGuides';
 import SafetyTips from './pages/SafetyTips';
 import SellingAdvice from './pages/SellingAdvice';
 import MarketTrends from './pages/MarketTrends';
+import Terms from './pages/Terms';
+
 
 
 
@@ -90,6 +92,8 @@ const App: React.FC = () => {
           <Route path="/safety-tips" element={<SafetyTips />} />
           <Route path="/selling-advice" element={<SellingAdvice />} />
           <Route path="/market-trends" element={<MarketTrends />} />
+          <Route path="/terms" element={<Terms />} />
+
 
 
 
