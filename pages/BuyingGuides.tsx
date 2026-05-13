@@ -1,6 +1,7 @@
 import React from 'react';
 
 const BuyingGuides: React.FC = () => {
+  const [activeSection, setActiveSection] = React.useState<string | null>(null);
   const sections = [
     {
       id: 'general-safety',
@@ -384,7 +385,29 @@ const BuyingGuides: React.FC = () => {
     }
   ];
 
-  const [activeSection, setActiveSection] = React.useState<string | null>(null);
+  React.useEffect(() => {
+    const hash = window.location.hash;
+    if (hash) {
+      const id = hash.replace("#", "").split("#")[1] || hash.replace("#", "");
+      if (id) {
+        setTimeout(() => {
+          setActiveSection(id);
+          const el = document.getElementById(id);
+          if (el) {
+            const offset = 160;
+            const bodyRect = document.body.getBoundingClientRect().top;
+            const elementRect = el.getBoundingClientRect().top;
+            const elementPosition = elementRect - bodyRect;
+            const offsetPosition = elementPosition - offset;
+            window.scrollTo({
+              top: offsetPosition,
+              behavior: 'smooth'
+            });
+          }
+        }, 500);
+      }
+    }
+  }, []);
 
   return (
     <div className="bg-slate-50 min-h-screen">

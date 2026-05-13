@@ -20,33 +20,172 @@ const Layout: React.FC<LayoutProps> = ({
   const location = useLocation();
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [globalSearch, setGlobalSearch] = useState('');
-  const [globalLocation, setGlobalLocation] = useState('');
+  const [globalSearch, setGlobalSearch] = useState("");
+  const [globalLocation, setGlobalLocation] = useState("");
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
 
   const MEGA_MENU_DATA: Record<string, string[]> = {
-    'Vehicles': ['Cars & Trucks', 'SUVs', 'Pickup Trucks', 'Vans', 'Commercial Vehicles', 'Auto Parts', 'Tires & Rims', 'Motorcycles', 'ATVs', 'Boats', 'RVs', 'Trailers', 'Heavy Equipment', 'Vehicle Services'],
-    'Real Estate': ['Houses for Sale', 'Condos for Sale', 'Townhouses', 'Commercial Property', 'Land for Sale', 'Apartments for Rent', 'Basements for Rent', 'Office Space', 'Retail Space', 'Vacation Rentals', 'Room Rentals'],
-    'Jobs': ['General Labour', 'Construction', 'Driving', 'Delivery', 'Office Admin', 'Accounting', 'IT & Tech', 'Sales', 'Healthcare', 'Hospitality', 'Security', 'Cleaning', 'Customer Service', 'Remote Jobs'],
-    'Local Services': ['Movers', 'Roofing', 'Plumbing', 'Electrical', 'Renovation', 'Landscaping', 'Cleaning', 'Marketing Services', 'Web Design', 'Printing', 'Photography', 'Tutors', 'Legal Services', 'Immigration', 'Towing', 'Appliance Repair'],
-    'Buy & Sell': ['Furniture', 'Electronics', 'TVs', 'Phones', 'Computers', 'Laptops', 'Tools', 'Appliances', 'Home Décor', 'Office Furniture', 'Baby Items', 'Musical Instruments', 'Cameras', 'Collectibles', 'Jewelry'],
-    'Business & Industrial': ['Restaurant Equipment', 'Office Equipment', 'Commercial Supplies', 'Warehouse Equipment', 'POS Systems', 'Retail Fixtures', 'Manufacturing', 'Packaging Supplies', 'Forklifts', 'Construction Equipment'],
-    'Community': ['Events', 'Volunteers', 'Lost & Found', 'Local News', 'Networking', 'Artists', 'Musicians', 'Activity Partners'],
-    'Pets': ['Dogs', 'Cats', 'Fish', 'Birds', 'Pet Services', 'Pet Accessories', 'Pet Adoption'],
-    'Home & Garden': ['Furniture', 'Gardening', 'Kitchen', 'Lighting', 'Outdoor', 'Renovation Materials', 'Home Improvement'],
-    'Electronics & Computers': ['Laptops', 'Desktop Computers', 'Gaming PCs', 'Phones', 'Tablets', 'Networking', 'Cameras', 'Smart Home'],
-    'Fashion & Beauty': ['Men’s Clothing', 'Women’s Clothing', 'Shoes', 'Bags', 'Jewelry', 'Beauty Products', 'Salons', 'Watches'],
-    'Events & Entertainment': ['Concerts', 'Business Events', 'Wedding Services', 'DJs', 'Party Rentals', 'Tickets', 'Catering']
+    Vehicles: [
+      "Cars & Trucks",
+      "SUVs",
+      "Pickup Trucks",
+      "Vans",
+      "Commercial Vehicles",
+      "Auto Parts",
+      "Tires & Rims",
+      "Motorcycles",
+      "ATVs",
+      "Boats",
+      "RVs",
+      "Trailers",
+      "Heavy Equipment",
+      "Vehicle Services",
+    ],
+    "Real Estate": [
+      "Houses for Sale",
+      "Condos for Sale",
+      "Townhouses",
+      "Commercial Property",
+      "Land for Sale",
+      "Apartments for Rent",
+      "Basements for Rent",
+      "Office Space",
+      "Retail Space",
+      "Vacation Rentals",
+      "Room Rentals",
+    ],
+    Jobs: [
+      "General Labour",
+      "Construction",
+      "Driving",
+      "Delivery",
+      "Office Admin",
+      "Accounting",
+      "IT & Tech",
+      "Sales",
+      "Healthcare",
+      "Hospitality",
+      "Security",
+      "Cleaning",
+      "Customer Service",
+      "Remote Jobs",
+    ],
+    "Local Services": [
+      "Movers",
+      "Roofing",
+      "Plumbing",
+      "Electrical",
+      "Renovation",
+      "Landscaping",
+      "Cleaning",
+      "Marketing Services",
+      "Web Design",
+      "Printing",
+      "Photography",
+      "Tutors",
+      "Legal Services",
+      "Immigration",
+      "Towing",
+      "Appliance Repair",
+    ],
+    "Buy & Sell": [
+      "Furniture",
+      "Electronics",
+      "TVs",
+      "Phones",
+      "Computers",
+      "Laptops",
+      "Tools",
+      "Appliances",
+      "Home Décor",
+      "Office Furniture",
+      "Baby Items",
+      "Musical Instruments",
+      "Cameras",
+      "Collectibles",
+      "Jewelry",
+    ],
+    "Business & Industrial": [
+      "Restaurant Equipment",
+      "Office Equipment",
+      "Commercial Supplies",
+      "Warehouse Equipment",
+      "POS Systems",
+      "Retail Fixtures",
+      "Manufacturing",
+      "Packaging Supplies",
+      "Forklifts",
+      "Construction Equipment",
+    ],
+    Community: [
+      "Events",
+      "Volunteers",
+      "Lost & Found",
+      "Local News",
+      "Networking",
+      "Artists",
+      "Musicians",
+      "Activity Partners",
+    ],
+    Pets: [
+      "Dogs",
+      "Cats",
+      "Fish",
+      "Birds",
+      "Pet Services",
+      "Pet Accessories",
+      "Pet Adoption",
+    ],
+    "Home & Garden": [
+      "Furniture",
+      "Gardening",
+      "Kitchen",
+      "Lighting",
+      "Outdoor",
+      "Renovation Materials",
+      "Home Improvement",
+    ],
+    "Electronics & Computers": [
+      "Laptops",
+      "Desktop Computers",
+      "Gaming PCs",
+      "Phones",
+      "Tablets",
+      "Networking",
+      "Cameras",
+      "Smart Home",
+    ],
+    "Fashion & Beauty": [
+      "Men’s Clothing",
+      "Women’s Clothing",
+      "Shoes",
+      "Bags",
+      "Jewelry",
+      "Beauty Products",
+      "Salons",
+      "Watches",
+    ],
+    "Events & Entertainment": [
+      "Concerts",
+      "Business Events",
+      "Wedding Services",
+      "DJs",
+      "Party Rentals",
+      "Tickets",
+      "Catering",
+    ],
   };
 
   const CATEGORIES = Object.keys(MEGA_MENU_DATA);
 
   const handleGlobalSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    let url = '/search?';
-    if (globalSearch.trim()) url += `q=${encodeURIComponent(globalSearch.trim())}&`;
-    if (globalLocation.trim()) url += `loc=${encodeURIComponent(globalLocation.trim())}&`;
-    navigate(url.replace(/&$/, ''));
+    let url = "/search?";
+    if (globalSearch.trim())
+      url += `q=${encodeURIComponent(globalSearch.trim())}&`;
+    if (globalLocation.trim())
+      url += `loc=${encodeURIComponent(globalLocation.trim())}&`;
+    navigate(url.replace(/&$/, ""));
   };
 
   const isAdminPage =
@@ -76,16 +215,20 @@ const Layout: React.FC<LayoutProps> = ({
                   alt="HitAds Logo"
                   className="h-20 object-contain transition-transform hover:scale-105 mix-blend-multiply"
                 />
-
               </Link>
             </div>
 
             {/* Desktop Search */}
             <div className="hidden lg:flex items-center justify-center flex-[2] max-w-3xl">
               {!isLoginPage && (
-                <form onSubmit={handleGlobalSearch} className="w-full relative flex items-center bg-white border border-slate-200 rounded-full p-1.5 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.08)] hover:shadow-[0_4px_25px_-4px_rgba(0,0,0,0.12)] focus-within:ring-4 focus-within:ring-primary/10 focus-within:border-primary transition-all duration-300">
+                <form
+                  onSubmit={handleGlobalSearch}
+                  className="w-full relative flex items-center bg-white border border-slate-200 rounded-full p-1.5 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.08)] hover:shadow-[0_4px_25px_-4px_rgba(0,0,0,0.12)] focus-within:ring-4 focus-within:ring-primary/10 focus-within:border-primary transition-all duration-300"
+                >
                   <div className="flex-1 relative flex items-center group">
-                    <span className="material-icons absolute left-4 text-slate-400 text-xl group-focus-within:text-primary transition-colors">search</span>
+                    <span className="material-icons absolute left-4 text-slate-400 text-xl group-focus-within:text-primary transition-colors">
+                      search
+                    </span>
                     <input
                       type="text"
                       value={globalSearch}
@@ -96,7 +239,9 @@ const Layout: React.FC<LayoutProps> = ({
                   </div>
                   <div className="w-px h-6 bg-slate-200 mx-1"></div>
                   <div className="flex-1 relative flex items-center group">
-                    <span className="material-icons absolute left-4 text-slate-400 text-xl group-focus-within:text-primary transition-colors">location_on</span>
+                    <span className="material-icons absolute left-4 text-slate-400 text-xl group-focus-within:text-primary transition-colors">
+                      location_on
+                    </span>
                     <input
                       type="text"
                       value={globalLocation}
@@ -105,7 +250,10 @@ const Layout: React.FC<LayoutProps> = ({
                       className="w-full bg-transparent border-none focus:ring-0 text-sm font-bold text-slate-800 placeholder:text-slate-400 placeholder:font-medium pl-12 pr-4 py-2.5 outline-none"
                     />
                   </div>
-                  <button type="submit" className="bg-primary hover:bg-primary-hover text-white px-8 py-3 rounded-full transition-all flex items-center justify-center font-black text-[11px] uppercase tracking-widest shadow-sm hover:shadow-md hover:-translate-y-[1px] active:translate-y-0 ml-1">
+                  <button
+                    type="submit"
+                    className="bg-primary hover:bg-primary-hover text-white px-8 py-3 rounded-full transition-all flex items-center justify-center font-black text-[11px] uppercase tracking-widest shadow-sm hover:shadow-md hover:-translate-y-[1px] active:translate-y-0 ml-1"
+                  >
                     Search
                   </button>
                 </form>
@@ -115,40 +263,77 @@ const Layout: React.FC<LayoutProps> = ({
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center gap-6 flex-1 justify-end shrink-0">
               {!isLoginPage && (
-                <Link to="/post-ad" className="flex flex-col items-center justify-center text-slate-600 hover:text-primary transition-colors group">
-                  <span className="material-icons text-[26px] group-hover:scale-110 transition-transform">add_circle_outline</span>
+                <Link
+                  to="/post-ad"
+                  className="flex flex-col items-center justify-center text-slate-600 hover:text-primary transition-colors group"
+                >
+                  <span className="material-icons text-[26px] group-hover:scale-110 transition-transform">
+                    add_circle_outline
+                  </span>
                   <span className="text-[11px] font-bold mt-1">Post an ad</span>
                 </Link>
               )}
 
               {!isLoggedIn && !isLoginPage ? (
                 <>
-                  <Link to="/login" state={{ mode: "register" }} className="flex flex-col items-center justify-center text-slate-600 hover:text-primary transition-colors group">
-                    <span className="material-icons text-[26px] group-hover:scale-110 transition-transform">person_add</span>
+                  <Link
+                    to="/login"
+                    state={{ mode: "register" }}
+                    className="flex flex-col items-center justify-center text-slate-600 hover:text-primary transition-colors group"
+                  >
+                    <span className="material-icons text-[26px] group-hover:scale-110 transition-transform">
+                      person_add
+                    </span>
                     <span className="text-[11px] font-bold mt-1">Sign up</span>
                   </Link>
-                  <Link to="/login" className="flex flex-col items-center justify-center text-slate-600 hover:text-primary transition-colors group">
-                    <span className="material-icons text-[26px] group-hover:scale-110 transition-transform">person</span>
+                  <Link
+                    to="/login"
+                    className="flex flex-col items-center justify-center text-slate-600 hover:text-primary transition-colors group"
+                  >
+                    <span className="material-icons text-[26px] group-hover:scale-110 transition-transform">
+                      person
+                    </span>
                     <span className="text-[11px] font-bold mt-1">Login</span>
                   </Link>
                 </>
-              ) : isLoggedIn && (
-                <>
-                  {isAdmin && (
-                    <Link to="/dashboard" className="flex flex-col items-center justify-center text-slate-600 hover:text-primary transition-colors group">
-                      <span className="material-icons text-[26px] group-hover:scale-110 transition-transform">admin_panel_settings</span>
-                      <span className="text-[11px] font-bold mt-1">Admin</span>
+              ) : (
+                isLoggedIn && (
+                  <>
+                    {isAdmin && (
+                      <Link
+                        to="/dashboard"
+                        className="flex flex-col items-center justify-center text-slate-600 hover:text-primary transition-colors group"
+                      >
+                        <span className="material-icons text-[26px] group-hover:scale-110 transition-transform">
+                          admin_panel_settings
+                        </span>
+                        <span className="text-[11px] font-bold mt-1">
+                          Admin
+                        </span>
+                      </Link>
+                    )}
+                    <Link
+                      to={isAdmin ? "/dashboard" : "/profile"}
+                      className="flex flex-col items-center justify-center text-slate-600 hover:text-primary transition-colors group"
+                    >
+                      <span className="material-icons text-[26px] group-hover:scale-110 transition-transform">
+                        account_circle
+                      </span>
+                      <span className="text-[11px] font-bold mt-1">
+                        Profile
+                      </span>
                     </Link>
-                  )}
-                  <Link to={isAdmin ? "/dashboard" : "/profile"} className="flex flex-col items-center justify-center text-slate-600 hover:text-primary transition-colors group">
-                    <span className="material-icons text-[26px] group-hover:scale-110 transition-transform">account_circle</span>
-                    <span className="text-[11px] font-bold mt-1">Profile</span>
-                  </Link>
-                  <button onClick={handleLogoutClick} className="flex flex-col items-center justify-center text-slate-600 hover:text-red-500 transition-colors group">
-                    <span className="material-icons text-[26px] group-hover:scale-110 transition-transform">logout</span>
-                    <span className="text-[11px] font-bold mt-1">Logout</span>
-                  </button>
-                </>
+                    <button
+                      onClick={handleLogoutClick}
+                      className="flex flex-col items-center justify-center text-slate-600 hover:text-red-500 transition-colors group"
+                    >
+                      <span className="material-icons text-[26px] group-hover:scale-110 transition-transform">
+                        logout
+                      </span>
+                      <span className="text-[11px] font-bold mt-1">Logout</span>
+                    </button>
+                  </>
+                )
               )}
             </div>
 
@@ -241,7 +426,7 @@ const Layout: React.FC<LayoutProps> = ({
 
         {/* Secondary Navigation - Categories */}
         {!isLoginPage && (
-          <div 
+          <div
             className="hidden md:block w-full border-t border-slate-200 bg-white shadow-sm relative z-40"
             onMouseLeave={() => setHoveredCategory(null)}
           >
@@ -250,9 +435,9 @@ const Layout: React.FC<LayoutProps> = ({
                 {CATEGORIES.map((cat, index) => (
                   <React.Fragment key={cat}>
                     <li onMouseEnter={() => setHoveredCategory(cat)}>
-                      <Link 
+                      <Link
                         to={`/search?cat=${encodeURIComponent(cat)}`}
-                        className={`block px-4 lg:px-6 py-3 text-sm font-bold transition-all whitespace-nowrap border-b-2 ${hoveredCategory === cat ? 'border-primary text-primary' : 'border-transparent text-slate-700 hover:text-primary hover:border-primary/50'}`}
+                        className={`block px-4 lg:px-6 py-3 text-sm font-bold transition-all whitespace-nowrap border-b-2 ${hoveredCategory === cat ? "border-primary text-primary" : "border-transparent text-slate-700 hover:text-primary hover:border-primary/50"}`}
                       >
                         {cat}
                       </Link>
@@ -266,17 +451,19 @@ const Layout: React.FC<LayoutProps> = ({
             </div>
 
             {/* Mega Menu Dropdown */}
-            <div 
-              className={`absolute top-full left-0 w-full bg-slate-50 border-t border-slate-200 shadow-2xl transition-all duration-300 origin-top z-40 ${hoveredCategory ? 'opacity-100 scale-y-100 visible' : 'opacity-0 scale-y-0 invisible'}`}
+            <div
+              className={`absolute top-full left-0 w-full bg-slate-50 border-t border-slate-200 shadow-2xl transition-all duration-300 origin-top z-40 ${hoveredCategory ? "opacity-100 scale-y-100 visible" : "opacity-0 scale-y-0 invisible"}`}
             >
               <div className="w-full max-w-[1400px] px-4 sm:px-6 lg:px-10 py-8 mx-auto flex">
                 {/* Subcategories Grid */}
                 <div className="flex-1 pr-8">
-                  <h3 className="text-sm font-black text-slate-800 mb-6 uppercase tracking-widest border-b border-slate-200 pb-3">Browse {hoveredCategory} by</h3>
+                  <h3 className="text-sm font-black text-slate-800 mb-6 uppercase tracking-widest border-b border-slate-200 pb-3">
+                    Browse {hoveredCategory} by
+                  </h3>
                   {hoveredCategory && MEGA_MENU_DATA[hoveredCategory] && (
                     <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-y-5 gap-x-8">
                       {MEGA_MENU_DATA[hoveredCategory].map((subCat) => (
-                        <Link 
+                        <Link
                           key={subCat}
                           to={`/search?cat=${encodeURIComponent(hoveredCategory)}&sub=${encodeURIComponent(subCat)}`}
                           className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors flex items-center gap-2 group"
@@ -288,24 +475,51 @@ const Layout: React.FC<LayoutProps> = ({
                     </div>
                   )}
                 </div>
-                
+
                 {/* Discover Guides (Right Side Pane) */}
                 <div className="w-80 shrink-0 border-l border-slate-200 pl-8 hidden xl:block">
-                  <h3 className="text-sm font-black text-slate-800 mb-6 uppercase tracking-widest border-b border-slate-200 pb-3">Discover more in our guides</h3>
+                  <h3 className="text-sm font-black text-slate-800 mb-6 uppercase tracking-widest border-b border-slate-200 pb-3">
+                    Discover more in our guides
+                  </h3>
                   <div className="flex flex-col gap-4 mb-8">
-                    <Link to="/buying-guides" className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Buying Guides</Link>
+                    <Link
+                      to="/buying-guides"
+                      className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
+                    >
+                      Buying Guides
+                    </Link>
 
-                    <Link to="/selling-advice" className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Selling Advice</Link>
+                    <Link
+                      to="/selling-advice"
+                      className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
+                    >
+                      Selling Advice
+                    </Link>
 
-                    <Link to="/market-trends" className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Market Trends</Link>
+                    <Link
+                      to="/market-trends"
+                      className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
+                    >
+                      Market Trends
+                    </Link>
 
-                    <Link to="/safety-tips" className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Safety Tips</Link>
-
+                    <Link
+                      to="/safety-tips"
+                      className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
+                    >
+                      Safety Tips
+                    </Link>
                   </div>
                   <div className="rounded-xl overflow-hidden shadow-md relative group cursor-pointer">
-                    <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&q=80" alt="Guides" className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-500" />
+                    <img
+                      src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&q=80"
+                      alt="Guides"
+                      className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end p-4">
-                      <span className="text-white font-bold text-sm">Read the {hoveredCategory} guide</span>
+                      <span className="text-white font-bold text-sm">
+                        Read the {hoveredCategory} guide
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -326,7 +540,6 @@ const Layout: React.FC<LayoutProps> = ({
               alt=""
               className="max-h-[50%] md:max-h-[65%] object-contain mix-blend-multiply opacity-50"
             />
-
           </div>
 
           <div className="relative z-10 w-full px-4 sm:px-6 lg:px-10">
@@ -354,78 +567,300 @@ const Layout: React.FC<LayoutProps> = ({
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-8 mb-16">
               {/* Column 1: Tips & Help */}
               <div className="space-y-6">
-                <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em]">Tips & Help</h4>
+                <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em]">
+                  Tips & Help
+                </h4>
                 <ul className="space-y-3">
-                  <li><Link to="/help" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Help Center</Link></li>
-                  <li><Link to="/contact" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Contact Us</Link></li>
-                  <li><Link to="/buying-guides" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Buying Guides</Link></li>
-                  <li><Link to="/safety-tips" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Safety Guidelines</Link></li>
+                  {/* <li>
+                    <Link
+                      to="/help"
+                      onClick={() =>
+                        window.scrollTo({ top: 0, behavior: "smooth" })
+                      }
+                      className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
+                    >
+                      Help Center
+                    </Link>
+                  </li> */}
+                  <li>
+                    <Link
+                      to="/contact"
+                      onClick={() =>
+                        window.scrollTo({ top: 0, behavior: "smooth" })
+                      }
+                      className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
+                    >
+                      Contact Us
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/buying-guides"
+                      onClick={() =>
+                        window.scrollTo({ top: 0, behavior: "smooth" })
+                      }
+                      className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
+                    >
+                      Buying Guides
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/safety-tips"
+                      onClick={() =>
+                        window.scrollTo({ top: 0, behavior: "smooth" })
+                      }
+                      className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
+                    >
+                      Safety Guidelines
+                    </Link>
+                  </li>
 
-                  <li><Link to="/selling-advice" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Selling Advice</Link></li>
-                  <li><Link to="/market-trends" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Market Trends</Link></li>
+                  <li>
+                    <Link
+                      to="/selling-advice"
+                      onClick={() =>
+                        window.scrollTo({ top: 0, behavior: "smooth" })
+                      }
+                      className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
+                    >
+                      Selling Advice
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/market-trends"
+                      onClick={() =>
+                        window.scrollTo({ top: 0, behavior: "smooth" })
+                      }
+                      className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
+                    >
+                      Market Trends
+                    </Link>
+                  </li>
                 </ul>
               </div>
 
               {/* Column 2: Legal */}
               <div className="space-y-6">
-                <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em]">Legal</h4>
+                <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em]">
+                  Legal
+                </h4>
                 <ul className="space-y-3">
-                  <li><Link to="/terms" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Terms & Conditions</Link></li>
+                  <li>
+                    <Link
+                      to="/terms"
+                      onClick={() =>
+                        window.scrollTo({ top: 0, behavior: "smooth" })
+                      }
+                      className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
+                    >
+                      Terms & Conditions
+                    </Link>
+                  </li>
 
-                  <li><Link to="#" className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Privacy Policy</Link></li>
-                  <li><Link to="#" className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Posting Policy</Link></li>
-                  <li><Link to="#" className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Cookie Policy</Link></li>
+                  {/* <li>
+                    <Link
+                      to="#"
+                      className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
+                    >
+                      Privacy Policy
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="#"
+                      className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
+                    >
+                      Posting Policy
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="#"
+                      className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
+                    >
+                      Cookie Policy
+                    </Link>
+                  </li> */}
                 </ul>
               </div>
 
               {/* Column 3: For Business */}
               <div className="space-y-6">
-                <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em]">For Business</h4>
+                <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em]">
+                  For Business
+                </h4>
                 <ul className="space-y-3">
-                  <li><Link to="#" className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Business Advertising</Link></li>
-                  <li><Link to="#" className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Promote Your Service</Link></li>
-                  <li><Link to="/search?q=Business%20Equipment" className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Business Equipment</Link></li>
+                  <li>
+                    <Link
+                      to="#"
+                      className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
+                    >
+                      Business Advertising
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="#"
+                      className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
+                    >
+                      Promote Your Service
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/search?q=Business%20Equipment"
+                      className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
+                    >
+                      Business Equipment
+                    </Link>
+                  </li>
                 </ul>
               </div>
 
               {/* Column 4: Explore */}
               <div className="space-y-6">
-                <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em]">Explore</h4>
+                <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em]">
+                  Explore
+                </h4>
                 <ul className="space-y-3">
-                  <li><Link to="/search" className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">All Categories</Link></li>
-                  <li><Link to="#" className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">All Locations</Link></li>
-                  <li><Link to="/search?q=Free" className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Free Stuff</Link></li>
-                  <li><Link to="#" className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Blog & News</Link></li>
+                  <li>
+                    <Link
+                      to="/search"
+                      className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
+                    >
+                      All Categories
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="#"
+                      className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
+                    >
+                      All Locations
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/search?q=Free"
+                      className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
+                    >
+                      Free Stuff
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="#"
+                      className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
+                    >
+                      Blog & News
+                    </Link>
+                  </li>
                 </ul>
               </div>
 
               {/* Column 5: HitAds Vehicles */}
               <div className="space-y-6">
-                <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em]">HitAds Vehicles</h4>
+                <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em]">
+                  HitAds Vehicles
+                </h4>
                 <ul className="space-y-3">
-                  <li><Link to="/search?q=Cars" className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Cars & Trucks</Link></li>
-                  <li><Link to="/search?q=SUV" className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">SUVs</Link></li>
-                  <li><Link to="/search?q=Pickup" className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Pickup Trucks</Link></li>
-                  <li><Link to="/search?q=Vans" className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Vans</Link></li>
-                  <li><Link to="/search?q=Parts" className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Auto Parts</Link></li>
+                  <li>
+                    <Link
+                      to="/search?q=Cars"
+                      className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
+                    >
+                      Cars & Trucks
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/search?q=SUV"
+                      className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
+                    >
+                      SUVs
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/search?q=Pickup"
+                      className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
+                    >
+                      Pickup Trucks
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/search?q=Vans"
+                      className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
+                    >
+                      Vans
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/search?q=Parts"
+                      className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
+                    >
+                      Auto Parts
+                    </Link>
+                  </li>
                 </ul>
               </div>
 
               {/* Column 6: Top Categories */}
               <div className="space-y-6">
-                <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em]">Top Categories</h4>
+                <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em]">
+                  Top Categories
+                </h4>
                 <ul className="space-y-3">
-                  <li><Link to="/search?q=Real%20Estate" className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Real Estate</Link></li>
-                  <li><Link to="/search?q=Jobs" className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Jobs</Link></li>
-                  <li><Link to="/search?q=Services" className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Local Services</Link></li>
-                  <li><Link to="/search?q=Buy" className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Buy & Sell</Link></li>
-                  <li><Link to="/search?q=Pets" className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors">Pets</Link></li>
+                  <li>
+                    <Link
+                      to="/search?q=Real%20Estate"
+                      className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
+                    >
+                      Real Estate
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/search?q=Jobs"
+                      className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
+                    >
+                      Jobs
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/search?q=Services"
+                      className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
+                    >
+                      Local Services
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/search?q=Buy"
+                      className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
+                    >
+                      Buy & Sell
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/search?q=Pets"
+                      className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
+                    >
+                      Pets
+                    </Link>
+                  </li>
                 </ul>
               </div>
             </div>
 
             <div className="pt-8 border-t border-slate-200 flex flex-col md:flex-row justify-between items-center gap-4">
-              <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+              <div className="text-[10px] font-black text-slate-400 lowercase">
                 © 2026 HitAds.ca — Free Ads. Sell Fast. Buy Local. Canada Wide.
               </div>
               <div className="flex gap-8 text-[10px] font-black text-slate-400 uppercase tracking-widest">
@@ -438,7 +873,6 @@ const Layout: React.FC<LayoutProps> = ({
                 >
                   Contact
                 </Link>
-
               </div>
             </div>
           </div>

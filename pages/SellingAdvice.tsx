@@ -277,6 +277,16 @@ const SellingAdvice: React.FC = () => {
     }
   ];
 
+  React.useEffect(() => {
+    const hash = window.location.hash;
+    if (hash) {
+      const id = hash.replace("#", "").split("#")[1] || hash.replace("#", "");
+      if (id) {
+        setTimeout(() => scrollToSection(id), 500);
+      }
+    }
+  }, []);
+
   const scrollToSection = (id: string) => {
     setActiveSection(id);
     const el = document.getElementById(id);
@@ -288,7 +298,7 @@ const SellingAdvice: React.FC = () => {
       const offsetPosition = elementPosition - offset;
       window.scrollTo({
         top: offsetPosition,
-        behavior: 'smooth'
+        behavior: "smooth",
       });
     }
   };

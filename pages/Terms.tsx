@@ -29,18 +29,28 @@ const Terms: React.FC = () => {
     { id: 'contact', title: '23. Contact Information', content: `For legal inquiries, policy questions, or support requests, contact: customerservice@hitads.ca` }
   ];
 
+  React.useEffect(() => {
+    const hash = window.location.hash;
+    if (hash) {
+      const id = hash.replace("#", "").split("#")[1] || hash.replace("#", "");
+      if (id) {
+        setTimeout(() => scrollToSection(id), 500);
+      }
+    }
+  }, []);
+
   const scrollToSection = (id: string) => {
     setActiveSection(id);
     const el = document.getElementById(id);
     if (el) {
-      const offset = 120;
+      const offset = 160;
       const bodyRect = document.body.getBoundingClientRect().top;
       const elementRect = el.getBoundingClientRect().top;
       const elementPosition = elementRect - bodyRect;
       const offsetPosition = elementPosition - offset;
       window.scrollTo({
         top: offsetPosition,
-        behavior: 'smooth'
+        behavior: "smooth",
       });
     }
   };
@@ -93,7 +103,7 @@ const Terms: React.FC = () => {
           <div className="flex-1 bg-white rounded-[2.5rem] p-8 md:p-16 shadow-sm border border-slate-100">
             <div className="space-y-12">
               {sections.map((section) => (
-                <section key={section.id} id={section.id} className="scroll-mt-32 border-b border-slate-50 pb-12 last:border-0 last:pb-0">
+                <section key={section.id} id={section.id} className="scroll-mt-40 border-b border-slate-50 pb-12 last:border-0 last:pb-0">
                   <h2 className="text-xl font-black text-slate-900 mb-6 flex items-center gap-3">
                     <span className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center text-[10px] font-black text-slate-400 group-hover:bg-primary group-hover:text-white transition-colors">
                         {section.id === 'intro' ? 'I' : section.title.split('.')[0]}
