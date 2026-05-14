@@ -8,6 +8,9 @@ const ItemDetails: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [activeIdx, setActiveIdx] = useState(0);
   const touchStartX = useRef<number | null>(null);
+  const [message, setMessage] = useState('');
+  const [sending, setSending] = useState(false);
+  const [sentStatus, setSentStatus] = useState<string | null>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -22,6 +25,38 @@ const ItemDetails: React.FC = () => {
       .catch(console.error)
       .finally(() => setLoading(false));
   }, [id]);
+
+  const handleSendMessage = async () => {
+    if (!message.trim()) return;
+    
+    setSending(true);
+    setSentStatus(null);
+    
+    try {
+      const user = JSON.parse(localStorage.getItem('user') || 'null');
+      const response = await fetch('/api/messages/create.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          listing_id: id,
+          message: message,
+          sender_id: user ? user.id : 0,
+          sender_name: user ? user.name : 'A Guest'
+        })
+      });
+      const data = await response.json();
+      if (data.success) {
+        setSentStatus('Message sent successfully!');
+        setMessage('');
+      } else {
+        setSentStatus('Failed to send message.');
+      }
+    } catch (err) {
+      setSentStatus('Error sending message.');
+    } finally {
+      setSending(false);
+    }
+  };
 
   if (loading) return <div className="p-20 text-center font-bold">Loading listing...</div>;
   if (!listing) return <div className="p-20 text-center font-bold text-red-500">Listing not found.</div>;
@@ -193,9 +228,27 @@ const ItemDetails: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                  <textarea className="w-full text-sm rounded-xl border-slate-200 bg-white focus:ring-primary focus:border-primary placeholder:text-slate-300 mb-4" placeholder="Is this still available?" rows={3}></textarea>
-                  <button className="w-full bg-primary text-white font-black py-4 rounded-xl hover:bg-primary-hover transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20">
-                    <span className="material-icons">send</span> Send Message
+                  <textarea 
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    className="w-full text-sm rounded-xl border-slate-200 bg-white focus:ring-primary focus:border-primary placeholder:text-slate-300 mb-4" 
+                    placeholder="Is this still available?" 
+                    rows={3}
+                  ></textarea>
+                  
+                  {sentStatus && (
+                    <div className={`text-xs font-bold mb-4 p-3 rounded-lg ${sentStatus.includes('successfully') ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
+                      {sentStatus}
+                    </div>
+                  )}
+
+                  <button 
+                    onClick={handleSendMessage}
+                    disabled={sending || !message.trim()}
+                    className="w-full bg-primary text-white font-black py-4 rounded-xl hover:bg-primary-hover transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20 disabled:opacity-50"
+                  >
+                    <span className="material-icons">{sending ? 'sync' : 'send'}</span> 
+                    {sending ? 'Sending...' : 'Send Message'}
                   </button>
                 </div>
                 

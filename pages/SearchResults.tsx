@@ -222,6 +222,131 @@ const SearchResults: React.FC = () => {
 
       <div className={`w-full px-4 sm:px-6 lg:px-10 ${selectedCategory === 'Vehicles' ? 'pt-24 pb-8' : 'py-8'}`}>
 
+      {/* Mobile Filter Overlay */}
+      {showMobileFilters && (
+        <div className="fixed inset-0 z-[100] bg-white overflow-y-auto lg:hidden animate-in slide-in-from-bottom-full duration-300">
+          <div className="sticky top-0 bg-white border-b border-slate-100 px-4 py-4 flex items-center justify-between shadow-sm">
+            <h2 className="text-lg font-black">Filters</h2>
+            <button 
+              onClick={() => setShowMobileFilters(false)}
+              className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors"
+            >
+              <span className="material-icons">close</span>
+            </button>
+          </div>
+          
+          <div className="p-6 space-y-8 pb-24">
+            {/* Search Query */}
+            <div>
+              <label className="block text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Keyword</label>
+              <div className="relative">
+                <span className="material-icons absolute left-4 top-3.5 text-slate-300">search</span>
+                <input 
+                  type="text" 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="What are you looking for?"
+                  className="w-full bg-slate-50 border-none rounded-2xl py-4 pl-12 pr-4 text-sm font-bold focus:ring-2 focus:ring-primary/20"
+                />
+              </div>
+            </div>
+
+            {/* Price Range */}
+            <div>
+              <label className="block text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Price Range ($)</label>
+              <div className="grid grid-cols-2 gap-4">
+                <input 
+                  type="number" 
+                  placeholder="Min" 
+                  value={minPrice}
+                  onChange={(e) => setMinPrice(e.target.value)}
+                  className="w-full bg-slate-50 border-none rounded-2xl py-4 px-6 text-sm font-bold focus:ring-2 focus:ring-primary/20"
+                />
+                <input 
+                  type="number" 
+                  placeholder="Max" 
+                  value={maxPrice}
+                  onChange={(e) => setMaxPrice(e.target.value)}
+                  className="w-full bg-slate-50 border-none rounded-2xl py-4 px-6 text-sm font-bold focus:ring-2 focus:ring-primary/20"
+                />
+              </div>
+            </div>
+
+            {/* Location */}
+            <div>
+              <label className="block text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Location</label>
+              <div className="relative">
+                <span className="material-icons absolute left-4 top-3.5 text-slate-300">place</span>
+                <input 
+                  type="text" 
+                  value={locationSearch}
+                  onChange={(e) => setLocationSearch(e.target.value)}
+                  placeholder="City or Postcode"
+                  className="w-full bg-slate-50 border-none rounded-2xl py-4 pl-12 pr-4 text-sm font-bold focus:ring-2 focus:ring-primary/20"
+                />
+              </div>
+            </div>
+
+            {/* Category-specific filters */}
+            {selectedCategory === 'Vehicles' && (
+              <div className="space-y-6 pt-6 border-t border-slate-100">
+                <div>
+                  <label className="block text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Make</label>
+                  <select 
+                    value={selectedMakeId}
+                    onChange={(e) => { setSelectedMakeId(e.target.value); setSelectedModelId(''); }}
+                    className="w-full bg-slate-50 border-none rounded-2xl py-4 px-6 text-sm font-bold focus:ring-2 focus:ring-primary/20"
+                  >
+                    <option value="">All Makes</option>
+                    {makes.map(make => (
+                      <option key={make.id} value={make.id}>{make.option_value}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Model</label>
+                  <select 
+                    value={selectedModelId}
+                    onChange={(e) => setSelectedModelId(e.target.value)}
+                    disabled={!selectedMakeId}
+                    className="w-full bg-slate-50 border-none rounded-2xl py-4 px-6 text-sm font-bold focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
+                  >
+                    <option value="">All Models</option>
+                    {models
+                      .filter(model => model.parent_id === Number(selectedMakeId))
+                      .map(model => (
+                        <option key={model.id} value={model.id}>{model.option_value}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="fixed bottom-0 left-0 w-full p-4 bg-white border-t border-slate-100 flex gap-4">
+            <button 
+              onClick={() => {
+                setMinPrice('');
+                setMaxPrice('');
+                setSearchQuery('');
+                setLocationSearch('');
+                setSelectedMakeId('');
+                setSelectedModelId('');
+              }}
+              className="flex-1 py-4 text-sm font-black text-slate-400 uppercase tracking-widest"
+            >
+              Reset
+            </button>
+            <button 
+              onClick={() => setShowMobileFilters(false)}
+              className="flex-[2] bg-primary text-white py-4 rounded-2xl text-sm font-black uppercase tracking-widest shadow-xl shadow-primary/20"
+            >
+              Show Results
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Mobile Filter Toggle Bar */}
       <div className="lg:hidden flex items-center justify-between mb-4 bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
         <span className="text-sm font-black text-slate-700">{filteredListings.length} Results</span>

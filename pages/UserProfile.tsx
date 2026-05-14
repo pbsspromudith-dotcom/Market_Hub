@@ -18,6 +18,9 @@ const UserProfile: React.FC = () => {
   });
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [activeTab, setActiveTab] = useState<'listings' | 'messages'>('listings');
+  const [messages, setMessages] = useState<any[]>([]);
+  const [isMessagesLoading, setIsMessagesLoading] = useState(false);
 
   useEffect(() => {
     const userStr = localStorage.getItem('user');
@@ -38,6 +41,16 @@ const UserProfile: React.FC = () => {
       })
       .catch(console.error)
       .finally(() => setIsLoading(false));
+
+    // Fetch user messages
+    setIsMessagesLoading(true);
+    fetch(`/api/messages/read_user.php?user_id=${userData.id}`)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) setMessages(data);
+      })
+      .catch(console.error)
+      .finally(() => setIsMessagesLoading(false));
   }, []);
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -251,7 +264,26 @@ const UserProfile: React.FC = () => {
         </div>
       </div>
 
-      {/* My Listings */}
+      {/* Tabs Navigation */}
+      <div className="flex gap-8 mb-8 border-b border-slate-100 px-4">
+        <button 
+          onClick={() => setActiveTab('listings')}
+          className={`pb-4 text-sm font-black uppercase tracking-widest transition-all relative ${activeTab === 'listings' ? 'text-primary' : 'text-slate-400 hover:text-slate-600'}`}
+        >
+          My Listings ({userListings.length})
+          {activeTab === 'listings' && <div className="absolute bottom-0 left-0 w-full h-1 bg-primary rounded-full"></div>}
+        </button>
+        <button 
+          onClick={() => setActiveTab('messages')}
+          className={`pb-4 text-sm font-black uppercase tracking-widest transition-all relative ${activeTab === 'messages' ? 'text-primary' : 'text-slate-400 hover:text-slate-600'}`}
+        >
+          Inquiries ({messages.length})
+          {activeTab === 'messages' && <div className="absolute bottom-0 left-0 w-full h-1 bg-primary rounded-full"></div>}
+        </button>
+      </div>
+
+      {/* My Listings Content */}
+      {activeTab === 'listings' && (
       <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-8">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-black text-slate-900">My Listings</h2>
@@ -325,6 +357,58 @@ const UserProfile: React.FC = () => {
           </div>
         )}
       </div>
+      )}
+
+      {/* Messages Content */}
+      {activeTab === 'messages' && (
+      <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-8">
+        <h2 className="text-xl font-black text-slate-900 mb-6">Inquiries Received</h2>
+        
+        {isMessagesLoading ? (
+          <div className="flex justify-center py-12">
+            <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        ) : messages.length === 0 ? (
+          <div className="text-center py-16">
+            <div className="w-20 h-20 bg-slate-50 rounded-3xl flex items-center justify-center mx-auto mb-4">
+              <span className="material-icons text-slate-300 text-4xl">forum</span>
+            </div>
+            <h3 className="text-lg font-black text-slate-700 mb-2">No Inquiries</h3>
+            <p className="text-sm text-slate-400 font-medium">When users message you about your ads, they will appear here.</p>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-4">
+            {messages.map((msg: any) => (
+              <div key={msg.id} className="p-6 bg-slate-50 rounded-2xl border border-slate-100 hover:border-primary/30 transition-all">
+                <div className="flex justify-between items-start mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                      <span className="material-icons text-xl">person</span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-black text-slate-800">{msg.sender_name}</p>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+                        {new Date(msg.created_at).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                  <Link to={`/item/${msg.listing_id}`} className="text-[10px] font-black text-primary bg-white px-3 py-1.5 rounded-lg border border-slate-200 hover:border-primary transition-all uppercase tracking-widest">
+                    View Ad
+                  </Link>
+                </div>
+                <div className="mb-3">
+                   <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Regarding Listing:</p>
+                   <p className="text-sm font-black text-slate-700">{msg.listing_title}</p>
+                </div>
+                <div className="bg-white p-4 rounded-xl border border-slate-100">
+                  <p className="text-sm text-slate-600 italic">"{msg.message}"</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+      )}
 
       {/* Edit Profile Modal */}
       {isEditing && (

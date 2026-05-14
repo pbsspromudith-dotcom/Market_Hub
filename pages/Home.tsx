@@ -155,6 +155,7 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn }) => {
             </div>
             <Link 
               to={`/search?q=${encodeURIComponent(searchQuery)}&loc=${encodeURIComponent(locationSearch)}`} 
+              onClick={() => window.scrollTo(0, 0)}
               className="bg-secondary hover:bg-secondary-hover text-white px-12 py-5 rounded-[1.8rem] font-black transition-all flex items-center justify-center shadow-lg shadow-secondary/25"
             >
               Explore
@@ -181,7 +182,7 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn }) => {
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6">
             {categories.map((cat) => (
-              <Link key={cat.name} to={`/search?cat=${encodeURIComponent(cat.name)}`} className="bg-white p-8 rounded-3xl border border-slate-100 text-center hover:border-primary-light hover:shadow-xl hover:-translate-y-1 transition-all group">
+              <Link key={cat.name} to={`/search?cat=${encodeURIComponent(cat.name)}`} onClick={() => window.scrollTo(0, 0)} className="bg-white p-8 rounded-3xl border border-slate-100 text-center hover:border-primary-light hover:shadow-xl hover:-translate-y-1 transition-all group">
                 <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:bg-primary-soft/10 transition-all">
                   <span className="material-icons text-3xl text-primary-neutral group-hover:text-primary-light">{cat.icon}</span>
                 </div>
@@ -199,12 +200,12 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn }) => {
                 <h2 className="text-3xl font-black mb-2">Recently Added</h2>
                 <p className="text-slate-500 font-medium">New items posted in your area</p>
               </div>
-              <Link to="/search" className="text-xs font-black text-primary-light uppercase tracking-widest hover:underline">See All</Link>
+              <Link to="/search" onClick={() => window.scrollTo(0, 0)} className="text-xs font-black text-primary-light uppercase tracking-widest hover:underline">See All</Link>
             </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
               {listings.map((item) => (
-                <Link to={`/item/${item.id}`} key={item.id} className="group bg-white rounded-[2.5rem] border border-slate-100 overflow-hidden hover:shadow-2xl transition-all">
+                <Link to={`/item/${item.id}`} key={item.id} onClick={() => window.scrollTo(0, 0)} className="group bg-white rounded-[2.5rem] border border-slate-100 overflow-hidden hover:shadow-2xl transition-all">
                   <div className="aspect-[4/3] relative flex items-center justify-center bg-slate-100">
                     <img src={item.image || 'https://picsum.photos/seed/default/800/600'} alt={item.title} className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-700" />
                     <button className="absolute top-5 right-5 w-10 h-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors shadow-sm">
@@ -235,7 +236,7 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn }) => {
                  <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-colors"></div>
                  <h3 className="text-2xl font-black mb-4 relative z-10">Join HitAds</h3>
                  <p className="text-white/80 text-sm mb-8 leading-relaxed relative z-10 font-medium">Create a free account to contact sellers and save your favorite items.</p>
-                 <Link to="/login" className="block w-full bg-white text-secondary font-black py-4 rounded-2xl text-center transition-all shadow-lg hover:bg-slate-50">
+                 <Link to="/login" onClick={() => window.scrollTo(0, 0)} className="block w-full bg-white text-secondary font-black py-4 rounded-2xl text-center transition-all shadow-lg hover:bg-slate-50">
                    Join Free
                  </Link>
               </div>
@@ -257,7 +258,7 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn }) => {
                   </li>
                 ))}
               </ul>
-              <Link to="/help" className="text-xs font-black text-primary-light hover:underline uppercase tracking-widest">Learn More</Link>
+              <Link to="/help" onClick={() => window.scrollTo(0, 0)} className="text-xs font-black text-primary-light hover:underline uppercase tracking-widest">Learn More</Link>
             </div>
           </aside>
         </div>

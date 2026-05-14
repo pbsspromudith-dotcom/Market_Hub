@@ -186,6 +186,7 @@ const Layout: React.FC<LayoutProps> = ({
     if (globalLocation.trim())
       url += `loc=${encodeURIComponent(globalLocation.trim())}&`;
     navigate(url.replace(/&$/, ""));
+    window.scrollTo(0, 0);
   };
 
   const isAdminPage =
@@ -202,18 +203,23 @@ const Layout: React.FC<LayoutProps> = ({
 
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
 
+  const handleNavClick = () => {
+    setHoveredCategory(null);
+    window.scrollTo(0, 0);
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
       <header className="sticky top-0 z-50 bg-white border-b border-slate-100">
         <div className="w-full px-4 sm:px-6 lg:px-10">
-          <div className="flex justify-between items-center h-24 gap-4 lg:gap-8">
+          <div className="flex justify-between items-center h-20 md:h-24 gap-4 lg:gap-8">
             {/* Logo Section */}
             <div className="flex-1 shrink-0 flex items-center justify-start">
               <Link to="/" className="flex items-center gap-1">
                 <img
                   src={logoImg}
                   alt="HitAds Logo"
-                  className="h-20 object-contain transition-transform hover:scale-105 mix-blend-multiply"
+                  className="h-14 md:h-20 object-contain transition-transform hover:scale-105 mix-blend-multiply"
                 />
               </Link>
             </div>
@@ -419,6 +425,36 @@ const Layout: React.FC<LayoutProps> = ({
                     </Link>
                   </div>
                 )}
+
+                {/* Mobile Categories Grid */}
+                <div className="pt-6 border-t border-slate-50">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 px-4">Quick Browse</p>
+                  <div className="grid grid-cols-2 gap-3 px-2">
+                    {CATEGORIES.slice(0, 8).map(cat => (
+                      <Link
+                        key={cat}
+                        to={`/search?cat=${encodeURIComponent(cat)}`}
+                        onClick={() => {
+                          setIsMobileMenuOpen(false);
+                          window.scrollTo(0, 0);
+                        }}
+                        className="flex items-center gap-3 p-4 bg-slate-50 rounded-2xl hover:bg-primary/5 transition-all group"
+                      >
+                        <span className="text-[11px] font-bold text-slate-700 truncate">{cat}</span>
+                      </Link>
+                    ))}
+                  </div>
+                  <Link
+                    to="/search"
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      window.scrollTo(0, 0);
+                    }}
+                    className="block mt-4 mx-2 py-3 text-center text-xs font-black text-primary-light uppercase tracking-widest hover:bg-primary/5 rounded-xl transition-all"
+                  >
+                    View All Categories
+                  </Link>
+                </div>
               </>
             )}
           </div>
@@ -437,6 +473,7 @@ const Layout: React.FC<LayoutProps> = ({
                     <li onMouseEnter={() => setHoveredCategory(cat)}>
                       <Link
                         to={`/search?cat=${encodeURIComponent(cat)}`}
+                        onClick={handleNavClick}
                         className={`block px-4 lg:px-6 py-3 text-sm font-bold transition-all whitespace-nowrap border-b-2 ${hoveredCategory === cat ? "border-primary text-primary" : "border-transparent text-slate-700 hover:text-primary hover:border-primary/50"}`}
                       >
                         {cat}
@@ -466,6 +503,7 @@ const Layout: React.FC<LayoutProps> = ({
                         <Link
                           key={subCat}
                           to={`/search?cat=${encodeURIComponent(hoveredCategory)}&sub=${encodeURIComponent(subCat)}`}
+                          onClick={handleNavClick}
                           className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors flex items-center gap-2 group"
                         >
                           <span className="w-1.5 h-1.5 rounded-full bg-slate-300 group-hover:bg-primary transition-colors shrink-0"></span>
@@ -484,6 +522,7 @@ const Layout: React.FC<LayoutProps> = ({
                   <div className="flex flex-col gap-4 mb-8">
                     <Link
                       to="/buying-guides"
+                      onClick={handleNavClick}
                       className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
                     >
                       Buying Guides
@@ -491,6 +530,7 @@ const Layout: React.FC<LayoutProps> = ({
 
                     <Link
                       to="/selling-advice"
+                      onClick={handleNavClick}
                       className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
                     >
                       Selling Advice
@@ -498,6 +538,7 @@ const Layout: React.FC<LayoutProps> = ({
 
                     <Link
                       to="/market-trends"
+                      onClick={handleNavClick}
                       className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
                     >
                       Market Trends
@@ -505,23 +546,28 @@ const Layout: React.FC<LayoutProps> = ({
 
                     <Link
                       to="/safety-tips"
+                      onClick={handleNavClick}
                       className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
                     >
                       Safety Tips
                     </Link>
                   </div>
-                  <div className="rounded-xl overflow-hidden shadow-md relative group cursor-pointer">
-                    <img
-                      src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&q=80"
-                      alt="Guides"
-                      className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end p-4">
-                      <span className="text-white font-bold text-sm">
-                        Read the {hoveredCategory} guide
-                      </span>
-                    </div>
-                  </div>
+                  <Link 
+                     to="/buying-guides"
+                     onClick={handleNavClick}
+                     className="rounded-xl overflow-hidden shadow-md relative group cursor-pointer block"
+                   >
+                     <img
+                       src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&q=80"
+                       alt="Guides"
+                       className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-500"
+                     />
+                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end p-4">
+                       <span className="text-white font-bold text-sm">
+                         Read the {hoveredCategory} guide
+                       </span>
+                     </div>
+                   </Link>
                 </div>
               </div>
             </div>
@@ -649,32 +695,32 @@ const Layout: React.FC<LayoutProps> = ({
                   </li>
 
                   <li>
-                    <Link
-                      to="/terms"
-                      onClick={() => window.scrollTo(0, 0)}
-                      className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
-                    >
-                      Privacy Policy
-                    </Link>
-                  </li>
-                  {/* <li>
-                    <Link
-                      to="/terms"
-                      onClick={() => window.scrollTo(0, 0)}
-                      className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
-                    >
-                      Posting Policy
-                    </Link>
-                  </li> */}
-                  {/* <li>
-                    <Link
-                      to="/terms"
-                      onClick={() => window.scrollTo(0, 0)}
-                      className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
-                    >
-                      Cookie Policy
-                    </Link>
-                  </li> */}
+                     <Link
+                       to="/terms"
+                       onClick={() => window.scrollTo(0, 0)}
+                       className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
+                     >
+                       Privacy Policy
+                     </Link>
+                   </li>
+                   <li>
+                     <Link
+                       to="/terms"
+                       onClick={() => window.scrollTo(0, 0)}
+                       className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
+                     >
+                       Posting Policy
+                     </Link>
+                   </li>
+                   <li>
+                     <Link
+                       to="/terms"
+                       onClick={() => window.scrollTo(0, 0)}
+                       className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
+                     >
+                       Cookie Policy
+                     </Link>
+                   </li>
                 </ul>
               </div>
 
