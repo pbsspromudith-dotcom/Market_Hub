@@ -16,13 +16,14 @@ const SearchResults: React.FC = () => {
   const initialQ = queryParams.get('q') || '';
   const initialCat = queryParams.get('cat') || null;
   const initialSub = queryParams.get('sub') || null;
+  const initialLoc = queryParams.get('loc') || '';
 
   // Filter States
   const [searchQuery, setSearchQuery] = useState(initialQ);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(initialCat);
   const [selectedSubCategory, setSelectedSubCategory] = useState<string | null>(initialSub);
-  const [locationSearch, setLocationSearch] = useState('');
-  const [locationFilterActive, setLocationFilterActive] = useState(false);
+  const [locationSearch, setLocationSearch] = useState(initialLoc);
+  const [locationFilterActive, setLocationFilterActive] = useState(!!initialLoc);
   const [distance, setDistance] = useState('Within 50 km');
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
@@ -40,6 +41,9 @@ const SearchResults: React.FC = () => {
     setSearchQuery(queryParams.get('q') || '');
     setSelectedCategory(queryParams.get('cat') || null);
     setSelectedSubCategory(queryParams.get('sub') || null);
+    const loc = queryParams.get('loc') || '';
+    setLocationSearch(loc);
+    setLocationFilterActive(!!loc);
   }, [location.search]);
 
   useEffect(() => {
@@ -72,6 +76,11 @@ const SearchResults: React.FC = () => {
   const CATEGORY_ALIASES: Record<string, string[]> = {
     'Vehicles': ['Vehicles', 'Cars'],
     'Cars': ['Vehicles', 'Cars'],
+    'Electronics & Computers': ['Electronics', 'Electronics & Computers'],
+    'Electronics': ['Electronics', 'Electronics & Computers'],
+    'Home & Garden': ['Home & Garden'],
+    'Real Estate': ['Real Estate'],
+    'Jobs': ['Jobs'],
   };
 
   const filteredListings = listings.filter(item => {

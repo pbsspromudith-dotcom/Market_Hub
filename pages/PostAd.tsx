@@ -47,8 +47,8 @@ const PostAd: React.FC = () => {
   const [reSize, setReSize] = useState('');
   // Shared
   const [condition, setCondition] = useState('New');
-  const [imageFiles, setImageFiles] = useState<(File | null)[]>([null, null, null, null, null]);
-  const [imagePreviews, setImagePreviews] = useState<(string | null)[]>([null, null, null, null, null]);
+  const [imageFiles, setImageFiles] = useState<(File | null)[]>(Array(10).fill(null));
+  const [imagePreviews, setImagePreviews] = useState<(string | null)[]>(Array(10).fill(null));
   const [isPublishing, setIsPublishing] = useState(false);
   const [dbOptions, setDbOptions] = useState<any[]>([]);
 
@@ -88,8 +88,8 @@ const PostAd: React.FC = () => {
       setCarDoors('');
       setCarSeatingCapacity('');
       setCarFeatures([]);
-      setImageFiles([null, null, null, null, null]);
-      setImagePreviews([null, null, null, null, null]);
+      setImageFiles(Array(10).fill(null));
+      setImagePreviews(Array(10).fill(null));
     }
   };
 
@@ -739,14 +739,14 @@ const PostAd: React.FC = () => {
                 {/* Header + progress */}
                 <div className="flex items-center justify-between mb-3">
                   <label className="text-xs font-black text-slate-400 uppercase tracking-widest">
-                    Add Photos (Minimum 5 Required) <span className="text-red-500">*</span>
+                    Add Photos (Cover Photo Required) <span className="text-red-500">*</span>
                   </label>
                   <span className={`text-xs font-black px-3 py-1 rounded-full ${
-                    imageFiles.filter(f => f !== null).length === 5
+                    imageFiles.filter(f => f !== null).length > 0
                       ? 'bg-green-100 text-green-600'
                       : 'bg-amber-50 text-amber-600'
                   }`}>
-                    {imageFiles.filter(f => f !== null).length} / 5 photos
+                    {imageFiles.filter(f => f !== null).length} / 10 photos
                   </span>
                 </div>
 
@@ -755,21 +755,21 @@ const PostAd: React.FC = () => {
                   <div
                     className="h-full rounded-full transition-all duration-500"
                     style={{
-                      width: `${(imageFiles.filter(f => f !== null).length / 5) * 100}%`,
-                      background: imageFiles.filter(f => f !== null).length === 5 ? '#22c55e' : '#f59e0b'
+                      width: `${(imageFiles.filter(f => f !== null).length / 10) * 100}%`,
+                      background: imageFiles[0] !== null ? '#22c55e' : '#f59e0b'
                     }}
                   />
                 </div>
 
-                {imageFiles.filter(f => f !== null).length < 5 && (
+                {imageFiles[0] === null && (
                   <p className="text-xs text-amber-600 font-bold mb-4 flex items-center gap-1.5">
                     <span className="material-icons text-sm">info</span>
-                    At least 5 photos are required to publish your ad.
+                    Cover photo is required to publish your ad.
                   </p>
                 )}
 
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-                  {Array.from({ length: 5 }).map((_, index) => (
+                  {Array.from({ length: 10 }).map((_, index) => (
                     <div
                       key={index}
                       className={`relative w-full aspect-square border-2 border-dashed rounded-2xl flex flex-col items-center justify-center group hover:border-primary hover:bg-white transition-all overflow-hidden cursor-pointer ${
@@ -815,7 +815,7 @@ const PostAd: React.FC = () => {
                           <span className="text-[10px] font-bold text-slate-400 tracking-widest uppercase">
                             {index === 0 ? 'Cover' : `Pic ${index + 1}`}
                           </span>
-                          <span className="text-[9px] text-red-400 font-bold mt-0.5">Required</span>
+                          {index === 0 && <span className="text-[9px] text-red-400 font-bold mt-0.5">Required</span>}
                         </>
                       )}
 
@@ -985,13 +985,13 @@ const PostAd: React.FC = () => {
               <div className="pt-10 border-t border-slate-100 flex justify-between items-center">
                 <button onClick={() => setStep(2)} className="px-10 py-4 font-bold text-slate-400 hover:text-slate-600">Back</button>
                 <div className="flex flex-col items-end gap-2">
-                  {imageFiles.filter(f => f !== null).length < 5 && (
+                  {imageFiles[0] === null && (
                     <p className="text-xs text-red-500 font-bold">
-                      {5 - imageFiles.filter(f => f !== null).length} more photo{5 - imageFiles.filter(f => f !== null).length !== 1 ? 's' : ''} needed
+                      Cover photo is required
                     </p>
                   )}
                   <button
-                    disabled={!location || isPublishing || imageFiles.filter(f => f !== null).length < 5}
+                    disabled={!location || isPublishing || imageFiles[0] === null}
                     onClick={handlePublish}
                     className="bg-primary hover:bg-primary-hover text-white px-10 py-4 rounded-xl font-bold transition-all shadow-lg shadow-primary/20 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >

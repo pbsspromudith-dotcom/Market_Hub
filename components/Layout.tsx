@@ -313,7 +313,7 @@ const Layout: React.FC<LayoutProps> = ({
                       </Link>
                     )}
                     <Link
-                      to={isAdmin ? "/dashboard" : "/profile"}
+                      to="/profile"
                       className="flex flex-col items-center justify-center text-slate-600 hover:text-primary transition-colors group"
                     >
                       <span className="material-icons text-[26px] group-hover:scale-110 transition-transform">
@@ -383,7 +383,7 @@ const Layout: React.FC<LayoutProps> = ({
                     Admin Panel
                   </Link>
                 )}
-                {isLoggedIn && !isAdmin && (
+                {isLoggedIn && (
                   <Link
                     to="/profile"
                     onClick={() => setIsMobileMenuOpen(false)}
@@ -533,15 +533,6 @@ const Layout: React.FC<LayoutProps> = ({
 
       {!isLoginPage && (
         <footer className="relative mt-16 md:mt-24 pt-24 pb-12 bg-white border-t border-slate-100 overflow-hidden">
-          {/* Decorative Footer Image */}
-          <div className="absolute right-0 top-0 bottom-0 w-1/2 md:w-1/3 flex items-center justify-end pr-8 pointer-events-none">
-            <img
-              src={footerImg}
-              alt=""
-              className="max-h-[50%] md:max-h-[65%] object-contain mix-blend-multiply opacity-50"
-            />
-          </div>
-
           <div className="relative z-10 w-full px-4 sm:px-6 lg:px-10">
             <div className="flex gap-4 mb-12">
               <a
@@ -650,34 +641,35 @@ const Layout: React.FC<LayoutProps> = ({
                   <li>
                     <Link
                       to="/terms"
-                      onClick={() =>
-                        window.scrollTo({ top: 0, behavior: "smooth" })
-                      }
+                      onClick={() => window.scrollTo(0, 0)}
                       className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
                     >
                       Terms & Conditions
                     </Link>
                   </li>
 
-                  {/* <li>
+                  <li>
                     <Link
-                      to="#"
+                      to="/terms"
+                      onClick={() => window.scrollTo(0, 0)}
                       className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
                     >
                       Privacy Policy
                     </Link>
                   </li>
-                  <li>
+                  {/* <li>
                     <Link
-                      to="#"
+                      to="/terms"
+                      onClick={() => window.scrollTo(0, 0)}
                       className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
                     >
                       Posting Policy
                     </Link>
-                  </li>
-                  <li>
+                  </li> */}
+                  {/* <li>
                     <Link
-                      to="#"
+                      to="/terms"
+                      onClick={() => window.scrollTo(0, 0)}
                       className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
                     >
                       Cookie Policy
@@ -694,7 +686,8 @@ const Layout: React.FC<LayoutProps> = ({
                 <ul className="space-y-3">
                   <li>
                     <Link
-                      to="#"
+                      to="/contact"
+                      onClick={() => window.scrollTo(0, 0)}
                       className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
                     >
                       Business Advertising
@@ -702,7 +695,8 @@ const Layout: React.FC<LayoutProps> = ({
                   </li>
                   <li>
                     <Link
-                      to="#"
+                      to="/contact"
+                      onClick={() => window.scrollTo(0, 0)}
                       className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
                     >
                       Promote Your Service
@@ -711,6 +705,7 @@ const Layout: React.FC<LayoutProps> = ({
                   <li>
                     <Link
                       to="/search?q=Business%20Equipment"
+                      onClick={() => window.scrollTo(0, 0)}
                       className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
                     >
                       Business Equipment
@@ -728,6 +723,7 @@ const Layout: React.FC<LayoutProps> = ({
                   <li>
                     <Link
                       to="/search"
+                      onClick={() => window.scrollTo(0, 0)}
                       className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
                     >
                       All Categories
@@ -735,7 +731,8 @@ const Layout: React.FC<LayoutProps> = ({
                   </li>
                   <li>
                     <Link
-                      to="#"
+                      to="/search"
+                      onClick={() => window.scrollTo(0, 0)}
                       className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
                     >
                       All Locations
@@ -744,6 +741,7 @@ const Layout: React.FC<LayoutProps> = ({
                   <li>
                     <Link
                       to="/search?q=Free"
+                      onClick={() => window.scrollTo(0, 0)}
                       className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
                     >
                       Free Stuff
@@ -751,7 +749,8 @@ const Layout: React.FC<LayoutProps> = ({
                   </li>
                   <li>
                     <Link
-                      to="#"
+                      to="/market-trends"
+                      onClick={() => window.scrollTo(0, 0)}
                       className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
                     >
                       Blog & News
@@ -769,6 +768,7 @@ const Layout: React.FC<LayoutProps> = ({
                   <li>
                     <Link
                       to="/search?q=Cars"
+                      onClick={() => window.scrollTo(0, 0)}
                       className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
                     >
                       Cars & Trucks
@@ -777,6 +777,7 @@ const Layout: React.FC<LayoutProps> = ({
                   <li>
                     <Link
                       to="/search?q=SUV"
+                      onClick={() => window.scrollTo(0, 0)}
                       className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
                     >
                       SUVs
@@ -785,6 +786,7 @@ const Layout: React.FC<LayoutProps> = ({
                   <li>
                     <Link
                       to="/search?q=Pickup"
+                      onClick={() => window.scrollTo(0, 0)}
                       className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
                     >
                       Pickup Trucks
@@ -793,6 +795,7 @@ const Layout: React.FC<LayoutProps> = ({
                   <li>
                     <Link
                       to="/search?q=Vans"
+                      onClick={() => window.scrollTo(0, 0)}
                       className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
                     >
                       Vans
@@ -801,6 +804,7 @@ const Layout: React.FC<LayoutProps> = ({
                   <li>
                     <Link
                       to="/search?q=Parts"
+                      onClick={() => window.scrollTo(0, 0)}
                       className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
                     >
                       Auto Parts
@@ -818,6 +822,7 @@ const Layout: React.FC<LayoutProps> = ({
                   <li>
                     <Link
                       to="/search?q=Real%20Estate"
+                      onClick={() => window.scrollTo(0, 0)}
                       className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
                     >
                       Real Estate
@@ -826,6 +831,7 @@ const Layout: React.FC<LayoutProps> = ({
                   <li>
                     <Link
                       to="/search?q=Jobs"
+                      onClick={() => window.scrollTo(0, 0)}
                       className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
                     >
                       Jobs
@@ -834,6 +840,7 @@ const Layout: React.FC<LayoutProps> = ({
                   <li>
                     <Link
                       to="/search?q=Services"
+                      onClick={() => window.scrollTo(0, 0)}
                       className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
                     >
                       Local Services
@@ -842,6 +849,7 @@ const Layout: React.FC<LayoutProps> = ({
                   <li>
                     <Link
                       to="/search?q=Buy"
+                      onClick={() => window.scrollTo(0, 0)}
                       className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
                     >
                       Buy & Sell
@@ -850,6 +858,7 @@ const Layout: React.FC<LayoutProps> = ({
                   <li>
                     <Link
                       to="/search?q=Pets"
+                      onClick={() => window.scrollTo(0, 0)}
                       className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
                     >
                       Pets

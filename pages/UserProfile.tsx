@@ -214,7 +214,10 @@ const UserProfile: React.FC = () => {
               {user.phone && <p className="text-sm text-slate-500 font-medium">{user.phone}</p>}
             </div>
             <button
-              onClick={() => setIsEditing(true)}
+              onClick={() => {
+                setEditData({ name: user.name || '', phone: user.phone || '' });
+                setIsEditing(true);
+              }}
               className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all self-start sm:self-auto"
             >
               <span className="material-icons text-sm">edit</span>

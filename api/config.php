@@ -19,7 +19,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] == 'OPTIONS'
 }
 
 // Database Credentials
-$host = "127.0.0.1";
+$host = "localhost";
 $db_name = "CNMarketHub";
 $username = "root";
 $password = "";

@@ -181,7 +181,7 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn }) => {
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6">
             {categories.map((cat) => (
-              <Link key={cat.name} to="/search" className="bg-white p-8 rounded-3xl border border-slate-100 text-center hover:border-primary-light hover:shadow-xl hover:-translate-y-1 transition-all group">
+              <Link key={cat.name} to={`/search?cat=${encodeURIComponent(cat.name)}`} className="bg-white p-8 rounded-3xl border border-slate-100 text-center hover:border-primary-light hover:shadow-xl hover:-translate-y-1 transition-all group">
                 <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:bg-primary-soft/10 transition-all">
                   <span className="material-icons text-3xl text-primary-neutral group-hover:text-primary-light">{cat.icon}</span>
                 </div>
