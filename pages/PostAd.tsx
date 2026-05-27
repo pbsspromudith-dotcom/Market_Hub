@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { trackListingSubmission } from '../analytics';
 const CAR_FEATURES_LIST = [
   'Alloy Wheels', 'Backup Camera',
   'Bluetooth', 'Leather Seats',
@@ -317,6 +318,7 @@ const PostAd: React.FC = () => {
       });
       const data = await response.json();
       if (data.success) {
+        trackListingSubmission(category || 'Other', parseFloat(price) || 0, location || 'Unknown');
         navigate('/item/' + data.id);
       } else {
         alert('Failed to publish');

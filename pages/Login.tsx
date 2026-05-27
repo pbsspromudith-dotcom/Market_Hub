@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import logoImg from '../assets/HitAds.png';
+import { trackUserRegistration } from '../analytics';
 
 interface LoginProps {
   onLogin: () => void;
@@ -113,6 +114,8 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         const data = await response.json();
         
         if (data.success) {
+          // Fire analytics event
+          trackUserRegistration('email');
           // Show verify-pending screen instead of auto-login
           setPendingEmail(email);
           setAuthMode('verify-pending');

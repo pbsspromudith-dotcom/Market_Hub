@@ -560,6 +560,7 @@ const Layout: React.FC<LayoutProps> = ({
                      <img
                        src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&q=80"
                        alt="Guides"
+                       loading="lazy"
                        className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-500"
                      />
                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end p-4">

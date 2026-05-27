@@ -207,7 +207,7 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn }) => {
               {listings.map((item) => (
                 <Link to={`/item/${item.id}`} key={item.id} onClick={() => window.scrollTo(0, 0)} className="group bg-white rounded-[2.5rem] border border-slate-100 overflow-hidden hover:shadow-2xl transition-all">
                   <div className="aspect-[4/3] relative flex items-center justify-center bg-slate-100">
-                    <img src={item.image || 'https://picsum.photos/seed/default/800/600'} alt={item.title} className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-700" />
+                    <img src={item.image || 'https://picsum.photos/seed/default/800/600'} alt={item.title} loading="lazy" className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-700" />
                     <button className="absolute top-5 right-5 w-10 h-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors shadow-sm">
                       <span className="material-icons text-xl">favorite_border</span>
                     </button>

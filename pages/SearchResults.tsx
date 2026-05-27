@@ -136,7 +136,7 @@ const SearchResults: React.FC = () => {
       {selectedCategory === 'Vehicles' && (
         <div className="w-full bg-slate-900 relative flex flex-col items-center justify-center pt-24 pb-48 mb-20 overflow-visible">
           <div className="absolute inset-0 opacity-40 z-0">
-            <img src="https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&q=80" alt="Cars" className="w-full h-full object-cover" />
+            <img src="https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&q=80" alt="Cars" loading="lazy" className="w-full h-full object-cover" />
           </div>
           
           <div className="relative z-10 text-center text-white mb-8 px-4">
@@ -393,7 +393,7 @@ const SearchResults: React.FC = () => {
                 className={`group flex flex-col bg-white rounded-2xl border overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all ${item.is_featured ? 'border-primary/30 ring-1 ring-primary/10' : 'border-slate-200'}`}
               >
                 <div className="w-full aspect-[4/3] flex-shrink-0 relative bg-slate-100 flex items-center justify-center overflow-hidden">
-                  <img src={item.image || 'https://picsum.photos/seed/default/800/600'} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  <img src={item.image || 'https://picsum.photos/seed/default/800/600'} alt={item.title} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                   {item.is_featured ? (
                     <div className="absolute top-3 left-3 bg-primary text-white text-[10px] font-black px-2 py-0.5 rounded-md flex items-center gap-1 shadow-sm">
                       <span className="material-icons text-xs">star</span> FEATURED

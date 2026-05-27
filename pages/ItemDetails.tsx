@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { CURRENT_USER } from '../constants';
+import { trackContactClick } from '../analytics';
 
 const ItemDetails: React.FC = () => {
   const { id } = useParams();
@@ -48,6 +49,7 @@ const ItemDetails: React.FC = () => {
       if (data.success) {
         setSentStatus('Message sent successfully!');
         setMessage('');
+        trackContactClick(id || '0', 'message');
       } else {
         setSentStatus('Failed to send message.');
       }
