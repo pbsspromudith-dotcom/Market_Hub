@@ -130,7 +130,8 @@ const PostAd: React.FC = () => {
         { name: 'Cars & Trucks' }, { name: 'SUVs' }, { name: 'Pickup Trucks' }, { name: 'Vans' }, 
         { name: 'Commercial Vehicles' }, { name: 'Auto Parts' }, { name: 'Tires & Rims' }, 
         { name: 'Motorcycles' }, { name: 'ATVs' }, { name: 'Boats' }, { name: 'RVs' }, 
-        { name: 'Trailers' }, { name: 'Heavy Equipment' }, { name: 'Vehicle Services' }
+        { name: 'Trailers' }, { name: 'Heavy Equipment' }, { name: 'Vehicle Services' },
+        { name: 'Classic Cars' }, { name: 'Salvage Vehicles' }, { name: 'Snowmobiles' }, { name: 'Dirt Bikes' }
       ]
     },
     { 
@@ -140,27 +141,34 @@ const PostAd: React.FC = () => {
         { name: 'Houses for Sale' }, { name: 'Condos for Sale' }, { name: 'Townhouses' }, 
         { name: 'Commercial Property' }, { name: 'Land for Sale' }, { name: 'Apartments for Rent' }, 
         { name: 'Basements for Rent' }, { name: 'Office Space' }, { name: 'Retail Space' }, 
-        { name: 'Vacation Rentals' }, { name: 'Room Rentals' }
+        { name: 'Vacation Rentals' }, { name: 'Room Rentals' },
+        { name: 'Storage & Parking' }, { name: 'Shared Accommodation' }, { name: 'Student Housing' }, 
+        { name: 'Farm Land' }, { name: 'Industrial Property' }
       ]
     },
     { 
       name: 'Jobs', 
       icon: 'work',
       subcategories: [
-        { name: 'General Labour' }, { name: 'Construction' }, { name: 'Driving' }, { name: 'Delivery' }, 
-        { name: 'Office Admin' }, { name: 'Accounting' }, { name: 'IT & Tech' }, { name: 'Sales' }, 
-        { name: 'Healthcare' }, { name: 'Hospitality' }, { name: 'Security' }, { name: 'Cleaning' }, 
-        { name: 'Customer Service' }, { name: 'Remote Jobs' }
+        { name: 'Hospitality & Restaurant' }, { name: 'Cleaning & Maintenance' }, 
+        { name: 'Manufacturing & Warehouse' }, { name: 'Education & Training' }, 
+        { name: 'Beauty & Wellness' }, { name: 'Media & Creative' }, { name: 'Remote Jobs' }, 
+        { name: 'Internship' }, { name: 'Cash Jobs' }, { name: 'Seasonal & Temporary' }, 
+        { name: 'Gig Jobs' }, { name: 'Seasonal Jobs' }, { name: 'Work From Home' }
       ]
     },
     { 
       name: 'Local Services', 
       icon: 'handyman',
       subcategories: [
-        { name: 'Movers' }, { name: 'Roofing' }, { name: 'Plumbing' }, { name: 'Electrical' }, 
-        { name: 'Renovation' }, { name: 'Landscaping' }, { name: 'Cleaning' }, { name: 'Marketing Services' }, 
-        { name: 'Web Design' }, { name: 'Printing' }, { name: 'Photography' }, { name: 'Tutors' }, 
-        { name: 'Legal Services' }, { name: 'Immigration' }, { name: 'Towing' }, { name: 'Appliance Repair' }
+        { name: 'Skilled Trades' }, { name: 'Home & Appliances Repair' }, { name: 'Snow Removal' }, 
+        { name: 'Junk Removal' }, { name: 'Pest Control' }, { name: 'Appliance Repair' }, 
+        { name: 'Locksmith Services' }, { name: 'Plumbing' }, { name: 'Electrical' }, { name: 'Roofing' }, 
+        { name: 'Home Improvement' }, { name: 'Cleaning Services' }, { name: 'Landscaping & Outdoor' }, 
+        { name: 'Moving & Transportation' }, { name: 'Automotive Services' }, { name: 'Business Services' }, 
+        { name: 'Marketing & Advertising' }, { name: 'Technology Services' }, { name: 'Education & Training' }, 
+        { name: 'Health & Beauty' }, { name: 'Event Services' }, { name: 'Child & Senior Care' }, 
+        { name: 'Creative & Media' }
       ]
     },
     { 
@@ -170,17 +178,22 @@ const PostAd: React.FC = () => {
         { name: 'Furniture' }, { name: 'Electronics' }, { name: 'TVs' }, { name: 'Phones' }, 
         { name: 'Computers' }, { name: 'Laptops' }, { name: 'Tools' }, { name: 'Appliances' }, 
         { name: 'Home Décor' }, { name: 'Office Furniture' }, { name: 'Baby Items' }, 
-        { name: 'Musical Instruments' }, { name: 'Cameras' }, { name: 'Collectibles' }, { name: 'Jewelry' }
+        { name: 'Musical Instruments' }, { name: 'Cameras' }, { name: 'Collectibles' }, { name: 'Jewelry' },
+        { name: 'Sports & Recreation' }, { name: 'Mobile phones' }, { name: 'Mobility equipment' }, 
+        { name: 'Medical supplies' }, { name: 'Signs & Print Advertising' }, { name: 'Arts & Crafts' }, 
+        { name: 'Antiques' }, { name: 'Books, Music & Movies' }, { name: 'CDs / DVDs / Blu-ray' }, 
+        { name: 'Toys & Games' }, { name: 'Free Stuff' }, { name: 'Tickets' }, 
+        { name: 'Garage Sale & Yard Sale' }, { name: 'Estate Sale' }, { name: 'Miscellaneous' }
       ]
     },
     { 
       name: 'Business & Industrial', 
       icon: 'business',
       subcategories: [
-        { name: 'Restaurant Equipment' }, { name: 'Office Equipment' }, { name: 'Commercial Supplies' }, 
-        { name: 'Warehouse Equipment' }, { name: 'POS Systems' }, { name: 'Retail Fixtures' }, 
-        { name: 'Manufacturing' }, { name: 'Packaging Supplies' }, { name: 'Forklifts' }, 
-        { name: 'Construction Equipment' }
+        { name: 'Industrial Machinery' }, { name: 'Farm & Agricultural Equipment' }, 
+        { name: 'Printing & Packaging Equipment' }, { name: 'Food & Beverage Business Supplies' }, 
+        { name: 'Safety & Security Equipment' }, { name: 'Liquidation & Wholesale Lots' }, 
+        { name: 'Other Business & Industrial' }
       ]
     },
     { 
@@ -195,7 +208,7 @@ const PostAd: React.FC = () => {
       name: 'Pets', 
       icon: 'pets',
       subcategories: [
-        { name: 'Dogs' }, { name: 'Cats' }, { name: 'Fish' }, { name: 'Birds' }, 
+        { name: 'Dogs & Puppies' }, { name: 'Cats & Kittens' }, { name: 'Fish' }, { name: 'Birds' }, 
         { name: 'Pet Services' }, { name: 'Pet Accessories' }, { name: 'Pet Adoption' }
       ]
     },
@@ -211,16 +224,24 @@ const PostAd: React.FC = () => {
       name: 'Electronics & Computers', 
       icon: 'computer',
       subcategories: [
-        { name: 'Laptops' }, { name: 'Desktop Computers' }, { name: 'Gaming PCs' }, { name: 'Phones' }, 
-        { name: 'Tablets' }, { name: 'Networking' }, { name: 'Cameras' }, { name: 'Smart Home' }
+        { name: 'Laptops' }, { name: 'Desktop Computers' }, { name: 'Gaming PCs' }, { name: 'Tablets' }, 
+        { name: 'Mobile Phones' }, { name: 'TVs' }, { name: 'Audio Systems' }, { name: 'Gaming Consoles' }, 
+        { name: 'Smart Watches' }, { name: 'Drones' }, { name: 'Cameras & Camcorders' }, 
+        { name: 'Computer Parts & Accessories' }, { name: 'Printers & Scanners' }, 
+        { name: 'Networking Equipment' }, { name: 'Smart Home Devices' }, { name: 'Video Games' }, 
+        { name: 'Miscellaneous Electronics' }
       ]
     },
     { 
       name: 'Fashion & Beauty', 
       icon: 'checkroom',
       subcategories: [
-        { name: 'Men’s Clothing' }, { name: 'Women’s Clothing' }, { name: 'Shoes' }, { name: 'Bags' }, 
-        { name: 'Jewelry' }, { name: 'Beauty Products' }, { name: 'Salons' }, { name: 'Watches' }
+        { name: 'Men’s Clothing' }, { name: 'Women’s Clothing' }, { name: 'Kids Clothing' }, 
+        { name: 'Shoes & Footwear' }, { name: 'Bags & Wallets' }, { name: 'Jewelry & Watches' }, 
+        { name: 'Sunglasses' }, { name: 'Fashion Accessories' }, { name: 'Beauty Products' }, 
+        { name: 'Skincare & Cosmetics' }, { name: 'Hair Products' }, { name: 'Perfumes & Fragrances' }, 
+        { name: 'Salon Services' }, { name: 'Barber Services' }, { name: 'Nail Services' }, 
+        { name: 'Makeup Artists' }, { name: 'Spa Services' }
       ]
     },
     { 
