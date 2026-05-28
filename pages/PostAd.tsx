@@ -122,156 +122,65 @@ const PostAd: React.FC = () => {
     setShowSuggestions(false);
   };
 
-  const categoriesData = [
-    { 
-      name: 'Vehicles', 
-      icon: 'directions_car',
-      subcategories: [
-        { name: 'Cars & Trucks' }, { name: 'SUVs' }, { name: 'Pickup Trucks' }, { name: 'Vans' }, 
-        { name: 'Commercial Vehicles' }, { name: 'Auto Parts' }, { name: 'Tires & Rims' }, 
-        { name: 'Motorcycles' }, { name: 'ATVs' }, { name: 'Boats' }, { name: 'RVs' }, 
-        { name: 'Trailers' }, { name: 'Heavy Equipment' }, { name: 'Vehicle Services' },
-        { name: 'Classic Cars' }, { name: 'Salvage Vehicles' }, { name: 'Snowmobiles' }, { name: 'Dirt Bikes' }
-      ]
-    },
-    { 
-      name: 'Real Estate', 
-      icon: 'home',
-      subcategories: [
-        { name: 'Houses for Sale' }, { name: 'Condos for Sale' }, { name: 'Townhouses' }, 
-        { name: 'Commercial Property' }, { name: 'Land for Sale' }, { name: 'Apartments for Rent' }, 
-        { name: 'Basements for Rent' }, { name: 'Office Space' }, { name: 'Retail Space' }, 
-        { name: 'Vacation Rentals' }, { name: 'Room Rentals' },
-        { name: 'Storage & Parking' }, { name: 'Shared Accommodation' }, { name: 'Student Housing' }, 
-        { name: 'Farm Land' }, { name: 'Industrial Property' }
-      ]
-    },
-    { 
-      name: 'Jobs', 
-      icon: 'work',
-      subcategories: [
-        { name: 'Hospitality & Restaurant' }, { name: 'Cleaning & Maintenance' }, 
-        { name: 'Manufacturing & Warehouse' }, { name: 'Education & Training' }, 
-        { name: 'Beauty & Wellness' }, { name: 'Media & Creative' }, { name: 'Remote Jobs' }, 
-        { name: 'Internship' }, { name: 'Cash Jobs' }, { name: 'Seasonal & Temporary' }, 
-        { name: 'Gig Jobs' }, { name: 'Seasonal Jobs' }, { name: 'Work From Home' }
-      ]
-    },
-    { 
-      name: 'Local Services', 
-      icon: 'handyman',
-      subcategories: [
-        { name: 'Skilled Trades' }, { name: 'Home & Appliances Repair' }, { name: 'Snow Removal' }, 
-        { name: 'Junk Removal' }, { name: 'Pest Control' }, { name: 'Appliance Repair' }, 
-        { name: 'Locksmith Services' }, { name: 'Plumbing' }, { name: 'Electrical' }, { name: 'Roofing' }, 
-        { name: 'Home Improvement' }, { name: 'Cleaning Services' }, { name: 'Landscaping & Outdoor' }, 
-        { name: 'Moving & Transportation' }, { name: 'Automotive Services' }, { name: 'Business Services' }, 
-        { name: 'Marketing & Advertising' }, { name: 'Technology Services' }, { name: 'Education & Training' }, 
-        { name: 'Health & Beauty' }, { name: 'Event Services' }, { name: 'Child & Senior Care' }, 
-        { name: 'Creative & Media' }
-      ]
-    },
-    { 
-      name: 'Buy & Sell', 
-      icon: 'shopping_cart',
-      subcategories: [
-        { name: 'Furniture' }, { name: 'Electronics' }, { name: 'TVs' }, { name: 'Phones' }, 
-        { name: 'Computers' }, { name: 'Laptops' }, { name: 'Tools' }, { name: 'Appliances' }, 
-        { name: 'Home Décor' }, { name: 'Office Furniture' }, { name: 'Baby Items' }, 
-        { name: 'Musical Instruments' }, { name: 'Cameras' }, { name: 'Collectibles' }, { name: 'Jewelry' },
-        { name: 'Sports & Recreation' }, { name: 'Mobile phones' }, { name: 'Mobility equipment' }, 
-        { name: 'Medical supplies' }, { name: 'Signs & Print Advertising' }, { name: 'Arts & Crafts' }, 
-        { name: 'Antiques' }, { name: 'Books, Music & Movies' }, { name: 'CDs / DVDs / Blu-ray' }, 
-        { name: 'Toys & Games' }, { name: 'Free Stuff' }, { name: 'Tickets' }, 
-        { name: 'Garage Sale & Yard Sale' }, { name: 'Estate Sale' }, { name: 'Miscellaneous' }
-      ]
-    },
-    { 
-      name: 'Business & Industrial', 
-      icon: 'business',
-      subcategories: [
-        { name: 'Industrial Machinery' }, { name: 'Farm & Agricultural Equipment' }, 
-        { name: 'Printing & Packaging Equipment' }, { name: 'Food & Beverage Business Supplies' }, 
-        { name: 'Safety & Security Equipment' }, { name: 'Liquidation & Wholesale Lots' }, 
-        { name: 'Other Business & Industrial' }
-      ]
-    },
-    { 
-      name: 'Community', 
-      icon: 'people',
-      subcategories: [
-        { name: 'Events' }, { name: 'Volunteers' }, { name: 'Lost & Found' }, { name: 'Local News' }, 
-        { name: 'Networking' }, { name: 'Artists' }, { name: 'Musicians' }, { name: 'Activity Partners' }
-      ]
-    },
-    { 
-      name: 'Pets', 
-      icon: 'pets',
-      subcategories: [
-        { name: 'Dogs & Puppies' }, { name: 'Cats & Kittens' }, { name: 'Fish' }, { name: 'Birds' }, 
-        { name: 'Pet Services' }, { name: 'Pet Accessories' }, { name: 'Pet Adoption' }
-      ]
-    },
-    { 
-      name: 'Home & Garden', 
-      icon: 'yard',
-      subcategories: [
-        { name: 'Furniture' }, { name: 'Gardening' }, { name: 'Kitchen' }, { name: 'Lighting' }, 
-        { name: 'Outdoor' }, { name: 'Renovation Materials' }, { name: 'Home Improvement' }
-      ]
-    },
-    { 
-      name: 'Electronics & Computers', 
-      icon: 'computer',
-      subcategories: [
-        { name: 'Laptops' }, { name: 'Desktop Computers' }, { name: 'Gaming PCs' }, { name: 'Tablets' }, 
-        { name: 'Mobile Phones' }, { name: 'TVs' }, { name: 'Audio Systems' }, { name: 'Gaming Consoles' }, 
-        { name: 'Smart Watches' }, { name: 'Drones' }, { name: 'Cameras & Camcorders' }, 
-        { name: 'Computer Parts & Accessories' }, { name: 'Printers & Scanners' }, 
-        { name: 'Networking Equipment' }, { name: 'Smart Home Devices' }, { name: 'Video Games' }, 
-        { name: 'Miscellaneous Electronics' }
-      ]
-    },
-    { 
-      name: 'Fashion & Beauty', 
-      icon: 'checkroom',
-      subcategories: [
-        { name: 'Men’s Clothing' }, { name: 'Women’s Clothing' }, { name: 'Kids Clothing' }, 
-        { name: 'Shoes & Footwear' }, { name: 'Bags & Wallets' }, { name: 'Jewelry & Watches' }, 
-        { name: 'Sunglasses' }, { name: 'Fashion Accessories' }, { name: 'Beauty Products' }, 
-        { name: 'Skincare & Cosmetics' }, { name: 'Hair Products' }, { name: 'Perfumes & Fragrances' }, 
-        { name: 'Salon Services' }, { name: 'Barber Services' }, { name: 'Nail Services' }, 
-        { name: 'Makeup Artists' }, { name: 'Spa Services' }
-      ]
-    },
-    { 
-      name: 'Events & Entertainment', 
-      icon: 'celebration',
-      subcategories: [
-        { name: 'Concerts' }, { name: 'Business Events' }, { name: 'Wedding Services' }, { name: 'DJs' }, 
-        { name: 'Party Rentals' }, { name: 'Tickets' }, { name: 'Catering' }
-      ]
-    }
-  ];
+  const [categoriesTree, setCategoriesTree] = useState<any[]>([]);
+  const [categoryPath, setCategoryPath] = useState<any[]>([]);
+  const [dynamicAttributesList, setDynamicAttributesList] = useState<any[]>([]);
+  const [dynamicAttributesValues, setDynamicAttributesValues] = useState<Record<string, string>>({});
 
-  const handleCategorySelect = (catName: string) => {
-    // Check if it's a top-level selection
-    const topLevelCat = categoriesData.find(c => c.name === catName);
-    if (topLevelCat) {
-      if (topLevelCat.subcategories) {
-        setCategory(catName); // Set it, but we need more info
-      } else {
-        setCategory(catName);
-      }
+  useEffect(() => {
+    fetch('/api/categories/read.php')
+      .then(res => res.json())
+      .then(res => {
+        if (res.success && Array.isArray(res.data)) {
+          setCategoriesTree(res.data);
+        }
+      })
+      .catch(err => console.error("Error loading categories", err));
+  }, []);
+
+  useEffect(() => {
+    if (category) {
+      fetch(`/api/categories/attributes.php?category_name=${encodeURIComponent(category)}`)
+        .then(res => res.json())
+        .then(res => {
+          if (res.success && Array.isArray(res.data)) {
+            setDynamicAttributesList(res.data);
+            const initialVals: Record<string, string> = {};
+            res.data.forEach((attr: any) => {
+              initialVals[attr.AttributeName] = '';
+            });
+            setDynamicAttributesValues(initialVals);
+          }
+        })
+        .catch(err => console.error("Error loading attributes", err));
     } else {
-       // It's a subcategory
-       setCategory(category.split(' > ')[0] + ' > ' + catName);
+      setDynamicAttributesList([]);
+      setDynamicAttributesValues({});
+    }
+  }, [category]);
+
+  const handleCategoryClick = (cat: any) => {
+    const newPath = [...categoryPath, cat];
+    setCategoryPath(newPath);
+    if (!cat.children || cat.children.length === 0) {
+      setCategory(newPath.map(c => c.CategoryName).join(' > '));
     }
   };
 
-  // Helper to find current subcategories
-  const currentTopCategory = categoriesData.find(c => c.name === category.split(' > ')[0]);
-  const currentSubcategories = currentTopCategory?.subcategories;
+  const handleCategoryBack = () => {
+    const newPath = categoryPath.slice(0, -1);
+    setCategoryPath(newPath);
+    setCategory('');
+  };
+
+  const handleCategoryReset = () => {
+    setCategoryPath([]);
+    setCategory('');
+  };
+
+  const currentLevelCategories = categoryPath.length === 0 
+    ? categoriesTree 
+    : (categoryPath[categoryPath.length - 1].children || []);
 
   const handlePublish = async () => {
     setIsPublishing(true);
@@ -299,26 +208,17 @@ const PostAd: React.FC = () => {
       }
 
       let finalDescription = description;
-      if (category.startsWith('Vehicles')) {
-        const carDetails = [];
-        if (carMake) carDetails.push(`Make: ${carMake}`);
-        if (carModel) carDetails.push(`Model: ${carModel}`);
-        if (carYear) carDetails.push(`Year: ${carYear}`);
-        if (carTransmission) carDetails.push(`Transmission: ${carTransmission}`);
-        if (carFuelType) carDetails.push(`Fuel Type: ${carFuelType}`);
-        if (carMileage) carDetails.push(`Mileage: ${carMileage} km`);
-        if (carVIN) carDetails.push(`VIN: ${carVIN}`);
-        if (carTrim) carDetails.push(`Trim: ${carTrim}`);
-        if (carBodyType) carDetails.push(`Body Type: ${carBodyType}`);
-        if (carDrivetrain) carDetails.push(`Drivetrain: ${carDrivetrain}`);
-        if (carColor) carDetails.push(`Color: ${carColor}`);
-        if (carDoors) carDetails.push(`Doors: ${carDoors}`);
-        if (carSeatingCapacity) carDetails.push(`Seating Capacity: ${carSeatingCapacity}`);
-        if (carFeatures.length > 0) carDetails.push(`Features: ${carFeatures.join(', ')}`);
-        
-        if (carDetails.length > 0) {
-          finalDescription = carDetails.join('\n') + '\n\n' + description;
+      const attrDetails = [];
+      for (const [key, val] of Object.entries(dynamicAttributesValues)) {
+        if (val) {
+          attrDetails.push(`${key}: ${val}`);
         }
+      }
+      if (carFeatures.length > 0 && category.startsWith('Vehicles')) {
+        attrDetails.push(`Features: ${carFeatures.join(', ')}`);
+      }
+      if (attrDetails.length > 0) {
+        finalDescription = attrDetails.join('\n') + '\n\n' + description;
       }
 
       const response = await fetch('/api/listings/create.php', {
@@ -392,48 +292,56 @@ const PostAd: React.FC = () => {
               <div className="mb-4">
                 <p className="text-sm text-slate-500 mb-4 tracking-widest uppercase font-bold text-center">Manually select a category</p>
                 
-                {/* Selected Top-Level Category */}
-                {category && (
+                {/* Category Breadcrumbs / Selected path */}
+                {categoryPath.length > 0 && (
                   <div className="flex items-center justify-between p-4 border border-slate-200 rounded-xl mb-4 bg-white shadow-sm">
-                    <span className="font-bold text-slate-800">{category.split(' > ')[0]}</span>
-                    <button 
-                      onClick={() => setCategory('')}
-                      className="text-slate-400 hover:text-slate-600 transition-colors"
-                    >
-                      <span className="material-icons text-xl">close</span>
-                    </button>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {categoryPath.map((c, i) => (
+                        <React.Fragment key={c.CategoryID}>
+                          {i > 0 && <span className="text-slate-400 text-sm font-black">/</span>}
+                          <span className="font-bold text-slate-800 text-sm">{c.CategoryName}</span>
+                        </React.Fragment>
+                      ))}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {category === '' && (
+                        <button 
+                          onClick={handleCategoryBack}
+                          className="text-slate-400 hover:text-slate-700 transition-colors text-xs font-bold flex items-center gap-1 bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-100"
+                        >
+                          <span className="material-icons text-sm">arrow_back</span> Back
+                        </button>
+                      )}
+                      <button 
+                        onClick={handleCategoryReset}
+                        className="text-slate-400 hover:text-red-500 transition-colors text-xs font-bold flex items-center gap-1 bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-100"
+                      >
+                        <span className="material-icons text-sm">close</span> Reset
+                      </button>
+                    </div>
                   </div>
                 )}
 
-                {/* Subcategories or Top-Level Categories */}
-                {!category ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                    {categoriesData.map(cat => (
-                      <button 
-                        key={cat.name} 
-                        onClick={() => handleCategorySelect(cat.name)}
-                        className={`flex flex-col items-center justify-center p-6 rounded-2xl border-2 transition-all group bg-slate-50 border-transparent hover:border-primary hover:bg-white`}
-                      >
-                        <span className={`material-icons text-3xl mb-3 text-slate-400 group-hover:text-primary`}>{cat.icon}</span>
-                        <span className="text-xs font-bold text-slate-600 uppercase tracking-widest">{cat.name}</span>
-                      </button>
-                    ))}
-                  </div>
-                ) : currentSubcategories && !category.includes(' > ') ? (
-                  <div className="space-y-2">
-                    {currentSubcategories.map(subcat => (
-                      <button
-                        key={subcat.name}
-                        onClick={() => handleCategorySelect(subcat.name)}
-                        className="w-full flex items-center justify-between p-4 border border-slate-200 rounded-xl bg-white hover:border-primary transition-all text-left group"
-                      >
-                        <span className="font-bold text-slate-700 group-hover:text-primary">{subcat.name}</span>
-                        {subcat.hasSubcategories && (
-                          <span className="material-icons text-slate-400">chevron_right</span>
-                        )}
-                      </button>
-                    ))}
-                  </div>
+                {/* Categories lists at current depth */}
+                {category === '' ? (
+                  currentLevelCategories.length > 0 ? (
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                      {currentLevelCategories.map((cat: any) => (
+                        <button 
+                          key={cat.CategoryID} 
+                          onClick={() => handleCategoryClick(cat)}
+                          className={`flex flex-col items-center justify-center p-6 rounded-2xl border-2 transition-all group bg-slate-50 border-transparent hover:border-primary hover:bg-white`}
+                        >
+                          <span className={`material-icons text-3xl mb-3 text-slate-400 group-hover:text-primary`}>{cat.Icon || 'folder'}</span>
+                          <span className="text-xs font-bold text-slate-600 uppercase tracking-widest text-center">{cat.CategoryName}</span>
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-8 text-center bg-amber-50 rounded-xl border border-amber-200 text-amber-800 font-bold">
+                      No subcategories available.
+                    </div>
+                  )
                 ) : (
                   <div className="p-8 text-center bg-primary/5 rounded-xl border border-primary/20">
                     <span className="material-icons text-4xl text-primary mb-4 block">check_circle</span>
@@ -444,7 +352,7 @@ const PostAd: React.FC = () => {
               </div>
               <div className="mt-10 pt-10 border-t border-slate-100 text-right">
                 <button 
-                  disabled={!category || (currentSubcategories != null && !category.includes(' > '))}
+                  disabled={category === ''}
                   onClick={() => setStep(2)} 
                   className="bg-primary hover:bg-primary-hover text-white px-10 py-4 rounded-xl font-bold transition-all shadow-lg shadow-primary/20 flex items-center gap-2 ml-auto disabled:opacity-50"
                 >
@@ -467,236 +375,96 @@ const PostAd: React.FC = () => {
                     placeholder="e.g. 2018 Honda Civic LX - Excellent Condition" 
                   />
                 </div>
-                
-                {category.startsWith('Vehicles') && (
-                  <div className="bg-primary/5 p-6 rounded-xl border border-primary/20 space-y-4">
-                     <h3 className="font-bold text-slate-800 flex items-center gap-2 mb-2">
-                       <span className="material-icons text-primary">directions_car</span>
-                       Vehicle Details
-                     </h3>
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                       <div>
-                         <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Make</label>
-                         <select 
-                           value={carMake} 
-                           onChange={e => {
-                             setCarMake(e.target.value);
-                             setCarModel(''); // reset model when make changes
-                           }} 
-                           className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm text-slate-700"
-                         >
-                           <option value="">Select Make...</option>
-                           {dbOptions.filter(o => o.option_type === 'car_make').map(make => (
-                             <option key={make.id} value={make.option_value}>{make.option_value}</option>
-                           ))}
-                         </select>
-                       </div>
-                       <div>
-                         <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Model</label>
-                         <select 
-                           value={carModel} 
-                           onChange={e => setCarModel(e.target.value)} 
-                           className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm text-slate-700"
-                           disabled={!carMake}
-                         >
-                           <option value="">Select Model...</option>
-                           {dbOptions
-                             .filter(o => {
-                               const selectedMakeObj = dbOptions.find(m => m.option_type === 'car_make' && m.option_value === carMake);
-                               return o.option_type === 'car_model' && (!selectedMakeObj || o.parent_id === selectedMakeObj.id);
-                             })
-                             .map(model => (
-                               <option key={model.id} value={model.option_value}>{model.option_value}</option>
-                             ))}
-                         </select>
-                       </div>
-                       <div>
-                         <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Year</label>
-                         <input type="number" value={carYear} onChange={e => setCarYear(e.target.value)} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm" placeholder="e.g. 2020" />
-                       </div>
-                       <div>
-                         <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Transmission</label>
-                         <select value={carTransmission} onChange={e => setCarTransmission(e.target.value)} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm text-slate-700">
-                           <option value="">Select...</option>
-                           <option>Automatic</option>
-                           <option>Manual</option>
-                           <option>Other</option>
-                         </select>
-                       </div>
-                       <div>
-                         <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Fuel Type</label>
-                         <select value={carFuelType} onChange={e => setCarFuelType(e.target.value)} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm text-slate-700">
-                           <option value="">Select...</option>
-                           {dbOptions.filter(o => o.option_type === 'fuel_type').map(opt => (
-                             <option key={opt.id} value={opt.option_value}>{opt.option_value}</option>
-                           ))}
-                         </select>
-                       </div>
-                       <div>
-                         <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Mileage (km)</label>
-                         <input type="number" value={carMileage} onChange={e => setCarMileage(e.target.value)} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm" placeholder="e.g. 50000" />
-                       </div>
-                       <div>
-                         <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Trim</label>
-                         <input value={carTrim} onChange={e => setCarTrim(e.target.value)} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm" placeholder="e.g. EX-L" />
-                       </div>
-                       <div>
-                         <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Body Type</label>
-                         <select value={carBodyType} onChange={e => setCarBodyType(e.target.value)} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm text-slate-700">
-                           <option value="">Select...</option>
-                           <option>SUV</option>
-                           <option>Sedan</option>
-                           <option>Coupe</option>
-                           <option>Hatchback</option>
-                           <option>Truck</option>
-                           <option>Van</option>
-                           <option>Wagon</option>
-                           <option>Other</option>
-                         </select>
-                       </div>
-                       <div>
-                         <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Drivetrain</label>
-                         <select value={carDrivetrain} onChange={e => setCarDrivetrain(e.target.value)} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm text-slate-700">
-                           <option value="">Select...</option>
-                           {dbOptions.filter(o => o.option_type === 'drivetrain').map(opt => (
-                             <option key={opt.id} value={opt.option_value}>{opt.option_value}</option>
-                           ))}
-                         </select>
-                       </div>
-                       <div>
-                         <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Exterior Color</label>
-                         <input value={carColor} onChange={e => setCarColor(e.target.value)} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm" placeholder="e.g. Black" />
-                       </div>
-                       <div>
-                         <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Doors</label>
-                         <select value={carDoors} onChange={e => setCarDoors(e.target.value)} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm text-slate-700">
-                           <option value="">Select...</option>
-                           <option>2</option>
-                           <option>3</option>
-                           <option>4</option>
-                           <option>5</option>
-                           <option>Other</option>
-                         </select>
-                       </div>
-                       <div>
-                         <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Seating Capacity</label>
-                         <input type="number" value={carSeatingCapacity} onChange={e => setCarSeatingCapacity(e.target.value)} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm" placeholder="e.g. 5" />
-                       </div>
-                       <div className="md:col-span-2">
-                         <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">VIN Number</label>
-                         <input value={carVIN} onChange={e => setCarVIN(e.target.value)} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm uppercase" placeholder="17-character VIN" maxLength={17} />
-                       </div>
-                     </div>
-                     <div className="pt-4 mt-2 border-t border-primary/10">
-                       <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">Features</label>
-                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                         {CAR_FEATURES_LIST.map(feature => (
-                           <label key={feature} className="flex items-center gap-3 cursor-pointer group">
-                             <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${carFeatures.includes(feature) ? 'bg-primary border-primary' : 'bg-white border-slate-300 group-hover:border-primary'}`}>
-                               {carFeatures.includes(feature) && <span className="material-icons text-white text-[14px]">check</span>}
-                             </div>
-                             <span className="text-sm font-medium text-slate-700">{feature}</span>
-                             <input 
-                               type="checkbox" 
-                               className="hidden" 
-                               checked={carFeatures.includes(feature)}
-                               onChange={() => {
-                                 setCarFeatures(prev => 
-                                   prev.includes(feature) ? prev.filter(f => f !== feature) : [...prev, feature]
-                                 );
-                               }}
-                             />
-                           </label>
-                         ))}
-                       </div>
-                     </div>
-                  </div>
-                )}
-
-                <div>
-                  <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Description</label>
-                  <div className="bg-slate-50 border border-slate-100 rounded-xl overflow-hidden">
-                    <textarea 
-                      value={description}
-                      onChange={e => setDescription(e.target.value)}
-                      className="w-full bg-transparent border-none focus:ring-0 p-5 text-sm" 
-                      rows={8} 
-                      placeholder="Describe what you are selling..."
-                    ></textarea>
-                  </div>
-                </div>
-                {/* ---- Jobs Category Fields ---- */}
-                {category.startsWith('Jobs') && (
+                             {dynamicAttributesList.length > 0 && (
                   <div className="bg-primary/5 p-6 rounded-xl border border-primary/20 space-y-4">
                     <h3 className="font-bold text-slate-800 flex items-center gap-2 mb-2">
-                      <span className="material-icons text-primary">work</span>
-                      Job Details
+                      <span className="material-icons text-primary">info</span>
+                      Specific Details
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Job Type / Title</label>
-                        <input value={jobType} onChange={e => setJobType(e.target.value)} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm" placeholder="e.g. Software Engineer" />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Employment Type</label>
-                        <select value={jobEmploymentType} onChange={e => setJobEmploymentType(e.target.value)} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm text-slate-700">
-                          <option value="">Select...</option>
-                          <option>Full-Time</option>
-                          <option>Part-Time</option>
-                          <option>Contract</option>
-                          <option>Freelance</option>
-                          <option>Internship</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Experience Required</label>
-                        <select value={jobExperience} onChange={e => setJobExperience(e.target.value)} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm text-slate-700">
-                          <option value="">Select...</option>
-                          <option>No Experience</option>
-                          <option>1-2 Years</option>
-                          <option>3-5 Years</option>
-                          <option>5+ Years</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Salary Range ($/yr)</label>
-                        <div className="flex gap-2 items-center">
-                          <input type="number" value={jobSalaryMin} onChange={e => setJobSalaryMin(e.target.value)} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm" placeholder="Min" />
-                          <span className="text-slate-300 font-bold">–</span>
-                          <input type="number" value={jobSalaryMax} onChange={e => setJobSalaryMax(e.target.value)} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm" placeholder="Max" />
+                      {dynamicAttributesList.map((attr) => {
+                        const name = attr.AttributeName;
+                        const isRequired = attr.IsRequired === 1;
+                        if (attr.AttributeType === 'Dropdown') {
+                          return (
+                            <div key={attr.AttributeID}>
+                              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">
+                                {name} {isRequired && <span className="text-red-500">*</span>}
+                              </label>
+                              <select
+                                value={dynamicAttributesValues[name] || ''}
+                                onChange={(e) => setDynamicAttributesValues(prev => ({ ...prev, [name]: e.target.value }))}
+                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm text-slate-700"
+                                required={isRequired}
+                              >
+                                <option value="">Select {name}...</option>
+                                {attr.options.map((opt: string) => (
+                                  <option key={opt} value={opt}>{opt}</option>
+                                ))}
+                              </select>
+                            </div>
+                          );
+                        } else if (attr.AttributeType === 'Number') {
+                          return (
+                            <div key={attr.AttributeID}>
+                              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">
+                                {name} {isRequired && <span className="text-red-500">*</span>}
+                              </label>
+                              <input
+                                type="number"
+                                value={dynamicAttributesValues[name] || ''}
+                                onChange={(e) => setDynamicAttributesValues(prev => ({ ...prev, [name]: e.target.value }))}
+                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm"
+                                placeholder={`Enter ${name}...`}
+                                required={isRequired}
+                              />
+                            </div>
+                          );
+                        } else {
+                          return (
+                            <div key={attr.AttributeID}>
+                              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">
+                                {name} {isRequired && <span className="text-red-500">*</span>}
+                              </label>
+                              <input
+                                type="text"
+                                value={dynamicAttributesValues[name] || ''}
+                                onChange={(e) => setDynamicAttributesValues(prev => ({ ...prev, [name]: e.target.value }))}
+                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm"
+                                placeholder={`Enter ${name}...`}
+                                required={isRequired}
+                              />
+                            </div>
+                          );
+                        }
+                      })}
+                    </div>
+
+                    {category.startsWith('Vehicles') && (
+                      <div className="pt-4 mt-2 border-t border-primary/10">
+                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">Features</label>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          {CAR_FEATURES_LIST.map(feature => (
+                            <label key={feature} className="flex items-center gap-3 cursor-pointer group">
+                              <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${carFeatures.includes(feature) ? 'bg-primary border-primary' : 'bg-white border-slate-300 group-hover:border-primary'}`}>
+                                {carFeatures.includes(feature) && <span className="material-icons text-white text-[14px]">check</span>}
+                              </div>
+                              <span className="text-sm font-medium text-slate-700">{feature}</span>
+                              <input 
+                                type="checkbox" 
+                                className="hidden" 
+                                checked={carFeatures.includes(feature)}
+                                onChange={() => {
+                                  setCarFeatures(prev => 
+                                    prev.includes(feature) ? prev.filter(f => f !== feature) : [...prev, feature]
+                                  );
+                                }}
+                              />
+                            </label>
+                          ))}
                         </div>
                       </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* ---- Real Estate Fields ---- */}
-                {category.startsWith('Real Estate') && (
-                  <div className="bg-primary/5 p-6 rounded-xl border border-primary/20 space-y-4">
-                    <h3 className="font-bold text-slate-800 flex items-center gap-2 mb-2">
-                      <span className="material-icons text-primary">home</span>
-                      Property Details
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div>
-                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Bedrooms</label>
-                        <select value={reBedrooms} onChange={e => setReBedrooms(e.target.value)} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm text-slate-700">
-                          <option value="">Select...</option>
-                          {['Studio', '1', '2', '3', '4', '5+'].map(v => <option key={v}>{v}</option>)}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Bathrooms</label>
-                        <select value={reBathrooms} onChange={e => setReBathrooms(e.target.value)} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm text-slate-700">
-                          <option value="">Select...</option>
-                          {['1', '2', '3', '4+'].map(v => <option key={v}>{v}</option>)}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Size (sq ft)</label>
-                        <input type="number" value={reSize} onChange={e => setReSize(e.target.value)} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm" placeholder="e.g. 1200" />
-                      </div>
-                    </div>
+                    )}
                   </div>
                 )}
 

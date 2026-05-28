@@ -32,6 +32,27 @@ export default defineConfig(({ mode }) => {
         alias: {
           '@': path.resolve(__dirname, '.'),
         }
+      },
+      build: {
+        // Generate source maps for production debugging
+        sourcemap: false,
+        // Increase chunk warning threshold
+        chunkSizeWarningLimit: 500,
+        rollupOptions: {
+          output: {
+            // Split vendor code into cacheable chunks
+            manualChunks(id) {
+              if (id.includes('node_modules/recharts') || id.includes('node_modules/d3')) {
+                return 'vendor-charts';
+              }
+              if (id.includes('node_modules/react-router') || id.includes('node_modules/@remix-run')) {
+                return 'vendor-router';
+              }
+            }
+          }
+        },
+        // Optimize CSS
+        cssCodeSplit: true,
       }
     };
 });

@@ -16,12 +16,14 @@ const SearchResults: React.FC = () => {
   const initialQ = queryParams.get('q') || '';
   const initialCat = queryParams.get('cat') || null;
   const initialSub = queryParams.get('sub') || null;
+  const initialSubSub = queryParams.get('subsub') || null;
   const initialLoc = queryParams.get('loc') || '';
 
   // Filter States
   const [searchQuery, setSearchQuery] = useState(initialQ);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(initialCat);
   const [selectedSubCategory, setSelectedSubCategory] = useState<string | null>(initialSub);
+  const [selectedSubSubCategory, setSelectedSubSubCategory] = useState<string | null>(initialSubSub);
   const [locationSearch, setLocationSearch] = useState(initialLoc);
   const [locationFilterActive, setLocationFilterActive] = useState(!!initialLoc);
   const [distance, setDistance] = useState('Within 50 km');
@@ -41,6 +43,7 @@ const SearchResults: React.FC = () => {
     setSearchQuery(queryParams.get('q') || '');
     setSelectedCategory(queryParams.get('cat') || null);
     setSelectedSubCategory(queryParams.get('sub') || null);
+    setSelectedSubSubCategory(queryParams.get('subsub') || null);
     const loc = queryParams.get('loc') || '';
     setLocationSearch(loc);
     setLocationFilterActive(!!loc);
@@ -92,6 +95,9 @@ const SearchResults: React.FC = () => {
       const aliases = CATEGORY_ALIASES[selectedCategory] || [selectedCategory];
       const match = aliases.some(alias => {
         if (selectedSubCategory) {
+          if (selectedSubSubCategory) {
+            return item.category === `${alias} > ${selectedSubCategory} > ${selectedSubSubCategory}`;
+          }
           return item.category === `${alias} > ${selectedSubCategory}` || item.category.startsWith(`${alias} > ${selectedSubCategory} >`);
         }
         return item.category === alias || item.category.startsWith(alias + ' > ');

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { CURRENT_USER } from "../constants";
 import logoImg from "../assets/HitAds.png";
@@ -24,204 +24,31 @@ const Layout: React.FC<LayoutProps> = ({
   const [globalLocation, setGlobalLocation] = useState("");
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
 
-  const MEGA_MENU_DATA: Record<string, string[]> = {
-    Vehicles: [
-      "Cars & Trucks",
-      "SUVs",
-      "Pickup Trucks",
-      "Vans",
-      "Commercial Vehicles",
-      "Auto Parts",
-      "Tires & Rims",
-      "Motorcycles",
-      "ATVs",
-      "Boats",
-      "RVs",
-      "Trailers",
-      "Heavy Equipment",
-      "Vehicle Services",
-      "Classic Cars",
-      "Salvage Vehicles",
-      "Snowmobiles",
-      "Dirt Bikes",
-    ],
-    "Real Estate": [
-      "Houses for Sale",
-      "Condos for Sale",
-      "Townhouses",
-      "Commercial Property",
-      "Land for Sale",
-      "Apartments for Rent",
-      "Basements for Rent",
-      "Office Space",
-      "Retail Space",
-      "Vacation Rentals",
-      "Room Rentals",
-      "Storage & Parking",
-      "Shared Accommodation",
-      "Student Housing",
-      "Farm Land",
-      "Industrial Property",
-    ],
-    Jobs: [
-      "Hospitality & Restaurant",
-      "Cleaning & Maintenance",
-      "Manufacturing & Warehouse",
-      "Education & Training",
-      "Beauty & Wellness",
-      "Media & Creative",
-      "Remote Jobs",
-      "Internship",
-      "Cash Jobs",
-      "Seasonal & Temporary",
-      "Gig Jobs",
-      "Seasonal Jobs",
-      "Work From Home",
-    ],
-    "Local Services": [
-      "Skilled Trades",
-      "Home & Appliances Repair",
-      "Snow Removal",
-      "Junk Removal",
-      "Pest Control",
-      "Appliance Repair",
-      "Locksmith Services",
-      "Plumbing",
-      "Electrical",
-      "Roofing",
-      "Home Improvement",
-      "Cleaning Services",
-      "Landscaping & Outdoor",
-      "Moving & Transportation",
-      "Automotive Services",
-      "Business Services",
-      "Marketing & Advertising",
-      "Technology Services",
-      "Education & Training",
-      "Health & Beauty",
-      "Event Services",
-      "Child & Senior Care",
-      "Creative & Media",
-    ],
-    "Buy & Sell": [
-      "Furniture",
-      "Electronics",
-      "TVs",
-      "Phones",
-      "Computers",
-      "Laptops",
-      "Tools",
-      "Appliances",
-      "Home Décor",
-      "Office Furniture",
-      "Baby Items",
-      "Musical Instruments",
-      "Cameras",
-      "Collectibles",
-      "Jewelry",
-      "Sports & Recreation",
-      "Mobile phones",
-      "Mobility equipment",
-      "Medical supplies",
-      "Signs & Print Advertising",
-      "Arts & Crafts",
-      "Antiques",
-      "Books, Music & Movies",
-      "CDs / DVDs / Blu-ray",
-      "Toys & Games",
-      "Free Stuff",
-      "Tickets",
-      "Garage Sale & Yard Sale",
-      "Estate Sale",
-      "Miscellaneous",
-    ],
-    "Business & Industrial": [
-      "Industrial Machinery",
-      "Farm & Agricultural Equipment",
-      "Printing & Packaging Equipment",
-      "Food & Beverage Business Supplies",
-      "Safety & Security Equipment",
-      "Liquidation & Wholesale Lots",
-      "Other Business & Industrial",
-    ],
-    Community: [
-      "Events",
-      "Volunteers",
-      "Lost & Found",
-      "Local News",
-      "Networking",
-      "Artists",
-      "Musicians",
-      "Activity Partners",
-    ],
-    Pets: [
-      "Dogs & Puppies",
-      "Cats & Kittens",
-      "Fish",
-      "Birds",
-      "Pet Services",
-      "Pet Accessories",
-      "Pet Adoption",
-    ],
-    "Home & Garden": [
-      "Furniture",
-      "Gardening",
-      "Kitchen",
-      "Lighting",
-      "Outdoor",
-      "Renovation Materials",
-      "Home Improvement",
-    ],
-    "Electronics & Computers": [
-      "Laptops",
-      "Desktop Computers",
-      "Gaming PCs",
-      "Tablets",
-      "Mobile Phones",
-      "TVs",
-      "Audio Systems",
-      "Gaming Consoles",
-      "Smart Watches",
-      "Drones",
-      "Cameras & Camcorders",
-      "Computer Parts & Accessories",
-      "Printers & Scanners",
-      "Networking Equipment",
-      "Smart Home Devices",
-      "Video Games",
-      "Miscellaneous Electronics",
-    ],
-    "Fashion & Beauty": [
-      "Men’s Clothing",
-      "Women’s Clothing",
-      "Kids Clothing",
-      "Shoes & Footwear",
-      "Bags & Wallets",
-      "Jewelry & Watches",
-      "Sunglasses",
-      "Fashion Accessories",
-      "Beauty Products",
-      "Skincare & Cosmetics",
-      "Hair Products",
-      "Perfumes & Fragrances",
-      "Salon Services",
-      "Barber Services",
-      "Nail Services",
-      "Makeup Artists",
-      "Spa Services",
-    ],
-    "Events & Entertainment": [
-      "Concerts",
-      "Business Events",
-      "Wedding Services",
-      "DJs",
-      "Party Rentals",
-      "Tickets",
-      "Catering",
-    ],
-  };
+  interface Category {
+    CategoryID: number;
+    ParentCategoryID: number | null;
+    CategoryName: string;
+    Slug: string | null;
+    Icon: string | null;
+    SortOrder: number;
+    children?: Category[];
+  }
 
-  const CATEGORIES = Object.keys(MEGA_MENU_DATA);
+  const [categoriesTree, setCategoriesTree] = useState<Category[]>([]);
+
+  useEffect(() => {
+    fetch('/api/categories/read.php')
+      .then(res => res.json())
+      .then(res => {
+        if (res.success && Array.isArray(res.data)) {
+          setCategoriesTree(res.data);
+        }
+      })
+      .catch(err => console.error("Error loading categories:", err));
+  }, []);
+
+  const CATEGORIES = categoriesTree.map(cat => cat.CategoryName);
+  const hoveredCategoryObj = categoriesTree.find(cat => cat.CategoryName === hoveredCategory);
 
   const handleGlobalSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -473,9 +300,11 @@ const Layout: React.FC<LayoutProps> = ({
 
                 {/* Mobile Categories Grid */}
                 <div className="pt-6 border-t border-slate-50">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 px-4">Quick Browse</p>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 px-4">
+                    Quick Browse
+                  </p>
                   <div className="grid grid-cols-2 gap-3 px-2">
-                    {CATEGORIES.slice(0, 8).map(cat => (
+                    {CATEGORIES.slice(0, 8).map((cat) => (
                       <Link
                         key={cat}
                         to={`/search?cat=${encodeURIComponent(cat)}`}
@@ -485,7 +314,9 @@ const Layout: React.FC<LayoutProps> = ({
                         }}
                         className="flex items-center gap-3 p-4 bg-slate-50 rounded-2xl hover:bg-primary/5 transition-all group"
                       >
-                        <span className="text-[11px] font-bold text-slate-700 truncate">{cat}</span>
+                        <span className="text-[11px] font-bold text-slate-700 truncate">
+                          {cat}
+                        </span>
                       </Link>
                     ))}
                   </div>
@@ -542,19 +373,48 @@ const Layout: React.FC<LayoutProps> = ({
                   <h3 className="text-sm font-black text-slate-800 mb-6 uppercase tracking-widest border-b border-slate-200 pb-3">
                     Browse {hoveredCategory} by
                   </h3>
-                  {hoveredCategory && MEGA_MENU_DATA[hoveredCategory] && (
-                    <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-y-5 gap-x-8">
-                      {MEGA_MENU_DATA[hoveredCategory].map((subCat) => (
-                        <Link
-                          key={subCat}
-                          to={`/search?cat=${encodeURIComponent(hoveredCategory)}&sub=${encodeURIComponent(subCat)}`}
-                          onClick={handleNavClick}
-                          className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors flex items-center gap-2 group"
-                        >
-                          <span className="w-1.5 h-1.5 rounded-full bg-slate-300 group-hover:bg-primary transition-colors shrink-0"></span>
-                          <span className="truncate">{subCat}</span>
-                        </Link>
-                      ))}
+                  {hoveredCategoryObj && hoveredCategoryObj.children && (
+                    <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-y-6 gap-x-8 items-start">
+                      {hoveredCategoryObj.children.map((subCat: any) => {
+                        const hasChildren = subCat.children && subCat.children.length > 0;
+                        if (hasChildren) {
+                          return (
+                            <div key={subCat.CategoryID} className="flex flex-col gap-2">
+                              <Link
+                                to={`/search?cat=${encodeURIComponent(hoveredCategoryObj.CategoryName)}&sub=${encodeURIComponent(subCat.CategoryName)}`}
+                                onClick={handleNavClick}
+                                className="text-[13px] font-black text-slate-800 hover:text-primary transition-colors"
+                              >
+                                {subCat.CategoryName}
+                              </Link>
+                              <div className="flex flex-col gap-1.5 pl-3 border-l border-slate-200 mt-1">
+                                {subCat.children.map((nestedCat: any) => (
+                                  <Link
+                                    key={nestedCat.CategoryID}
+                                    to={`/search?cat=${encodeURIComponent(hoveredCategoryObj.CategoryName)}&sub=${encodeURIComponent(subCat.CategoryName)}&subsub=${encodeURIComponent(nestedCat.CategoryName)}`}
+                                    onClick={handleNavClick}
+                                    className="text-[12px] font-bold text-slate-500 hover:text-primary transition-colors truncate"
+                                  >
+                                    {nestedCat.CategoryName}
+                                  </Link>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        } else {
+                          return (
+                            <Link
+                              key={subCat.CategoryID}
+                              to={`/search?cat=${encodeURIComponent(hoveredCategoryObj.CategoryName)}&sub=${encodeURIComponent(subCat.CategoryName)}`}
+                              onClick={handleNavClick}
+                              className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors flex items-center gap-2 group"
+                            >
+                              <span className="w-1.5 h-1.5 rounded-full bg-slate-300 group-hover:bg-primary transition-colors shrink-0"></span>
+                              <span className="truncate">{subCat.CategoryName}</span>
+                            </Link>
+                          );
+                        }
+                      })}
                     </div>
                   )}
                 </div>
@@ -597,23 +457,23 @@ const Layout: React.FC<LayoutProps> = ({
                       Safety Tips
                     </Link>
                   </div>
-                  <Link 
-                     to="/buying-guides"
-                     onClick={handleNavClick}
-                     className="rounded-xl overflow-hidden shadow-md relative group cursor-pointer block"
-                   >
-                     <img
-                       src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&q=80"
-                       alt="Guides"
-                       loading="lazy"
-                       className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-500"
-                     />
-                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end p-4">
-                       <span className="text-white font-bold text-sm">
-                         Read the {hoveredCategory} guide
-                       </span>
-                     </div>
-                   </Link>
+                  <Link
+                    to="/buying-guides"
+                    onClick={handleNavClick}
+                    className="rounded-xl overflow-hidden shadow-md relative group cursor-pointer block"
+                  >
+                    <img
+                      src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&q=80"
+                      alt="Guides"
+                      loading="lazy"
+                      className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end p-4">
+                      <span className="text-white font-bold text-sm">
+                        Read the {hoveredCategory} guide
+                      </span>
+                    </div>
+                  </Link>
                 </div>
               </div>
             </div>
@@ -741,32 +601,32 @@ const Layout: React.FC<LayoutProps> = ({
                   </li>
 
                   <li>
-                     <Link
-                       to="/terms"
-                       onClick={() => window.scrollTo(0, 0)}
-                       className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
-                     >
-                       Privacy Policy
-                     </Link>
-                   </li>
-                   <li>
-                     <Link
-                       to="/terms"
-                       onClick={() => window.scrollTo(0, 0)}
-                       className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
-                     >
-                       Posting Policy
-                     </Link>
-                   </li>
-                   <li>
-                     <Link
-                       to="/terms"
-                       onClick={() => window.scrollTo(0, 0)}
-                       className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
-                     >
-                       Cookie Policy
-                     </Link>
-                   </li>
+                    <Link
+                      to="/terms"
+                      onClick={() => window.scrollTo(0, 0)}
+                      className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
+                    >
+                      Privacy Policy
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/terms"
+                      onClick={() => window.scrollTo(0, 0)}
+                      className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
+                    >
+                      Posting Policy
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/terms"
+                      onClick={() => window.scrollTo(0, 0)}
+                      className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
+                    >
+                      Cookie Policy
+                    </Link>
+                  </li>
                 </ul>
               </div>
 
@@ -794,7 +654,7 @@ const Layout: React.FC<LayoutProps> = ({
                       Promote Your Service
                     </Link>
                   </li>
-                  <li>
+                  {/* <li>
                     <Link
                       to="/search?q=Business%20Equipment"
                       onClick={() => window.scrollTo(0, 0)}
@@ -802,7 +662,7 @@ const Layout: React.FC<LayoutProps> = ({
                     >
                       Business Equipment
                     </Link>
-                  </li>
+                  </li> */}
                 </ul>
               </div>
 
@@ -962,7 +822,7 @@ const Layout: React.FC<LayoutProps> = ({
 
             <div className="pt-8 border-t border-slate-200 flex flex-col md:flex-row justify-between items-center gap-4">
               <div className="text-[10px] font-black text-slate-400 lowercase">
-                © 2026 HitAds.ca — Free Ads. Sell Fast. Buy Local. Canada Wide.
+                © 2026 HitAds.ca — Free Ads. Sell Fast. Buy Local. Canada-Wide.
               </div>
               <div className="flex gap-8 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                 <Link

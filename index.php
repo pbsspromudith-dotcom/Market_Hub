@@ -14,6 +14,15 @@ $og_image = "https://hitads.ca/assets/logo.png";
 $canonical_url = "https://hitads.ca" . rtrim($clean_path, '/');
 $schema_markup = '';
 
+// ── Analytics IDs (replace with real IDs to enable tracking) ──
+$gtm_id = 'GTM-XXXXXXX';
+$ga4_id = 'G-XXXXXXXXXX';
+$meta_pixel_id = 'XXXXXXXXXXXXXXXX';
+
+$has_gtm = (strpos($gtm_id, 'XXXX') === false);
+$has_ga4 = (strpos($ga4_id, 'XXXX') === false);
+$has_pixel = (strpos($meta_pixel_id, 'XXXX') === false);
+
 // ── Organization + LocalBusiness Schema (shown on homepage) ──
 $org_schema = '
 <script type="application/ld+json">
@@ -203,23 +212,43 @@ elseif ($clean_path === '/market-trends') {
     <!-- Schema.org Structured Data -->
     <?php echo $schema_markup; ?>
 
+    <!-- Preconnect to Google Fonts for faster loading -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <!-- Fonts (non-render-blocking with media trick + display=swap) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+          rel="stylesheet" media="print" onload="this.media='all'">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons&display=swap"
+          rel="stylesheet" media="print" onload="this.media='all'">
+    <!-- Fallback for browsers with JS disabled -->
+    <noscript>
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+      <link href="https://fonts.googleapis.com/icon?family=Material+Icons&display=swap" rel="stylesheet">
+    </noscript>
+
+    <?php if ($has_gtm): ?>
     <!-- Google Tag Manager -->
     <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
     new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
     j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-    })(window,document,'script','dataLayer','GTM-XXXXXXX');</script>
+    })(window,document,'script','dataLayer','<?php echo $gtm_id; ?>');</script>
     <!-- End Google Tag Manager -->
+    <?php endif; ?>
 
+    <?php if ($has_ga4): ?>
     <!-- Google Analytics 4 -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=<?php echo $ga4_id; ?>"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-      gtag('config', 'G-XXXXXXXXXX');
+      gtag('config', '<?php echo $ga4_id; ?>');
     </script>
+    <?php endif; ?>
 
+    <?php if ($has_pixel): ?>
     <!-- Meta Pixel -->
     <script>
     !function(f,b,e,v,n,t,s)
@@ -230,59 +259,65 @@ elseif ($clean_path === '/market-trends') {
     t.src=v;s=b.getElementsByTagName(e)[0];
     s.parentNode.insertBefore(t,s)}(window, document,'script',
     'https://connect.facebook.net/en_US/fbevents.js');
-    fbq('init', 'XXXXXXXXXXXXXXXX');
+    fbq('init', '<?php echo $meta_pixel_id; ?>');
     fbq('track', 'PageView');
     </script>
     <noscript><img height="1" width="1" style="display:none"
-    src="https://www.facebook.net/tr?id=XXXXXXXXXXXXXXXX&ev=PageView&noscript=1"
+    src="https://www.facebook.net/tr?id=<?php echo $meta_pixel_id; ?>&ev=PageView&noscript=1"
     /></noscript>
-
-    <!-- Tailwind and Styles -->
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <script>
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        "primary": "#2558a7",
-                        "primary-hover": "#1d4a8f",
-                        "primary-light": "#3b82f6",
-                        "primary-soft": "#60a5fa",
-                        "primary-neutral": "#94a3b8",
-                        "secondary": "#cc2d2d",
-                        "secondary-hover": "#a82222",
-                        "accent": "#cc2d2d",
-                        "background-light": "#f8fafc",
-                        "background-dark": "#1a1a1a",
-                    },
-                    fontFamily: {
-                        "display": ["Inter", "sans-serif"]
+    <?php endif; ?>
+    <?php
+    // ── Load Vite build manifest to get hashed asset filenames ──
+    $manifest_path = __DIR__ . '/dist/.vite/manifest.json';
+    $built_css = '';
+    $built_js = '';
+    $preload_chunks = [];
+    
+    if (file_exists($manifest_path)) {
+        $manifest = json_decode(file_get_contents($manifest_path), true);
+        if (isset($manifest['index.html'])) {
+            $entry = $manifest['index.html'];
+            if (isset($entry['css'])) {
+                foreach ($entry['css'] as $css_file) {
+                    $built_css .= '<link rel="stylesheet" href="/assets/' . basename($css_file) . '">' . "\n    ";
+                }
+            }
+            if (isset($entry['file'])) {
+                $built_js = '/assets/' . basename($entry['file']);
+            }
+            // Preload important chunks
+            if (isset($entry['imports'])) {
+                foreach ($entry['imports'] as $import_key) {
+                    if (isset($manifest[$import_key]['file'])) {
+                        $preload_chunks[] = '/assets/' . basename($manifest[$import_key]['file']);
                     }
-                },
-            },
+                }
+            }
         }
-    </script>
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
-        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-        .bg-gradient-mesh {
-          background-color: #f8fafc;
-          background-image:
-            radial-gradient(at 0% 0%, rgba(37, 88, 167, 0.10) 0px, transparent 50%),
-            radial-gradient(at 100% 0%, rgba(204, 45, 45, 0.08) 0px, transparent 50%);
-        }
-    </style>
+    }
+    
+    // Output CSS
+    echo $built_css;
+    
+    // Preload important JS chunks
+    foreach ($preload_chunks as $chunk) {
+        echo '<link rel="modulepreload" crossorigin href="' . $chunk . '">' . "\n    ";
+    }
+    ?>
 </head>
 <body class="bg-background-light text-slate-900 transition-colors duration-200">
+    <?php if ($has_gtm): ?>
     <!-- Google Tag Manager (noscript) -->
-    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-XXXXXXX"
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=<?php echo $gtm_id; ?>"
     height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <?php endif; ?>
 
     <div id="root"></div>
+    <?php if ($built_js): ?>
+    <script type="module" crossorigin src="<?php echo $built_js; ?>"></script>
+    <?php else: ?>
+    <!-- Fallback: no manifest found, try loading directly -->
     <script type="module" src="/index.tsx"></script>
+    <?php endif; ?>
 </body>
 </html>
