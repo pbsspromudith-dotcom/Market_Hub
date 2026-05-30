@@ -5,26 +5,36 @@
 require_once __DIR__ . '/api/config.php';
 
 $request_uri = $_SERVER['REQUEST_URI'];
-$clean_path = explode('?', $request_uri)[0];
+$clean_path = explode('?', $request_uri)[0];// ── Fetch SEO Settings from Database ──
+$seo_settings = [];
+try {
+    $stmt = $conn->query("SELECT setting_key, setting_value FROM seo_settings");
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    foreach ($rows as $row) {
+        $seo_settings[$row['setting_key']] = $row['setting_value'];
+    }
+} catch (Exception $e) {
+    // Fallback if table doesn't exist
+}
 
 // ── Default SEO values ──
-$page_title = "HitAds.ca – Toronto Classified Ads & Local Marketplace Canada";
-$meta_desc = "HitAds.ca is Canada's modern classified ads platform connecting local communities, businesses, services, jobs, real estate, and marketplace listings across Toronto and beyond.";
+$page_title = $seo_settings['page_title_home'] ?? "HitAds.ca – Toronto Classified Ads & Local Marketplace Canada";
+$meta_desc = $seo_settings['meta_desc_home'] ?? "HitAds.ca is Canada's modern classified ads platform connecting local communities, businesses, services, jobs, real estate, and marketplace listings across Toronto and beyond.";
 $og_image = "https://hitads.ca/assets/logo.png";
 $canonical_url = "https://hitads.ca" . rtrim($clean_path, '/');
 $schema_markup = '';
 
-// ── Analytics IDs (replace with real IDs to enable tracking) ──
-$gtm_id = 'GTM-XXXXXXX';
-$ga4_id = 'G-XXXXXXXXXX';
-$meta_pixel_id = 'XXXXXXXXXXXXXXXX';
+// ── Analytics IDs ──
+$gtm_id = $seo_settings['gtm_id'] ?? 'GTM-XXXXXXX';
+$ga4_id = $seo_settings['ga4_id'] ?? 'G-XXXXXXXXXX';
+$meta_pixel_id = $seo_settings['meta_pixel_id'] ?? 'XXXXXXXXXXXXXXXX';
 
 $has_gtm = (strpos($gtm_id, 'XXXX') === false);
 $has_ga4 = (strpos($ga4_id, 'XXXX') === false);
 $has_pixel = (strpos($meta_pixel_id, 'XXXX') === false);
 
 // ── Organization + LocalBusiness Schema (shown on homepage) ──
-$org_schema = '
+$org_schema = $seo_settings['homepage_schema_markup'] ?? '
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -121,66 +131,37 @@ elseif ($clean_path === '/search') {
         $page_title = "Buy & Sell " . $cat . " in Toronto | HitAds.ca";
         $meta_desc = "Find deals on " . $cat . " in Toronto and surrounding GTA. Browse listings, post classified ads for free, and connect with local buyers and sellers.";
     } else {
-        $page_title = "Search Classified Ads | HitAds.ca";
-        $meta_desc = "Search thousands of classified ads across Canada. Find vehicles, real estate, jobs, services, and more on HitAds.ca.";
+        $page_title = $seo_settings['page_title_search'] ?? "Search Classified Ads | HitAds.ca";
+        $meta_desc = $seo_settings['meta_desc_search'] ?? "Search thousands of classified ads across Canada. Find vehicles, real estate, jobs, services, and more on HitAds.ca.";
     }
 }
 
-// SEO Landing Pages
-elseif ($clean_path === '/toronto-classifieds') {
-    $page_title = "Toronto Classifieds & Local Marketplace - Buy & Sell | HitAds.ca";
-    $meta_desc = "Search local classifieds listings in Toronto, ON. Post free advertisements for jobs, cars, real estate, and items for sale on HitAds.ca.";
-    $schema_markup = $org_schema;
-}
-elseif ($clean_path === '/buy-and-sell-toronto') {
-    $page_title = "Buy and Sell in Toronto - Free Classifieds | HitAds.ca";
-    $meta_desc = "Buy and sell items in Toronto. Find electronics, furniture, vehicles, and more. Post your free ad today on HitAds.ca.";
-}
-elseif ($clean_path === '/local-services-toronto') {
-    $page_title = "Local Services in Toronto - Movers, Plumbers, Contractors | HitAds.ca";
-    $meta_desc = "Find trusted local services in Toronto including movers, plumbing, electrical, renovation, cleaning, and more on HitAds.ca.";
-}
-elseif ($clean_path === '/jobs-toronto') {
-    $page_title = "Jobs in Toronto - Find Employment & Career Opportunities | HitAds.ca";
-    $meta_desc = "Search job listings in Toronto. Find full-time, part-time, and contract jobs across all industries on HitAds.ca.";
-}
-elseif ($clean_path === '/real-estate-toronto') {
-    $page_title = "Real Estate Toronto - Houses, Condos, Rentals | HitAds.ca";
-    $meta_desc = "Browse real estate listings in Toronto. Find houses for sale, condos, apartments for rent, and commercial property on HitAds.ca.";
-}
-elseif ($clean_path === '/sri-lankan-marketplace-canada') {
-    $page_title = "Sri Lankan Marketplace Canada - Community Classifieds | HitAds.ca";
-    $meta_desc = "Canada's Sri Lankan community marketplace. Buy, sell, and connect with the Sri Lankan diaspora across Toronto and Canada on HitAds.ca.";
-}
+// Static & Landing Pages
+else {
+    $static_routes = [
+        '/toronto-classifieds' => ['slug' => 'toronto-classifieds', 'default_title' => 'Toronto Classifieds & Local Marketplace - Buy & Sell | HitAds.ca', 'default_desc' => 'Search local classifieds listings in Toronto, ON. Post free advertisements for jobs, cars, real estate, and items for sale on HitAds.ca.'],
+        '/buy-and-sell-toronto' => ['slug' => 'buy-and-sell-toronto', 'default_title' => 'Buy and Sell in Toronto - Free Classifieds | HitAds.ca', 'default_desc' => 'Buy and sell items in Toronto. Find electronics, furniture, vehicles, and more. Post your free ad today on HitAds.ca.'],
+        '/local-services-toronto' => ['slug' => 'local-services-toronto', 'default_title' => 'Local Services in Toronto - Movers, Plumbers, Contractors | HitAds.ca', 'default_desc' => 'Find trusted local services in Toronto including movers, plumbing, electrical, renovation, cleaning, and more on HitAds.ca.'],
+        '/jobs-toronto' => ['slug' => 'jobs-toronto', 'default_title' => 'Jobs in Toronto - Find Employment & Career Opportunities | HitAds.ca', 'default_desc' => 'Search job listings in Toronto. Find full-time, part-time, and contract jobs across all industries on HitAds.ca.'],
+        '/real-estate-toronto' => ['slug' => 'real-estate-toronto', 'default_title' => 'Real Estate Toronto - Houses, Condos, Rentals | HitAds.ca', 'default_desc' => 'Browse real estate listings in Toronto. Find houses for sale, condos, apartments for rent, and commercial property on HitAds.ca.'],
+        '/sri-lankan-marketplace-canada' => ['slug' => 'sri-lankan-marketplace-canada', 'default_title' => 'Sri Lankan Marketplace Canada - Community Classifieds | HitAds.ca', 'default_desc' => "Canada's Sri Lankan community marketplace. Buy, sell, and connect with the Sri Lankan diaspora across Toronto and Canada on HitAds.ca."],
+        '/contact' => ['slug' => 'contact', 'default_title' => 'Contact Us | HitAds.ca', 'default_desc' => "Get in touch with the HitAds.ca team. We're here to help with questions about listings, advertising, and partnerships."],
+        '/help' => ['slug' => 'help', 'default_title' => 'Help Center | HitAds.ca', 'default_desc' => 'Find answers to frequently asked questions about posting ads, managing your account, and using HitAds.ca.'],
+        '/terms' => ['slug' => 'terms', 'default_title' => 'Terms & Conditions | HitAds.ca', 'default_desc' => 'Read the HitAds.ca terms of service, privacy policy, and posting guidelines.'],
+        '/buying-guides' => ['slug' => 'buying-guides', 'default_title' => 'Buying Guides - Smart Shopping Tips | HitAds.ca', 'default_desc' => 'Expert buying guides to help you make smart shopping decisions on HitAds.ca classifieds.'],
+        '/safety-tips' => ['slug' => 'safety-tips', 'default_title' => 'Safety Tips for Buyers & Sellers | HitAds.ca', 'default_desc' => 'Stay safe while buying and selling on HitAds.ca. Essential safety guidelines for online classifieds.'],
+        '/selling-advice' => ['slug' => 'selling-advice', 'default_title' => 'Selling Advice - Get the Best Price | HitAds.ca', 'default_desc' => 'Expert tips to sell faster and get the best price for your items on HitAds.ca classifieds.'],
+        '/market-trends' => ['slug' => 'market-trends', 'default_title' => 'Market Trends & Insights | HitAds.ca', 'default_desc' => 'Explore market trends, pricing insights, and popular categories on HitAds.ca Canadian classifieds.']
+    ];
 
-// Static Pages
-elseif ($clean_path === '/contact') {
-    $page_title = "Contact Us | HitAds.ca";
-    $meta_desc = "Get in touch with the HitAds.ca team. We're here to help with questions about listings, advertising, and partnerships.";
-}
-elseif ($clean_path === '/help') {
-    $page_title = "Help Center | HitAds.ca";
-    $meta_desc = "Find answers to frequently asked questions about posting ads, managing your account, and using HitAds.ca.";
-}
-elseif ($clean_path === '/terms') {
-    $page_title = "Terms & Conditions | HitAds.ca";
-    $meta_desc = "Read the HitAds.ca terms of service, privacy policy, and posting guidelines.";
-}
-elseif ($clean_path === '/buying-guides') {
-    $page_title = "Buying Guides - Smart Shopping Tips | HitAds.ca";
-    $meta_desc = "Expert buying guides to help you make smart purchasing decisions on HitAds.ca classifieds.";
-}
-elseif ($clean_path === '/safety-tips') {
-    $page_title = "Safety Tips for Buyers & Sellers | HitAds.ca";
-    $meta_desc = "Stay safe while buying and selling on HitAds.ca. Essential safety guidelines for online classifieds.";
-}
-elseif ($clean_path === '/selling-advice') {
-    $page_title = "Selling Advice - Get the Best Price | HitAds.ca";
-    $meta_desc = "Expert tips to sell faster and get the best price for your items on HitAds.ca classifieds.";
-}
-elseif ($clean_path === '/market-trends') {
-    $page_title = "Market Trends & Insights | HitAds.ca";
-    $meta_desc = "Explore market trends, pricing insights, and popular categories on HitAds.ca Canadian classifieds.";
+    if (isset($static_routes[$clean_path])) {
+        $r = $static_routes[$clean_path];
+        $page_title = $seo_settings['page_title_' . $r['slug']] ?? $r['default_title'];
+        $meta_desc = $seo_settings['meta_desc_' . $r['slug']] ?? $r['default_desc'];
+        if ($clean_path === '/toronto-classifieds') {
+            $schema_markup = $org_schema;
+        }
+    }
 }
 
 // ── Render HTML ──

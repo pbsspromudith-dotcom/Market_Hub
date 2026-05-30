@@ -51,6 +51,60 @@ const AdminDashboard: React.FC = () => {
   const [isSendingTest, setIsSendingTest] = useState(false);
   const [showSmtpPassword, setShowSmtpPassword] = useState(false);
 
+  // Tab Navigation State
+  const [activeTab, setActiveTab] = useState('overview');
+
+  const tabs = [
+    { id: 'overview', label: 'Overview', icon: 'dashboard' },
+    { id: 'listings', label: 'Listings', icon: 'inventory_2' },
+    { id: 'users', label: 'Users', icon: 'people' },
+    { id: 'lookups', label: 'Sub Masters', icon: 'category' },
+    { id: 'email', label: 'Email Setup', icon: 'email' },
+    { id: 'seo', label: 'SEO Settings', icon: 'manage_search' }
+  ];
+
+  // SEO Settings State
+  const [seoSettings, setSeoSettings] = useState<any>({
+    gtm_id: '',
+    ga4_id: '',
+    meta_pixel_id: '',
+    robots_txt: '',
+    homepage_schema_markup: '',
+    page_title_home: '',
+    meta_desc_home: '',
+    page_title_search: '',
+    meta_desc_search: '',
+    'page_title_toronto-classifieds': '',
+    'meta_desc_toronto-classifieds': '',
+    'page_title_buy-and-sell-toronto': '',
+    'meta_desc_buy-and-sell-toronto': '',
+    'page_title_local-services-toronto': '',
+    'meta_desc_local-services-toronto': '',
+    'page_title_jobs-toronto': '',
+    'meta_desc_jobs-toronto': '',
+    'page_title_real-estate-toronto': '',
+    'meta_desc_real-estate-toronto': '',
+    'page_title_sri-lankan-marketplace-canada': '',
+    'meta_desc_sri-lankan-marketplace-canada': '',
+    page_title_contact: '',
+    meta_desc_contact: '',
+    page_title_help: '',
+    meta_desc_help: '',
+    page_title_terms: '',
+    meta_desc_terms: '',
+    'page_title_buying-guides': '',
+    'meta_desc_buying-guides': '',
+    'page_title_safety-tips': '',
+    'meta_desc_safety-tips': '',
+    'page_title_selling-advice': '',
+    'meta_desc_selling-advice': '',
+    'page_title_market-trends': '',
+    'meta_desc_market-trends': ''
+  });
+  const [isSavingSeo, setIsSavingSeo] = useState(false);
+  const [seoSaveMsg, setSeoSaveMsg] = useState<{type: 'success' | 'error', text: string} | null>(null);
+  const [activeSeoSubTab, setActiveSeoSubTab] = useState('general');
+
   useEffect(() => {
     fetch('/api/admin/stats.php')
       .then(res => res.json())
@@ -65,7 +119,43 @@ const AdminDashboard: React.FC = () => {
     fetchOptions();
     fetchEmailConfig();
     fetchUsers();
+    fetchSeoSettings();
   }, []);
+
+  const fetchSeoSettings = () => {
+    fetch('/api/admin/seo_read.php')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.settings) {
+          setSeoSettings((prev: any) => ({ ...prev, ...data.settings }));
+        }
+      })
+      .catch(console.error);
+  };
+
+  const handleSaveSeoSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingSeo(true);
+    setSeoSaveMsg(null);
+    try {
+      const response = await fetch('/api/admin/seo_update.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(seoSettings),
+      });
+      const data = await response.json();
+      if (data.success) {
+        setSeoSaveMsg({ type: 'success', text: data.message });
+      } else {
+        setSeoSaveMsg({ type: 'error', text: data.message || 'Failed to save settings' });
+      }
+    } catch (err) {
+      setSeoSaveMsg({ type: 'error', text: 'Network error. Backend not reachable.' });
+    } finally {
+      setIsSavingSeo(false);
+      setTimeout(() => setSeoSaveMsg(null), 5000);
+    }
+  };
 
   const fetchUsers = () => {
     fetch('/api/users/read.php')
@@ -362,302 +452,330 @@ const AdminDashboard: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-        {stats.map(stat => (
-          <div key={stat.label} className="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm">
-            <div className="flex justify-between items-start mb-4">
-              <div className={`w-12 h-12 rounded-2xl bg-${stat.color}-50 flex items-center justify-center text-${stat.color}-500`}>
-                <span className="material-icons text-2xl">{stat.icon}</span>
-              </div>
-              <span className={`text-[10px] font-black text-${stat.change.startsWith('+') ? 'green' : 'red'}-500 uppercase tracking-widest`}>
-                {stat.change}
-              </span>
-            </div>
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">{stat.label}</p>
-            <p className="text-2xl font-black text-slate-900">{stat.value}</p>
-          </div>
+      {/* Tabs Navigation */}
+      <div className="flex flex-wrap gap-2 mb-8 bg-slate-100 p-1.5 rounded-2xl max-w-max border border-slate-200/60 animate-in fade-in duration-300">
+        {tabs.map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`flex items-center gap-2 px-5 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-200 ${
+              activeTab === tab.id
+                ? 'bg-white text-primary shadow-sm'
+                : 'text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <span className="material-icons text-sm">{tab.icon}</span>
+            {tab.label}
+          </button>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-        <div className="lg:col-span-2 bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm">
-          <div className="flex justify-between items-center mb-10">
-            <div>
-              <h2 className="text-xl font-black">Listing Trends</h2>
-              <p className="text-xs text-slate-400 uppercase font-bold tracking-widest">Volume of new listings over 30 days</p>
-            </div>
-            <select className="text-xs font-bold border-slate-200 rounded-lg px-4 py-2">
-              <option>Last 30 Days</option>
-              <option>Last 7 Days</option>
-            </select>
-          </div>
-          <div className="h-80 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="name" stroke="#94a3b8" fontSize={10} axisLine={false} tickLine={false} />
-                <YAxis stroke="#94a3b8" fontSize={10} axisLine={false} tickLine={false} />
-                <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
-                <Bar dataKey="value" fill="#f2b90d" radius={[6, 6, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        <div className="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm">
-          <h2 className="text-xl font-black mb-8">Recent Activity</h2>
-          <div className="space-y-8">
-            {adminStats?.recentActivity ? adminStats.recentActivity.map((activity: any, i: number) => (
-              <div key={i} className="flex gap-4">
-                <div className={`w-10 h-10 rounded-xl bg-green-50 flex-shrink-0 flex items-center justify-center text-green-500`}>
-                  <span className="material-icons text-lg">inventory_2</span>
+      {/* 1. Overview Tab */}
+      {activeTab === 'overview' && (
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+            {stats.map(stat => (
+              <div key={stat.label} className="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm">
+                <div className="flex justify-between items-start mb-4">
+                  <div className={`w-12 h-12 rounded-2xl bg-${stat.color}-50 flex items-center justify-center text-${stat.color}-500`}>
+                    <span className="material-icons text-2xl">{stat.icon}</span>
+                  </div>
+                  <span className={`text-[10px] font-black text-${stat.change.startsWith('+') ? 'green' : 'red'}-500 uppercase tracking-widest`}>
+                    {stat.change}
+                  </span>
                 </div>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">{stat.label}</p>
+                <p className="text-2xl font-black text-slate-900">{stat.value}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+            <div className="lg:col-span-2 bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm">
+              <div className="flex justify-between items-center mb-10">
                 <div>
-                  <p className="text-sm">
-                    <span className="font-bold">{activity.title}</span> was posted as a new listing.
-                  </p>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Recently</p>
+                  <h2 className="text-xl font-black">Listing Trends</h2>
+                  <p className="text-xs text-slate-400 uppercase font-bold tracking-widest">Volume of new listings over 30 days</p>
                 </div>
+                <select className="text-xs font-bold border-slate-200 rounded-lg px-4 py-2">
+                  <option>Last 30 Days</option>
+                  <option>Last 7 Days</option>
+                </select>
               </div>
-            )) : (
-              <p className="text-sm text-slate-400">Loading recent activity...</p>
-            )}
-          </div>
-          <button className="w-full mt-10 py-3 font-bold text-primary hover:bg-primary/5 rounded-xl transition-all uppercase tracking-widest text-xs">View All Activity</button>
-        </div>
-      </div>
-
-      <div className="mt-10 bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
-          <div>
-            <h2 className="text-xl font-black">Manage Listings</h2>
-            <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Add, review, or remove active listings</p>
-          </div>
-          <Link 
-            to="/post-ad"
-            className="bg-primary hover:bg-primary-hover text-white px-6 py-3 rounded-xl font-bold transition-all shadow-lg shadow-primary/20 flex items-center gap-2 text-sm"
-          >
-            <span className="material-icons text-sm">add</span>
-            Add Listing
-          </Link>
-        </div>
-
-        {/* Bulk Action Bar */}
-        {selectedIds.size > 0 && (
-          <div className="flex items-center justify-between bg-red-50 border border-red-200 rounded-2xl px-6 py-4 mb-4 animate-in fade-in duration-200">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-                <span className="material-icons text-red-500 text-sm">checklist</span>
+              <div className="h-80 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={data}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                    <XAxis dataKey="name" stroke="#94a3b8" fontSize={10} axisLine={false} tickLine={false} />
+                    <YAxis stroke="#94a3b8" fontSize={10} axisLine={false} tickLine={false} />
+                    <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
+                    <Bar dataKey="value" fill="#f2b90d" radius={[6, 6, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
-              <span className="text-sm font-black text-red-700">
-                {selectedIds.size} listing{selectedIds.size > 1 ? 's' : ''} selected
-              </span>
             </div>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setSelectedIds(new Set())}
-                className="text-xs font-bold text-slate-500 hover:text-slate-700 px-3 py-1.5 rounded-lg hover:bg-white transition-all"
-              >
-                Clear Selection
-              </button>
-              <button
-                onClick={handleBulkDelete}
-                disabled={isBulkDeleting}
-                className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-red-200 disabled:opacity-60"
-              >
-                {isBulkDeleting ? (
-                  <span className="material-icons text-sm animate-spin">sync</span>
-                ) : (
-                  <span className="material-icons text-sm">delete_sweep</span>
+
+            <div className="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm">
+              <h2 className="text-xl font-black mb-8">Recent Activity</h2>
+              <div className="space-y-8">
+                {adminStats?.recentActivity ? adminStats.recentActivity.map((activity: any, i: number) => (
+                  <div key={i} className="flex gap-4">
+                    <div className={`w-10 h-10 rounded-xl bg-green-50 flex-shrink-0 flex items-center justify-center text-green-500`}>
+                      <span className="material-icons text-lg">inventory_2</span>
+                    </div>
+                    <div>
+                      <p className="text-sm">
+                        <span className="font-bold">{activity.title}</span> was posted as a new listing.
+                      </p>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Recently</p>
+                    </div>
+                  </div>
+                )) : (
+                  <p className="text-sm text-slate-400">Loading recent activity...</p>
                 )}
-                {isBulkDeleting ? 'Deleting...' : `Delete ${selectedIds.size} Selected`}
-              </button>
+              </div>
+              <button className="w-full mt-10 py-3 font-bold text-primary hover:bg-primary/5 rounded-xl transition-all uppercase tracking-widest text-xs">View All Activity</button>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead className="bg-slate-50 border-y border-slate-100 uppercase text-[10px] font-black text-slate-400 tracking-widest">
-              <tr>
-                <th className="px-6 py-4 rounded-l-xl w-10">
-                  <input
-                    type="checkbox"
-                    className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary cursor-pointer"
-                    checked={listings.length > 0 && selectedIds.size === listings.length}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setSelectedIds(new Set(listings.map((l: any) => String(l.id))));
-                      } else {
-                        setSelectedIds(new Set());
-                      }
-                    }}
-                    title="Select All"
-                  />
-                </th>
-                <th className="px-6 py-4">Title</th>
-                <th className="px-6 py-4">Price</th>
-                <th className="px-6 py-4">Category</th>
-                <th className="px-6 py-4">Status</th>
-                <th className="px-6 py-4 text-right rounded-r-xl">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="text-sm font-medium">
-              {listings.map((l: any) => (
-                <tr
-                  key={l.id}
-                  className={`border-b border-slate-50 transition-colors ${
-                    selectedIds.has(String(l.id))
-                      ? 'bg-primary/5 hover:bg-primary/10'
-                      : 'hover:bg-slate-50/50'
-                  }`}
+      {/* 2. Listings Tab */}
+      {activeTab === 'listings' && (
+        <div className="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
+            <div>
+              <h2 className="text-xl font-black">Manage Listings</h2>
+              <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Add, review, or remove active listings</p>
+            </div>
+            <Link 
+              to="/post-ad"
+              className="bg-primary hover:bg-primary-hover text-white px-6 py-3 rounded-xl font-bold transition-all shadow-lg shadow-primary/20 flex items-center gap-2 text-sm"
+            >
+              <span className="material-icons text-sm">add</span>
+              Add Listing
+            </Link>
+          </div>
+
+          {/* Bulk Action Bar */}
+          {selectedIds.size > 0 && (
+            <div className="flex items-center justify-between bg-red-50 border border-red-200 rounded-2xl px-6 py-4 mb-4 animate-in fade-in duration-200">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                  <span className="material-icons text-red-500 text-sm">checklist</span>
+                </div>
+                <span className="text-sm font-black text-red-700">
+                  {selectedIds.size} listing{selectedIds.size > 1 ? 's' : ''} selected
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setSelectedIds(new Set())}
+                  className="text-xs font-bold text-slate-500 hover:text-slate-700 px-3 py-1.5 rounded-lg hover:bg-white transition-all"
                 >
-                  {/* Checkbox */}
-                  <td className="px-6 py-4 w-10">
+                  Clear Selection
+                </button>
+                <button
+                  onClick={handleBulkDelete}
+                  disabled={isBulkDeleting}
+                  className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-red-200 disabled:opacity-60"
+                >
+                  {isBulkDeleting ? (
+                    <span className="material-icons text-sm animate-spin">sync</span>
+                  ) : (
+                    <span className="material-icons text-sm">delete_sweep</span>
+                  )}
+                  {isBulkDeleting ? 'Deleting...' : `Delete ${selectedIds.size} Selected`}
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead className="bg-slate-50 border-y border-slate-100 uppercase text-[10px] font-black text-slate-400 tracking-widest">
+                <tr>
+                  <th className="px-6 py-4 rounded-l-xl w-10">
                     <input
                       type="checkbox"
                       className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary cursor-pointer"
-                      checked={selectedIds.has(String(l.id))}
+                      checked={listings.length > 0 && selectedIds.size === listings.length}
                       onChange={(e) => {
-                        const next = new Set(selectedIds);
-                        if (e.target.checked) next.add(String(l.id));
-                        else next.delete(String(l.id));
-                        setSelectedIds(next);
+                        if (e.target.checked) {
+                          setSelectedIds(new Set(listings.map((l: any) => String(l.id))));
+                        } else {
+                          setSelectedIds(new Set());
+                        }
                       }}
+                      title="Select All"
                     />
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-slate-100 overflow-hidden flex-shrink-0 border border-slate-200">
-                        {l.image ? (
-                           <img src={l.image} className="w-full h-full object-cover" alt="" />
+                  </th>
+                  <th className="px-6 py-4">Title</th>
+                  <th className="px-6 py-4">Price</th>
+                  <th className="px-6 py-4">Category</th>
+                  <th className="px-6 py-4">Status</th>
+                  <th className="px-6 py-4 text-right rounded-r-xl">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="text-sm font-medium">
+                {listings.map((l: any) => (
+                  <tr
+                    key={l.id}
+                    className={`border-b border-slate-50 transition-colors ${
+                      selectedIds.has(String(l.id))
+                        ? 'bg-primary/5 hover:bg-primary/10'
+                        : 'hover:bg-slate-50/50'
+                    }`}
+                  >
+                    {/* Checkbox */}
+                    <td className="px-6 py-4 w-10">
+                      <input
+                        type="checkbox"
+                        className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary cursor-pointer"
+                        checked={selectedIds.has(String(l.id))}
+                        onChange={(e) => {
+                          const next = new Set(selectedIds);
+                          if (e.target.checked) next.add(String(l.id));
+                          else next.delete(String(l.id));
+                          setSelectedIds(next);
+                        }}
+                      />
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-slate-100 overflow-hidden flex-shrink-0 border border-slate-200">
+                          {l.image ? (
+                             <img src={l.image} className="w-full h-full object-cover" alt="" />
+                          ) : (
+                             <span className="w-full h-full flex items-center justify-center material-icons text-slate-400 text-sm">image</span>
+                          )}
+                        </div>
+                        <div>
+                          <p className="font-bold text-slate-800 line-clamp-1">{l.title}</p>
+                          <p className="text-xs text-slate-400">{l.location}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 font-bold">${Number(l.price).toLocaleString()}</td>
+                    <td className="px-6 py-4">
+                      <span className="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-[10px] uppercase font-black tracking-widest">
+                        {l.category}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="flex items-center gap-1.5 text-green-500 text-xs font-bold">
+                        <span className="w-2 h-2 rounded-full bg-green-500"></span> Active
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <button 
+                        onClick={() => handleDeleteListing(l.id)}
+                        disabled={isDeleting === l.id}
+                        className="w-8 h-8 rounded-lg bg-red-50 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center transition-colors disabled:opacity-50 inline-flex"
+                        title="Delete Listing"
+                      >
+                        {isDeleting === l.id ? (
+                          <span className="material-icons text-sm animate-spin">sync</span>
                         ) : (
-                           <span className="w-full h-full flex items-center justify-center material-icons text-slate-400 text-sm">image</span>
+                          <span className="material-icons text-sm">delete</span>
                         )}
-                      </div>
-                      <div>
-                        <p className="font-bold text-slate-800 line-clamp-1">{l.title}</p>
-                        <p className="text-xs text-slate-400">{l.location}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 font-bold">${Number(l.price).toLocaleString()}</td>
-                  <td className="px-6 py-4">
-                    <span className="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-[10px] uppercase font-black tracking-widest">
-                      {l.category}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="flex items-center gap-1.5 text-green-500 text-xs font-bold">
-                      <span className="w-2 h-2 rounded-full bg-green-500"></span> Active
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <button 
-                      onClick={() => handleDeleteListing(l.id)}
-                      disabled={isDeleting === l.id}
-                      className="w-8 h-8 rounded-lg bg-red-50 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center transition-colors disabled:opacity-50 inline-flex"
-                      title="Delete Listing"
-                    >
-                      {isDeleting === l.id ? (
-                        <span className="material-icons text-sm animate-spin">sync</span>
-                      ) : (
-                        <span className="material-icons text-sm">delete</span>
-                      )}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {listings.length === 0 && (
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+                {listings.length === 0 && (
+                  <tr>
+                     <td colSpan={6} className="px-6 py-10 text-center text-slate-400">Loading listings...</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* 3. Users Tab */}
+      {activeTab === 'users' && (
+        <div className="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <div className="mb-6">
+            <h2 className="text-xl font-black">Manage Users</h2>
+            <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">View, edit, or remove user accounts</p>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead className="bg-slate-50 border-y border-slate-100 uppercase text-[10px] font-black text-slate-400 tracking-widest">
                 <tr>
-                   <td colSpan={5} className="px-6 py-10 text-center text-slate-400">Loading listings...</td>
+                  <th className="px-6 py-4 rounded-l-xl">User</th>
+                  <th className="px-6 py-4">Role</th>
+                  <th className="px-6 py-4">Joined</th>
+                  <th className="px-6 py-4 text-right rounded-r-xl">Actions</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* User Management Section */}
-      <div className="mt-10 bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm">
-        <div className="mb-6">
-          <h2 className="text-xl font-black">Manage Users</h2>
-          <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">View, edit, or remove user accounts</p>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead className="bg-slate-50 border-y border-slate-100 uppercase text-[10px] font-black text-slate-400 tracking-widest">
-              <tr>
-                <th className="px-6 py-4 rounded-l-xl">User</th>
-                <th className="px-6 py-4">Role</th>
-                <th className="px-6 py-4">Joined</th>
-                <th className="px-6 py-4 text-right rounded-r-xl">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="text-sm font-medium">
-              {users.map((u: any) => (
-                <tr key={u.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-black">
-                        {u.avatar ? (
-                          <img src={u.avatar} alt={u.name} className="w-full h-full object-cover rounded-full" />
+              </thead>
+              <tbody className="text-sm font-medium">
+                {users.map((u: any) => (
+                  <tr key={u.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-black">
+                          {u.avatar ? (
+                            <img src={u.avatar} alt={u.name} className="w-full h-full object-cover rounded-full" />
+                          ) : (
+                            u.name.charAt(0).toUpperCase()
+                          )}
+                        </div>
+                        <div>
+                          <p className="font-bold text-slate-800">{u.name}</p>
+                          <p className="text-xs text-slate-400">{u.email}</p>
+                          {u.phone && <p className="text-xs text-slate-400">{u.phone}</p>}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`px-3 py-1 rounded-full text-[10px] uppercase font-black tracking-widest ${
+                        u.role === 'admin' ? 'bg-purple-100 text-purple-600' : 'bg-slate-100 text-slate-600'
+                      }`}>
+                        {u.role}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-slate-505 text-xs font-bold">
+                      {new Date(u.join_date).toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <button
+                        onClick={() => setEditingUser(u)}
+                        className="w-8 h-8 rounded-lg bg-blue-50 text-blue-500 hover:bg-blue-500 hover:text-white flex items-center justify-center transition-colors inline-flex mr-2"
+                        title="Edit User"
+                      >
+                        <span className="material-icons text-sm">edit</span>
+                      </button>
+                      <button
+                        onClick={() => handleDeleteUser(u.id)}
+                        disabled={isDeletingUser === u.id}
+                        className="w-8 h-8 rounded-lg bg-red-50 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center transition-colors disabled:opacity-50 inline-flex"
+                        title="Delete User"
+                      >
+                        {isDeletingUser === u.id ? (
+                          <span className="material-icons text-sm animate-spin">sync</span>
                         ) : (
-                          u.name.charAt(0).toUpperCase()
+                          <span className="material-icons text-sm">delete</span>
                         )}
-                      </div>
-                      <div>
-                        <p className="font-bold text-slate-800">{u.name}</p>
-                        <p className="text-xs text-slate-400">{u.email}</p>
-                        {u.phone && <p className="text-xs text-slate-400">{u.phone}</p>}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`px-3 py-1 rounded-full text-[10px] uppercase font-black tracking-widest ${
-                      u.role === 'admin' ? 'bg-purple-100 text-purple-600' : 'bg-slate-100 text-slate-600'
-                    }`}>
-                      {u.role}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-slate-500 text-xs font-bold">
-                    {new Date(u.join_date).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <button
-                      onClick={() => setEditingUser(u)}
-                      className="w-8 h-8 rounded-lg bg-blue-50 text-blue-500 hover:bg-blue-500 hover:text-white flex items-center justify-center transition-colors inline-flex mr-2"
-                      title="Edit User"
-                    >
-                      <span className="material-icons text-sm">edit</span>
-                    </button>
-                    <button
-                      onClick={() => handleDeleteUser(u.id)}
-                      disabled={isDeletingUser === u.id}
-                      className="w-8 h-8 rounded-lg bg-red-50 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center transition-colors disabled:opacity-50 inline-flex"
-                      title="Delete User"
-                    >
-                      {isDeletingUser === u.id ? (
-                        <span className="material-icons text-sm animate-spin">sync</span>
-                      ) : (
-                        <span className="material-icons text-sm">delete</span>
-                      )}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {users.length === 0 && (
-                <tr>
-                  <td colSpan={4} className="px-6 py-10 text-center text-slate-400">Loading users...</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+                {users.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="px-6 py-10 text-center text-slate-400">Loading users...</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Edit User Modal */}
+      {/* Edit User Modal (rendered as modal overlay, keep root level) */}
       {editingUser && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200">
@@ -728,381 +846,598 @@ const AdminDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* System Configuration - Redesigned Sub Masters */}
-      <div className="mt-10 bg-white p-6 sm:p-8 rounded-[2rem] border border-slate-200 shadow-sm flex flex-col md:flex-row gap-8">
-        {/* Sidebar for Sub Masters */}
-        <div className="w-full md:w-64 flex-shrink-0">
-          <div className="mb-6">
-            <h2 className="text-xl font-black">Sub Masters</h2>
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Manage global lookups</p>
-          </div>
-          <ul className="space-y-1">
-            {subMasterTypes.map(type => (
-              <li key={type.id}>
-                <button
-                  onClick={() => {
-                    setActiveSubMaster(type.id);
-                    setIsAddingOption(false);
-                    setSubMasterSearch('');
-                  }}
-                  className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold transition-all flex items-center gap-3 ${activeSubMaster === type.id ? 'bg-primary text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'}`}
-                >
-                  <span className="material-icons text-[18px] opacity-75">{type.icon}</span>
-                  {type.label}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* Main Content Area */}
-        <div className="flex-1 min-w-0 flex flex-col">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-100">
-            <h3 className="font-black text-lg text-slate-800 flex items-center gap-2">
-              {subMasterTypes.find(t => t.id === activeSubMaster)?.label} List
-            </h3>
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <span className="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">search</span>
-                <input 
-                  type="text" 
-                  placeholder="Search..." 
-                  value={subMasterSearch}
-                  onChange={(e) => setSubMasterSearch(e.target.value)}
-                  className="pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm w-48 transition-all focus:w-64"
-                />
-              </div>
-              <button 
-                onClick={() => setIsAddingOption(!isAddingOption)}
-                className="bg-slate-900 hover:bg-slate-800 text-white p-2 sm:px-4 sm:py-2 rounded-lg font-bold text-sm transition-all flex items-center gap-2"
-              >
-                <span className="material-icons text-[18px]">{isAddingOption ? 'close' : 'add'}</span>
-                <span className="hidden sm:inline">{isAddingOption ? 'Cancel' : 'Add New'}</span>
-              </button>
+      {/* 4. Sub Masters Tab */}
+      {activeTab === 'lookups' && (
+        <div className="bg-white p-6 sm:p-8 rounded-[2rem] border border-slate-200 shadow-sm flex flex-col md:flex-row gap-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
+          {/* Sidebar for Sub Masters */}
+          <div className="w-full md:w-64 flex-shrink-0">
+            <div className="mb-6">
+              <h2 className="text-xl font-black">Sub Masters</h2>
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Manage global lookups</p>
             </div>
+            <ul className="space-y-1">
+              {subMasterTypes.map(type => (
+                <li key={type.id}>
+                  <button
+                    onClick={() => {
+                      setActiveSubMaster(type.id);
+                      setIsAddingOption(false);
+                      setSubMasterSearch('');
+                    }}
+                    className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold transition-all flex items-center gap-3 ${activeSubMaster === type.id ? 'bg-primary text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'}`}
+                  >
+                    <span className="material-icons text-[18px] opacity-75">{type.icon}</span>
+                    {type.label}
+                  </button>
+                </li>
+              ))}
+            </ul>
           </div>
 
-          {/* Add Form */}
-          {isAddingOption && (
-            <div className="mb-6 p-5 bg-slate-50 rounded-xl border border-slate-200">
-              <form onSubmit={handleCreateOption} className="flex flex-col sm:flex-row gap-4 items-end">
-                {activeSubMaster === 'car_model' && (
-                  <div className="w-full sm:w-1/3">
-                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Car Make <span className="text-red-500">*</span></label>
-                    <select 
-                      required
-                      value={newOptionParentId}
-                      onChange={e => setNewOptionParentId(e.target.value)}
-                      className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm font-medium"
-                    >
-                      <option value="">-- Choose --</option>
-                      {options.filter(o => o.option_type === 'car_make').map(make => (
-                        <option key={make.id} value={make.id}>{make.option_value}</option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-                <div className="flex-1 w-full">
-                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 px-1">{subMasterTypes.find(t => t.id === activeSubMaster)?.label.slice(0,-1)} Name <span className="text-red-500">*</span></label>
+          {/* Main Content Area */}
+          <div className="flex-1 min-w-0 flex flex-col">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-100">
+              <h3 className="font-black text-lg text-slate-800 flex items-center gap-2">
+                {subMasterTypes.find(t => t.id === activeSubMaster)?.label} List
+              </h3>
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <span className="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">search</span>
                   <input 
-                    type="text"
-                    required
-                    value={newOptionValue}
-                    onChange={e => setNewOptionValue(e.target.value)}
-                    className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm"
-                    placeholder="Enter value..."
+                    type="text" 
+                    placeholder="Search..." 
+                    value={subMasterSearch}
+                    onChange={(e) => setSubMasterSearch(e.target.value)}
+                    className="pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm w-48 transition-all focus:w-64"
                   />
                 </div>
                 <button 
-                  type="submit"
-                  disabled={!newOptionValue.trim() || isCreatingOption}
-                  className="w-full sm:w-auto bg-primary hover:bg-primary-hover text-white px-6 py-2 rounded-lg font-bold text-sm transition-all shadow-md disabled:opacity-50"
+                  onClick={() => setIsAddingOption(!isAddingOption)}
+                  className="bg-slate-900 hover:bg-slate-800 text-white p-2 sm:px-4 sm:py-2 rounded-lg font-bold text-sm transition-all flex items-center gap-2"
                 >
-                  {isCreatingOption ? 'Saving...' : 'Save'}
+                  <span className="material-icons text-[18px]">{isAddingOption ? 'close' : 'add'}</span>
+                  <span className="hidden sm:inline">{isAddingOption ? 'Cancel' : 'Add New'}</span>
                 </button>
-              </form>
+              </div>
+            </div>
+
+            {/* Add Form */}
+            {isAddingOption && (
+              <div className="mb-6 p-5 bg-slate-50 rounded-xl border border-slate-200">
+                <form onSubmit={handleCreateOption} className="flex flex-col sm:flex-row gap-4 items-end">
+                  {activeSubMaster === 'car_model' && (
+                    <div className="w-full sm:w-1/3">
+                      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Car Make <span className="text-red-500">*</span></label>
+                      <select 
+                        required
+                        value={newOptionParentId}
+                        onChange={e => setNewOptionParentId(e.target.value)}
+                        className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm font-medium"
+                      >
+                        <option value="">-- Choose --</option>
+                        {options.filter(o => o.option_type === 'car_make').map(make => (
+                          <option key={make.id} value={make.id}>{make.option_value}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                  <div className="flex-1 w-full">
+                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 px-1">{subMasterTypes.find(t => t.id === activeSubMaster)?.label.slice(0,-1)} Name <span className="text-red-500">*</span></label>
+                    <input 
+                      type="text"
+                      required
+                      value={newOptionValue}
+                      onChange={e => setNewOptionValue(e.target.value)}
+                      className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm"
+                      placeholder="Enter value..."
+                    />
+                  </div>
+                  <button 
+                    type="submit"
+                    disabled={!newOptionValue.trim() || isCreatingOption}
+                    className="w-full sm:w-auto bg-primary hover:bg-primary-hover text-white px-6 py-2 rounded-lg font-bold text-sm transition-all shadow-md disabled:opacity-50"
+                  >
+                    {isCreatingOption ? 'Saving...' : 'Save'}
+                  </button>
+                </form>
+              </div>
+            )}
+
+            {/* Data Grid Table */}
+            <div className="overflow-x-auto rounded-xl border border-slate-200">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-200">
+                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-16">ID</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{subMasterTypes.find(t => t.id === activeSubMaster)?.label.slice(0,-1)} Name</th>
+                    {activeSubMaster === 'car_model' && (
+                      <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Mapped Make</th>
+                    )}
+                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-24 text-center">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {options
+                    .filter(o => o.option_type === activeSubMaster)
+                    .filter(o => subMasterSearch ? o.option_value.toLowerCase().includes(subMasterSearch.toLowerCase()) : true)
+                    .map(opt => {
+                      const parentOpt = activeSubMaster === 'car_model' && opt.parent_id ? options.find(p => p.id === opt.parent_id) : null;
+                      return (
+                        <tr key={opt.id} className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors group">
+                          <td className="px-6 py-4 text-xs font-bold text-slate-400">#{opt.id}</td>
+                          <td className="px-6 py-4 text-sm font-bold text-slate-700">{opt.option_value}</td>
+                          {activeSubMaster === 'car_model' && (
+                            <td className="px-6 py-4 text-sm font-medium text-slate-505">
+                              <select 
+                                value={opt.parent_id || ''} 
+                                onChange={(e) => handleUpdateParentId(opt.id, opt.option_type, e.target.value)}
+                                className="px-3 py-1 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-xs text-slate-700 w-32"
+                              >
+                                <option value="">-- Unmapped --</option>
+                                {options.filter(o => o.option_type === 'car_make').map(make => (
+                                  <option key={make.id} value={make.id}>{make.option_value}</option>
+                                ))}
+                              </select>
+                            </td>
+                          )}
+                          <td className="px-6 py-4 text-center">
+                            <button 
+                              onClick={() => handleDeleteOption(opt.id, opt.option_type)}
+                              disabled={isDeletingOption === opt.id}
+                              className="text-slate-300 hover:text-red-505 transition-colors p-1 rounded-md hover:bg-red-50 disabled:opacity-50"
+                              title="Delete"
+                            >
+                              <span className="material-icons text-[18px]">delete_outline</span>
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  }
+                  {options.filter(o => o.option_type === activeSubMaster && (!subMasterSearch || o.option_value.toLowerCase().includes(subMasterSearch.toLowerCase()))).length === 0 && (
+                    <tr>
+                      <td colSpan={activeSubMaster === 'car_model' ? 4 : 3} className="px-6 py-12 text-center text-slate-400">
+                        <span className="material-icons text-4xl mb-2 opacity-50">search_off</span>
+                        <p className="text-sm font-medium">No items found</p>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 5. Email Setup Tab */}
+      {activeTab === 'email' && (
+        <div className="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <div className="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-black flex items-center gap-3">
+                <span className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
+                  <span className="material-icons text-primary">email</span>
+                </span>
+                Email Server Configuration
+              </h2>
+              <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-2">Configure SMTP settings for welcome emails and notifications</p>
+            </div>
+            {emailConfig.smtp_username && (
+              <span className="flex items-center gap-2 text-xs font-bold text-green-500 bg-green-50 px-4 py-2 rounded-full">
+                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                Configured
+              </span>
+            )}
+          </div>
+
+          {/* Status Messages */}
+          {emailSaveMsg && (
+            <div className={`mb-6 px-5 py-4 rounded-2xl text-sm font-bold flex items-center gap-3 animate-in fade-in duration-200 ${
+              emailSaveMsg.type === 'success' 
+                ? 'bg-green-50 border border-green-100 text-green-700' 
+                : 'bg-red-50 border border-red-100 text-red-700'
+            }`}>
+              <span className="material-icons text-lg">
+                {emailSaveMsg.type === 'success' ? 'check_circle' : 'error'}
+              </span>
+              {emailSaveMsg.text}
             </div>
           )}
 
-          {/* Data Grid Table */}
-          <div className="overflow-x-auto rounded-xl border border-slate-200">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-50 border-b border-slate-200">
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-16">ID</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{subMasterTypes.find(t => t.id === activeSubMaster)?.label.slice(0,-1)} Name</th>
-                  {activeSubMaster === 'car_model' && (
-                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Mapped Make</th>
-                  )}
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-24 text-center">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {options
-                  .filter(o => o.option_type === activeSubMaster)
-                  .filter(o => subMasterSearch ? o.option_value.toLowerCase().includes(subMasterSearch.toLowerCase()) : true)
-                  .map(opt => {
-                    const parentOpt = activeSubMaster === 'car_model' && opt.parent_id ? options.find(p => p.id === opt.parent_id) : null;
-                    return (
-                      <tr key={opt.id} className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors group">
-                        <td className="px-6 py-4 text-xs font-bold text-slate-400">#{opt.id}</td>
-                        <td className="px-6 py-4 text-sm font-bold text-slate-700">{opt.option_value}</td>
-                        {activeSubMaster === 'car_model' && (
-                          <td className="px-6 py-4 text-sm font-medium text-slate-500">
-                            <select 
-                              value={opt.parent_id || ''} 
-                              onChange={(e) => handleUpdateParentId(opt.id, opt.option_type, e.target.value)}
-                              className="px-3 py-1 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-xs text-slate-700 w-32"
-                            >
-                              <option value="">-- Unmapped --</option>
-                              {options.filter(o => o.option_type === 'car_make').map(make => (
-                                <option key={make.id} value={make.id}>{make.option_value}</option>
-                              ))}
-                            </select>
-                          </td>
-                        )}
-                        <td className="px-6 py-4 text-center">
-                          <button 
-                            onClick={() => handleDeleteOption(opt.id, opt.option_type)}
-                            disabled={isDeletingOption === opt.id}
-                            className="text-slate-300 hover:text-red-500 transition-colors p-1 rounded-md hover:bg-red-50 disabled:opacity-50"
-                            title="Delete"
-                          >
-                            <span className="material-icons text-[18px]">delete_outline</span>
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })
-                }
-                {options.filter(o => o.option_type === activeSubMaster && (!subMasterSearch || o.option_value.toLowerCase().includes(subMasterSearch.toLowerCase()))).length === 0 && (
-                  <tr>
-                    <td colSpan={activeSubMaster === 'car_model' ? 4 : 3} className="px-6 py-12 text-center text-slate-400">
-                      <span className="material-icons text-4xl mb-2 opacity-50">search_off</span>
-                      <p className="text-sm font-medium">No items found</p>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
+          <form onSubmit={handleSaveEmailConfig}>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+              {/* Left Column — Server Settings */}
+              <div className="space-y-5">
+                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest pb-3 border-b border-slate-100 flex items-center gap-2">
+                  <span className="material-icons text-sm text-slate-300">dns</span>
+                  SMTP Server
+                </h3>
 
-      {/* Email Server Configuration */}
-      <div className="mt-10 bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm">
-        <div className="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <h2 className="text-xl font-black flex items-center gap-3">
-              <span className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
-                <span className="material-icons text-primary">email</span>
-              </span>
-              Email Server Configuration
-            </h2>
-            <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-2">Configure SMTP settings for welcome emails and notifications</p>
-          </div>
-          {emailConfig.smtp_username && (
-            <span className="flex items-center gap-2 text-xs font-bold text-green-500 bg-green-50 px-4 py-2 rounded-full">
-              <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-              Configured
-            </span>
-          )}
-        </div>
+                <div>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">SMTP Host</label>
+                  <div className="relative">
+                    <span className="material-icons absolute left-4 top-3.5 text-slate-300 text-lg">cloud</span>
+                    <input 
+                      type="text"
+                      value={emailConfig.smtp_host}
+                      onChange={e => setEmailConfig({...emailConfig, smtp_host: e.target.value})}
+                      className="w-full pl-12 pr-4 py-4 bg-slate-50 border-slate-100 rounded-2xl focus:ring-primary focus:border-primary text-sm font-medium"
+                      placeholder="smtp.gmail.com"
+                    />
+                  </div>
+                </div>
 
-        {/* Status Messages */}
-        {emailSaveMsg && (
-          <div className={`mb-6 px-5 py-4 rounded-2xl text-sm font-bold flex items-center gap-3 animate-in fade-in duration-200 ${
-            emailSaveMsg.type === 'success' 
-              ? 'bg-green-50 border border-green-100 text-green-700' 
-              : 'bg-red-50 border border-red-100 text-red-700'
-          }`}>
-            <span className="material-icons text-lg">
-              {emailSaveMsg.type === 'success' ? 'check_circle' : 'error'}
-            </span>
-            {emailSaveMsg.text}
-          </div>
-        )}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Port</label>
+                    <input 
+                      type="number"
+                      value={emailConfig.smtp_port}
+                      onChange={e => setEmailConfig({...emailConfig, smtp_port: e.target.value})}
+                      className="w-full px-4 py-4 bg-slate-50 border-slate-100 rounded-2xl focus:ring-primary focus:border-primary text-sm font-medium"
+                      placeholder="587"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Encryption</label>
+                    <select 
+                      value={emailConfig.smtp_encryption}
+                      onChange={e => setEmailConfig({...emailConfig, smtp_encryption: e.target.value})}
+                      className="w-full px-4 py-4 bg-slate-50 border-slate-100 rounded-2xl focus:ring-primary focus:border-primary text-sm font-medium"
+                    >
+                      <option value="tls">TLS (Port 587)</option>
+                      <option value="ssl">SSL (Port 465)</option>
+                      <option value="none">None (Port 25)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
 
-        <form onSubmit={handleSaveEmailConfig}>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-            {/* Left Column — Server Settings */}
-            <div className="space-y-5">
-              <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest pb-3 border-b border-slate-100 flex items-center gap-2">
-                <span className="material-icons text-sm text-slate-300">dns</span>
-                SMTP Server
+              {/* Right Column — Credentials */}
+              <div className="space-y-5">
+                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest pb-3 border-b border-slate-100 flex items-center gap-2">
+                  <span className="material-icons text-sm text-slate-300">lock</span>
+                  Authentication
+                </h3>
+
+                <div>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">SMTP Username / Email</label>
+                  <div className="relative">
+                    <span className="material-icons absolute left-4 top-3.5 text-slate-300 text-lg">alternate_email</span>
+                    <input 
+                      type="email"
+                      value={emailConfig.smtp_username}
+                      onChange={e => setEmailConfig({...emailConfig, smtp_username: e.target.value})}
+                      className="w-full pl-12 pr-4 py-4 bg-slate-50 border-slate-100 rounded-2xl focus:ring-primary focus:border-primary text-sm font-medium"
+                      placeholder="yourname@gmail.com"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">SMTP Password / App Password</label>
+                  <div className="relative">
+                    <span className="material-icons absolute left-4 top-3.5 text-slate-300 text-lg">key</span>
+                    <input 
+                      type={showSmtpPassword ? 'text' : 'password'}
+                      value={emailConfig.smtp_password}
+                      onChange={e => setEmailConfig({...emailConfig, smtp_password: e.target.value})}
+                      className="w-full pl-12 pr-12 py-4 bg-slate-50 border-slate-100 rounded-2xl focus:ring-primary focus:border-primary text-sm font-medium"
+                      placeholder="App password (not your regular password)"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowSmtpPassword(!showSmtpPassword)}
+                      className="absolute right-4 top-3.5 text-slate-400 hover:text-primary transition-colors"
+                      tabIndex={-1}
+                    >
+                      <span className="material-icons text-lg">{showSmtpPassword ? 'visibility_off' : 'visibility'}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Sender Identity */}
+            <div className="mt-8 pt-6 border-t border-slate-100">
+              <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest pb-4 flex items-center gap-2">
+                <span className="material-icons text-sm text-slate-300">badge</span>
+                Sender Identity
               </h3>
-
-              <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">SMTP Host</label>
-                <div className="relative">
-                  <span className="material-icons absolute left-4 top-3.5 text-slate-300 text-lg">cloud</span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">From Name</label>
                   <input 
                     type="text"
-                    value={emailConfig.smtp_host}
-                    onChange={e => setEmailConfig({...emailConfig, smtp_host: e.target.value})}
-                    className="w-full pl-12 pr-4 py-4 bg-slate-50 border-slate-100 rounded-2xl focus:ring-primary focus:border-primary text-sm font-medium"
-                    placeholder="smtp.gmail.com"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Port</label>
-                  <input 
-                    type="number"
-                    value={emailConfig.smtp_port}
-                    onChange={e => setEmailConfig({...emailConfig, smtp_port: e.target.value})}
+                    value={emailConfig.smtp_from_name}
+                    onChange={e => setEmailConfig({...emailConfig, smtp_from_name: e.target.value})}
                     className="w-full px-4 py-4 bg-slate-50 border-slate-100 rounded-2xl focus:ring-primary focus:border-primary text-sm font-medium"
-                    placeholder="587"
+                    placeholder="HitAds.ca"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Encryption</label>
-                  <select 
-                    value={emailConfig.smtp_encryption}
-                    onChange={e => setEmailConfig({...emailConfig, smtp_encryption: e.target.value})}
-                    className="w-full px-4 py-4 bg-slate-50 border-slate-100 rounded-2xl focus:ring-primary focus:border-primary text-sm font-medium"
-                  >
-                    <option value="tls">TLS (Port 587)</option>
-                    <option value="ssl">SSL (Port 465)</option>
-                    <option value="none">None (Port 25)</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            {/* Right Column — Credentials */}
-            <div className="space-y-5">
-              <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest pb-3 border-b border-slate-100 flex items-center gap-2">
-                <span className="material-icons text-sm text-slate-300">lock</span>
-                Authentication
-              </h3>
-
-              <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">SMTP Username / Email</label>
-                <div className="relative">
-                  <span className="material-icons absolute left-4 top-3.5 text-slate-300 text-lg">alternate_email</span>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">From Email</label>
                   <input 
                     type="email"
-                    value={emailConfig.smtp_username}
-                    onChange={e => setEmailConfig({...emailConfig, smtp_username: e.target.value})}
-                    className="w-full pl-12 pr-4 py-4 bg-slate-50 border-slate-100 rounded-2xl focus:ring-primary focus:border-primary text-sm font-medium"
-                    placeholder="yourname@gmail.com"
+                    value={emailConfig.smtp_from_email}
+                    onChange={e => setEmailConfig({...emailConfig, smtp_from_email: e.target.value})}
+                    className="w-full px-4 py-4 bg-slate-50 border-slate-100 rounded-2xl focus:ring-primary focus:border-primary text-sm font-medium"
+                    placeholder="noreply@hitads.ca"
                   />
                 </div>
               </div>
+            </div>
 
-              <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">SMTP Password / App Password</label>
-                <div className="relative">
-                  <span className="material-icons absolute left-4 top-3.5 text-slate-300 text-lg">key</span>
+            {/* Actions Row */}
+            <div className="mt-8 pt-6 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+              {/* Test Email */}
+              <div className="flex items-center gap-3 flex-grow max-w-md">
+                <div className="relative flex-grow">
+                  <span className="material-icons absolute left-4 top-3 text-slate-300 text-lg">send</span>
                   <input 
-                    type={showSmtpPassword ? 'text' : 'password'}
-                    value={emailConfig.smtp_password}
-                    onChange={e => setEmailConfig({...emailConfig, smtp_password: e.target.value})}
-                    className="w-full pl-12 pr-12 py-4 bg-slate-50 border-slate-100 rounded-2xl focus:ring-primary focus:border-primary text-sm font-medium"
-                    placeholder="App password (not your regular password)"
+                    type="email"
+                    value={testEmail}
+                    onChange={e => setTestEmail(e.target.value)}
+                    className="w-full pl-12 pr-4 py-3 bg-slate-50 border-slate-100 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium"
+                    placeholder="test@example.com"
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowSmtpPassword(!showSmtpPassword)}
-                    className="absolute right-4 top-3.5 text-slate-400 hover:text-primary transition-colors"
-                    tabIndex={-1}
-                  >
-                    <span className="material-icons text-lg">{showSmtpPassword ? 'visibility_off' : 'visibility'}</span>
-                  </button>
                 </div>
+                <button
+                  type="button"
+                  onClick={handleSendTestEmail}
+                  disabled={isSendingTest || !testEmail.trim()}
+                  className="px-5 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-xs uppercase tracking-widest transition-all disabled:opacity-50 whitespace-nowrap flex items-center gap-2"
+                >
+                  {isSendingTest ? (
+                    <><span className="material-icons text-sm animate-spin">sync</span> Sending...</>
+                  ) : (
+                    <><span className="material-icons text-sm">send</span> Send Test</>
+                  )}
+                </button>
               </div>
-            </div>
-          </div>
 
-          {/* Sender Identity */}
-          <div className="mt-8 pt-6 border-t border-slate-100">
-            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest pb-4 flex items-center gap-2">
-              <span className="material-icons text-sm text-slate-300">badge</span>
-              Sender Identity
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">From Name</label>
-                <input 
-                  type="text"
-                  value={emailConfig.smtp_from_name}
-                  onChange={e => setEmailConfig({...emailConfig, smtp_from_name: e.target.value})}
-                  className="w-full px-4 py-4 bg-slate-50 border-slate-100 rounded-2xl focus:ring-primary focus:border-primary text-sm font-medium"
-                  placeholder="HitAds.ca"
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">From Email</label>
-                <input 
-                  type="email"
-                  value={emailConfig.smtp_from_email}
-                  onChange={e => setEmailConfig({...emailConfig, smtp_from_email: e.target.value})}
-                  className="w-full px-4 py-4 bg-slate-50 border-slate-100 rounded-2xl focus:ring-primary focus:border-primary text-sm font-medium"
-                  placeholder="noreply@hitads.ca"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Actions Row */}
-          <div className="mt-8 pt-6 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-            {/* Test Email */}
-            <div className="flex items-center gap-3 flex-grow max-w-md">
-              <div className="relative flex-grow">
-                <span className="material-icons absolute left-4 top-3 text-slate-300 text-lg">send</span>
-                <input 
-                  type="email"
-                  value={testEmail}
-                  onChange={e => setTestEmail(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 bg-slate-50 border-slate-100 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium"
-                  placeholder="test@example.com"
-                />
-              </div>
-              <button
-                type="button"
-                onClick={handleSendTestEmail}
-                disabled={isSendingTest || !testEmail.trim()}
-                className="px-5 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-xs uppercase tracking-widest transition-all disabled:opacity-50 whitespace-nowrap flex items-center gap-2"
+              {/* Save Button */}
+              <button 
+                type="submit"
+                disabled={isSavingEmail}
+                className="bg-primary hover:bg-primary-hover text-white font-black py-4 px-10 rounded-2xl transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2 disabled:opacity-50 text-xs uppercase tracking-widest"
               >
-                {isSendingTest ? (
-                  <><span className="material-icons text-sm animate-spin">sync</span> Sending...</>
+                {isSavingEmail ? (
+                  <><span className="material-icons text-sm animate-spin">sync</span> Saving...</>
                 ) : (
-                  <><span className="material-icons text-sm">send</span> Send Test</>
+                  <><span className="material-icons text-sm">save</span> Save Email Settings</>
                 )}
               </button>
             </div>
+          </form>
 
-            {/* Save Button */}
-            <button 
-              type="submit"
-              disabled={isSavingEmail}
-              className="bg-primary hover:bg-primary-hover text-white font-black py-4 px-10 rounded-2xl transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2 disabled:opacity-50 text-xs uppercase tracking-widest"
-            >
-              {isSavingEmail ? (
-                <><span className="material-icons text-sm animate-spin">sync</span> Saving...</>
-              ) : (
-                <><span className="material-icons text-sm">save</span> Save Email Settings</>
-              )}
-            </button>
-          </div>
-        </form>
-
-        {/* Help Tip */}
-        <div className="mt-8 p-5 bg-amber-50 border border-amber-100 rounded-2xl flex items-start gap-4">
-          <span className="material-icons text-amber-500 mt-0.5">tips_and_updates</span>
-          <div>
-            <p className="text-sm font-bold text-amber-800 mb-1">Gmail App Password Setup</p>
-            <p className="text-xs text-amber-700 leading-relaxed">
-              For Gmail: Enable 2-Factor Authentication, then go to 
-              <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener" className="font-bold underline"> myaccount.google.com/apppasswords</a> 
-              to generate a 16-character App Password. Use that instead of your regular Gmail password.
-            </p>
+          {/* Help Tip */}
+          <div className="mt-8 p-5 bg-amber-50 border border-amber-100 rounded-2xl flex items-start gap-4">
+            <span className="material-icons text-amber-500 mt-0.5">tips_and_updates</span>
+            <div>
+              <p className="text-sm font-bold text-amber-800 mb-1">Gmail App Password Setup</p>
+              <p className="text-xs text-amber-700 leading-relaxed">
+                For Gmail: Enable 2-Factor Authentication, then go to 
+                <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener" className="font-bold underline"> myaccount.google.com/apppasswords</a> 
+                to generate a 16-character App Password. Use that instead of your regular Gmail password.
+              </p>
+            </div>
           </div>
         </div>
-      </div>
+      )}
+
+      {/* 6. SEO Settings Tab */}
+      {activeTab === 'seo' && (
+        <div className="mt-10 bg-white p-6 sm:p-8 rounded-[2rem] border border-slate-200 shadow-sm flex flex-col md:flex-row gap-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
+          {/* Sub Tab Sidebar */}
+          <div className="w-full md:w-64 flex-shrink-0">
+            <div className="mb-6">
+              <h2 className="text-xl font-black">SEO Settings</h2>
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Optimize Search Engines & Analytics</p>
+            </div>
+            <ul className="space-y-1">
+              {[
+                { id: 'general', label: 'General & Analytics', icon: 'analytics' },
+                { id: 'meta', label: 'Page Meta Tags', icon: 'description' },
+                { id: 'robots', label: 'robots.txt Configuration', icon: 'smart_toy' },
+                { id: 'schema', label: 'Structured Data (Schema)', icon: 'code' }
+              ].map(sub => (
+                <li key={sub.id}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveSeoSubTab(sub.id);
+                      setSeoSaveMsg(null);
+                    }}
+                    className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold transition-all flex items-center gap-3 ${
+                      activeSeoSubTab === sub.id
+                        ? 'bg-slate-900 text-white shadow-md'
+                        : 'text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    <span className="material-icons text-[18px] opacity-75">{sub.icon}</span>
+                    {sub.label}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Sub Tab Main Area */}
+          <div className="flex-1 min-w-0">
+            {seoSaveMsg && (
+              <div className={`mb-6 px-5 py-4 rounded-2xl text-sm font-bold flex items-center gap-3 animate-in fade-in duration-200 ${
+                seoSaveMsg.type === 'success' 
+                  ? 'bg-green-50 border border-green-100 text-green-700' 
+                  : 'bg-red-50 border border-red-100 text-red-700'
+              }`}>
+                <span className="material-icons text-lg">
+                  {seoSaveMsg.type === 'success' ? 'check_circle' : 'error'}
+                </span>
+                {seoSaveMsg.text}
+              </div>
+            )}
+
+            <form onSubmit={handleSaveSeoSettings} className="space-y-6">
+              {/* General & Analytics Sub-tab */}
+              {activeSeoSubTab === 'general' && (
+                <div className="space-y-5">
+                  <div>
+                    <h3 className="font-black text-lg text-slate-800 mb-2">Tracking & Analytics Integrations</h3>
+                    <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mb-4">Connect analytics platforms to track visitor behavior and listings conversions</p>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                    <div>
+                      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Google Tag Manager ID</label>
+                      <input 
+                        type="text"
+                        value={seoSettings.gtm_id || ''}
+                        onChange={e => setSeoSettings({...seoSettings, gtm_id: e.target.value})}
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium"
+                        placeholder="GTM-XXXXXXX"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Google Analytics 4 ID</label>
+                      <input 
+                        type="text"
+                        value={seoSettings.ga4_id || ''}
+                        onChange={e => setSeoSettings({...seoSettings, ga4_id: e.target.value})}
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium"
+                        placeholder="G-XXXXXXXXXX"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Meta Pixel ID</label>
+                      <input 
+                        type="text"
+                        value={seoSettings.meta_pixel_id || ''}
+                        onChange={e => setSeoSettings({...seoSettings, meta_pixel_id: e.target.value})}
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium"
+                        placeholder="XXXXXXXXXXXXXXXX"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Page Meta Tags Sub-tab */}
+              {activeSeoSubTab === 'meta' && (
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="font-black text-lg text-slate-800 mb-2">Meta Configuration</h3>
+                    <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mb-4">Edit page title tags and meta descriptions for search engines</p>
+                  </div>
+
+                  <div className="max-h-[500px] overflow-y-auto space-y-6 pr-2">
+                    {[
+                      { key: 'home', label: 'Homepage' },
+                      { key: 'search', label: 'Search Results Page' },
+                      { key: 'toronto-classifieds', label: 'Toronto Classifieds (/toronto-classifieds)' },
+                      { key: 'buy-and-sell-toronto', label: 'Buy & Sell Toronto (/buy-and-sell-toronto)' },
+                      { key: 'local-services-toronto', label: 'Local Services Toronto (/local-services-toronto)' },
+                      { key: 'jobs-toronto', label: 'Jobs Toronto (/jobs-toronto)' },
+                      { key: 'real-estate-toronto', label: 'Real Estate Toronto (/real-estate-toronto)' },
+                      { key: 'sri-lankan-marketplace-canada', label: 'Sri Lankan Marketplace (/sri-lankan-marketplace-canada)' },
+                      { key: 'contact', label: 'Contact Us Page' },
+                      { key: 'help', label: 'Help Center Page' },
+                      { key: 'terms', label: 'Terms & Conditions Page' },
+                      { key: 'buying-guides', label: 'Buying Guides Page' },
+                      { key: 'safety-tips', label: 'Safety Tips Page' },
+                      { key: 'selling-advice', label: 'Selling Advice Page' },
+                      { key: 'market-trends', label: 'Market Trends Page' }
+                    ].map(route => (
+                      <div key={route.key} className="p-5 bg-slate-50 rounded-2xl border border-slate-200/80">
+                        <h4 className="font-black text-sm text-slate-700 mb-3">{route.label}</h4>
+                        <div className="grid grid-cols-1 gap-4">
+                          <div>
+                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">Page Title Tag</label>
+                            <input 
+                              type="text"
+                              value={seoSettings[`page_title_${route.key}`] || ''}
+                              onChange={e => setSeoSettings({...seoSettings, [`page_title_${route.key}`]: e.target.value})}
+                              className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium"
+                              placeholder="Enter SEO page title"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">Meta Description</label>
+                            <textarea 
+                              rows={2}
+                              value={seoSettings[`meta_desc_${route.key}`] || ''}
+                              onChange={e => setSeoSettings({...seoSettings, [`meta_desc_${route.key}`]: e.target.value})}
+                              className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium"
+                              placeholder="Enter SEO meta description (keep between 120-160 characters)"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* robots.txt Sub-tab */}
+              {activeSeoSubTab === 'robots' && (
+                <div className="space-y-5">
+                  <div>
+                    <h3 className="font-black text-lg text-slate-800 mb-2">robots.txt Configuration</h3>
+                    <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mb-4">Control crawler crawl rules. Saving will update the physical robots.txt file in the site root.</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 px-1">robots.txt Content</label>
+                    <textarea 
+                      rows={8}
+                      value={seoSettings.robots_txt || ''}
+                      onChange={e => setSeoSettings({...seoSettings, robots_txt: e.target.value})}
+                      className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-primary focus:border-primary font-mono text-xs leading-relaxed"
+                      placeholder="User-agent: *&#10;Allow: /"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Schema JSON-LD Sub-tab */}
+              {activeSeoSubTab === 'schema' && (
+                <div className="space-y-5">
+                  <div>
+                    <h3 className="font-black text-lg text-slate-800 mb-2">Homepage JSON-LD Schema Markup</h3>
+                    <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mb-4">Inject custom Schema.org script blocks into the homepage header payload (include raw &lt;script&gt; tags)</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Schema Markup</label>
+                    <textarea 
+                      rows={12}
+                      value={seoSettings.homepage_schema_markup || ''}
+                      onChange={e => setSeoSettings({...seoSettings, homepage_schema_markup: e.target.value})}
+                      className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-primary focus:border-primary font-mono text-xs leading-relaxed"
+                      placeholder="<script type=&quot;application/ld+json&quot;>&#10;{&#10;  ...&#10;}&#10;</script>"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Submit Buttons */}
+              <div className="pt-6 border-t border-slate-100 flex items-center justify-end">
+                <button
+                  type="submit"
+                  disabled={isSavingSeo}
+                  className="bg-slate-900 hover:bg-slate-800 text-white font-black py-4 px-8 rounded-xl transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-50 text-xs uppercase tracking-widest"
+                >
+                  {isSavingSeo ? (
+                    <><span className="material-icons text-sm animate-spin">sync</span> Saving...</>
+                  ) : (
+                    <><span className="material-icons text-sm">save</span> Save SEO Settings</>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
