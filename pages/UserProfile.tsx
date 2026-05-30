@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import MonerisPayModal from '../components/MonerisPayModal';
 
 const UserProfile: React.FC = () => {
   const navigate = useNavigate();
@@ -16,6 +17,12 @@ const UserProfile: React.FC = () => {
     is_urgent: false,
     is_home_gallery: false
   });
+
+  // Moneris payment state
+  const [isPayModalOpen, setIsPayModalOpen] = useState(false);
+  const [payTicket, setPayTicket] = useState('');
+  const [payAmount, setPayAmount] = useState(0);
+  const [payEnvironment, setPayEnvironment] = useState('qa');
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [activeTab, setActiveTab] = useState<'listings' | 'messages'>('listings');
@@ -142,31 +149,61 @@ const UserProfile: React.FC = () => {
 
   const handlePromoteSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Calculate total cost
+    let total = 0;
+    if (promotionData.is_top_ad) total += 9.99;
+    if (promotionData.is_highlighted) total += 4.99;
+    if (promotionData.is_urgent) total += 5.99;
+    if (promotionData.is_home_gallery) total += 14.99;
+
+    if (total === 0) {
+      alert("Please select at least one promotion option.");
+      return;
+    }
+
     try {
-      const response = await fetch('/api/listings/promote.php', {
+      const response = await fetch('/api/payments/preload.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          id: selectedListing.id,
+          listing_id: selectedListing.id,
           user_id: user.id,
           ...promotionData
         }),
       });
+
       const data = await response.json();
       if (data.success) {
-        setUserListings(userListings.map(l => 
-          l.id === selectedListing.id 
-            ? { ...l, ...promotionData } 
-            : l
-        ));
+        setPayTicket(data.ticket);
+        setPayAmount(data.amount);
+        setPayEnvironment(data.environment || 'qa');
         setIsPromoteModalOpen(false);
+        setIsPayModalOpen(true);
       } else {
-        alert(data.message || 'Failed to update promotions');
+        alert(data.message || 'Failed to initialize payment process.');
       }
     } catch (err) {
       console.error(err);
-      alert('Error updating promotions');
+      alert('Error connecting to the payment server. Please try again.');
     }
+  };
+
+  const handlePaymentSuccess = (receiptId: string) => {
+    setIsPayModalOpen(false);
+    alert('Payment approved and promotions applied successfully! Receipt ID: ' + receiptId);
+    
+    // Update local listings state
+    setUserListings(userListings.map(l => 
+      l.id === selectedListing.id 
+        ? { ...l, ...promotionData } 
+        : l
+    ));
+  };
+
+  const handlePaymentCancel = () => {
+    setIsPayModalOpen(false);
+    setIsPromoteModalOpen(true);
   };
 
   if (!user) return null;
@@ -507,9 +544,12 @@ const UserProfile: React.FC = () => {
                   onChange={e => setPromotionData({...promotionData, is_top_ad: e.target.checked})}
                   className="w-5 h-5 text-primary rounded border-slate-300 focus:ring-primary"
                 />
-                <div className="ml-3">
-                  <p className="text-sm font-bold text-slate-800">Top Ad</p>
-                  <p className="text-[10px] text-slate-500">Appears at the very top of search results.</p>
+                <div className="ml-3 flex-1 flex justify-between items-center">
+                  <div>
+                    <p className="text-sm font-bold text-slate-800">Top Ad</p>
+                    <p className="text-[10px] text-slate-500">Appears at the very top of search results.</p>
+                  </div>
+                  <span className="text-xs font-black bg-amber-50 text-amber-700 px-2 py-1 rounded border border-amber-100 shrink-0">$9.99</span>
                 </div>
               </label>
               
@@ -520,9 +560,12 @@ const UserProfile: React.FC = () => {
                   onChange={e => setPromotionData({...promotionData, is_highlighted: e.target.checked})}
                   className="w-5 h-5 text-yellow-500 rounded border-slate-300 focus:ring-yellow-500"
                 />
-                <div className="ml-3">
-                  <p className="text-sm font-bold text-slate-800">Highlighted</p>
-                  <p className="text-[10px] text-slate-500">Ad stands out with a bright highlighted background.</p>
+                <div className="ml-3 flex-1 flex justify-between items-center">
+                  <div>
+                    <p className="text-sm font-bold text-slate-800">Highlighted</p>
+                    <p className="text-[10px] text-slate-500">Ad stands out with a bright highlighted background.</p>
+                  </div>
+                  <span className="text-xs font-black bg-yellow-50 text-yellow-700 px-2 py-1 rounded border border-yellow-100 shrink-0">$4.99</span>
                 </div>
               </label>
 
@@ -533,9 +576,12 @@ const UserProfile: React.FC = () => {
                   onChange={e => setPromotionData({...promotionData, is_urgent: e.target.checked})}
                   className="w-5 h-5 text-red-500 rounded border-slate-300 focus:ring-red-500"
                 />
-                <div className="ml-3">
-                  <p className="text-sm font-bold text-slate-800">Urgent</p>
-                  <p className="text-[10px] text-slate-500">Mark as urgent to sell faster.</p>
+                <div className="ml-3 flex-1 flex justify-between items-center">
+                  <div>
+                    <p className="text-sm font-bold text-slate-800">Urgent</p>
+                    <p className="text-[10px] text-slate-500">Mark as urgent to sell faster.</p>
+                  </div>
+                  <span className="text-xs font-black bg-red-50 text-red-700 px-2 py-1 rounded border border-red-100 shrink-0">$5.99</span>
                 </div>
               </label>
 
@@ -546,9 +592,12 @@ const UserProfile: React.FC = () => {
                   onChange={e => setPromotionData({...promotionData, is_home_gallery: e.target.checked})}
                   className="w-5 h-5 text-blue-500 rounded border-slate-300 focus:ring-blue-500"
                 />
-                <div className="ml-3">
-                  <p className="text-sm font-bold text-slate-800">Home Gallery</p>
-                  <p className="text-[10px] text-slate-500">Showcase your ad on the homepage gallery.</p>
+                <div className="ml-3 flex-1 flex justify-between items-center">
+                  <div>
+                    <p className="text-sm font-bold text-slate-800">Home Gallery</p>
+                    <p className="text-[10px] text-slate-500">Showcase your ad on the homepage gallery.</p>
+                  </div>
+                  <span className="text-xs font-black bg-blue-50 text-blue-700 px-2 py-1 rounded border border-blue-100 shrink-0">$14.99</span>
                 </div>
               </label>
 
@@ -562,14 +611,30 @@ const UserProfile: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-3 bg-primary hover:bg-primary-hover text-white font-bold rounded-xl text-sm transition-colors shadow-lg shadow-primary/20"
+                  className="flex-1 px-4 py-3 bg-primary hover:bg-primary-hover text-white font-bold rounded-xl text-sm transition-colors shadow-lg shadow-primary/20 flex items-center justify-center gap-1.5"
                 >
-                  Apply Promotions
+                  <span className="material-icons text-sm">payment</span>
+                  Proceed to Pay ${(
+                    (promotionData.is_top_ad ? 9.99 : 0) +
+                    (promotionData.is_highlighted ? 4.99 : 0) +
+                    (promotionData.is_urgent ? 5.99 : 0) +
+                    (promotionData.is_home_gallery ? 14.99 : 0)
+                  ).toFixed(2)}
                 </button>
               </div>
             </form>
           </div>
         </div>
+      )}
+
+      {isPayModalOpen && (
+        <MonerisPayModal
+          ticket={payTicket}
+          amount={payAmount}
+          environment={payEnvironment}
+          onSuccess={handlePaymentSuccess}
+          onCancel={handlePaymentCancel}
+        />
       )}
     </div>
   );

@@ -32,4 +32,45 @@ try {
 } catch(PDOException $e) {
     echo "reset_token_expiry: " . $e->getMessage() . "<br/>";
 }
+
+try {
+    // Create transactions table
+    $conn->exec("CREATE TABLE IF NOT EXISTS transactions (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        listing_id INT NOT NULL,
+        ticket VARCHAR(255) NOT NULL,
+        receipt_id VARCHAR(255) DEFAULT NULL,
+        amount DECIMAL(10,2) NOT NULL,
+        response_code VARCHAR(50) DEFAULT NULL,
+        payment_type VARCHAR(50) DEFAULT NULL,
+        promotions VARCHAR(255) NOT NULL,
+        status VARCHAR(50) DEFAULT 'pending',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+        FOREIGN KEY (listing_id) REFERENCES listings (id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;");
+    echo "Created transactions table.<br/>";
+} catch(PDOException $e) {
+    echo "transactions: " . $e->getMessage() . "<br/>";
+}
+
+try {
+    $checkQuery = "SHOW COLUMNS FROM listings LIKE 'is_top_ad'";
+    $stmt = $conn->prepare($checkQuery);
+    $stmt->execute();
+    if ($stmt->rowCount() == 0) {
+        $alterQuery = "ALTER TABLE listings 
+            ADD COLUMN is_top_ad TINYINT(1) DEFAULT 0,
+            ADD COLUMN is_highlighted TINYINT(1) DEFAULT 0,
+            ADD COLUMN is_urgent TINYINT(1) DEFAULT 0,
+            ADD COLUMN is_home_gallery TINYINT(1) DEFAULT 0";
+        $conn->exec($alterQuery);
+        echo "Added promotion columns to listings table.<br/>";
+    } else {
+        echo "Promotion columns already exist on listings.<br/>";
+    }
+} catch(PDOException $e) {
+    echo "listings promotion columns: " . $e->getMessage() . "<br/>";
+}
 ?>

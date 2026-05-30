@@ -37,18 +37,20 @@ const Layout: React.FC<LayoutProps> = ({
   const [categoriesTree, setCategoriesTree] = useState<Category[]>([]);
 
   useEffect(() => {
-    fetch('/api/categories/read.php')
-      .then(res => res.json())
-      .then(res => {
+    fetch("/api/categories/read.php")
+      .then((res) => res.json())
+      .then((res) => {
         if (res.success && Array.isArray(res.data)) {
           setCategoriesTree(res.data);
         }
       })
-      .catch(err => console.error("Error loading categories:", err));
+      .catch((err) => console.error("Error loading categories:", err));
   }, []);
 
-  const CATEGORIES = categoriesTree.map(cat => cat.CategoryName);
-  const hoveredCategoryObj = categoriesTree.find(cat => cat.CategoryName === hoveredCategory);
+  const CATEGORIES = categoriesTree.map((cat) => cat.CategoryName);
+  const hoveredCategoryObj = categoriesTree.find(
+    (cat) => cat.CategoryName === hoveredCategory,
+  );
 
   const handleGlobalSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -201,6 +203,17 @@ const Layout: React.FC<LayoutProps> = ({
                         Profile
                       </span>
                     </Link>
+                    <Link
+                      to="/payment-portal"
+                      className="flex flex-col items-center justify-center text-slate-600 hover:text-primary transition-colors group"
+                    >
+                      <span className="material-icons text-[26px] group-hover:scale-110 transition-transform">
+                        payment
+                      </span>
+                      <span className="text-[11px] font-bold mt-1">
+                        Billing
+                      </span>
+                    </Link>
                     <button
                       onClick={handleLogoutClick}
                       className="flex flex-col items-center justify-center text-slate-600 hover:text-red-500 transition-colors group"
@@ -262,13 +275,22 @@ const Layout: React.FC<LayoutProps> = ({
                   </Link>
                 )}
                 {isLoggedIn && (
-                  <Link
-                    to="/profile"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="block px-4 py-3 text-lg font-black text-slate-900 hover:bg-slate-50 rounded-2xl transition-all"
-                  >
-                    My Profile
-                  </Link>
+                  <>
+                    <Link
+                      to="/profile"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="block px-4 py-3 text-lg font-black text-slate-900 hover:bg-slate-50 rounded-2xl transition-all"
+                    >
+                      My Profile
+                    </Link>
+                    <Link
+                      to="/payment-portal"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="block px-4 py-3 text-lg font-black text-slate-900 hover:bg-slate-50 rounded-2xl transition-all"
+                    >
+                      Billing Portal
+                    </Link>
+                  </>
                 )}
                 <div className="h-px bg-slate-50 mx-4"></div>
                 {isLoggedIn ? (
@@ -376,10 +398,14 @@ const Layout: React.FC<LayoutProps> = ({
                   {hoveredCategoryObj && hoveredCategoryObj.children && (
                     <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-y-6 gap-x-8 items-start">
                       {hoveredCategoryObj.children.map((subCat: any) => {
-                        const hasChildren = subCat.children && subCat.children.length > 0;
+                        const hasChildren =
+                          subCat.children && subCat.children.length > 0;
                         if (hasChildren) {
                           return (
-                            <div key={subCat.CategoryID} className="flex flex-col gap-2">
+                            <div
+                              key={subCat.CategoryID}
+                              className="flex flex-col gap-2"
+                            >
                               <Link
                                 to={`/search?cat=${encodeURIComponent(hoveredCategoryObj.CategoryName)}&sub=${encodeURIComponent(subCat.CategoryName)}`}
                                 onClick={handleNavClick}
@@ -410,7 +436,9 @@ const Layout: React.FC<LayoutProps> = ({
                               className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors flex items-center gap-2 group"
                             >
                               <span className="w-1.5 h-1.5 rounded-full bg-slate-300 group-hover:bg-primary transition-colors shrink-0"></span>
-                              <span className="truncate">{subCat.CategoryName}</span>
+                              <span className="truncate">
+                                {subCat.CategoryName}
+                              </span>
                             </Link>
                           );
                         }
@@ -822,7 +850,8 @@ const Layout: React.FC<LayoutProps> = ({
 
             <div className="pt-8 border-t border-slate-200 flex flex-col md:flex-row justify-between items-center gap-4">
               <div className="text-[10px] font-black text-slate-400 lowercase">
-                © 2026 HitAds.ca — Free Ads. Sell Fast. Buy Local. Canada-Wide.
+                © 2026 HitAds.ca — Post free ads, sell fast, buy local, and
+                connect with buyers and sellers across Canada.
               </div>
               <div className="flex gap-8 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                 <Link

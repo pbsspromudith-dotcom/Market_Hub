@@ -18,6 +18,12 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] == 'OPTIONS'
     exit();
 }
 
+// Moneris Checkout Credentials (QA Test Environment Defaults)
+define('MONERIS_STORE_ID', 'monca03650');
+define('MONERIS_API_TOKEN', '7Yw0MPTlhjBRcZiE6837');
+define('MONERIS_CHECKOUT_ID', 'chkt50189815682');
+define('MONERIS_ENVIRONMENT', 'qa'); // Set to 'prod' for production
+
 // Database Credentials
 $host = "localhost";
 $db_name = "CNMarketHub";

@@ -530,7 +530,7 @@ const AdminDashboard: React.FC = () => {
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-lg bg-slate-100 overflow-hidden flex-shrink-0 border border-slate-200">
                         {l.image ? (
-                           <img src={l.image.startsWith('http') || l.image.startsWith('/upload') ? l.image : ('http://localhost:8080' + (l.image.startsWith('/') ? '' : '/') + l.image)} className="w-full h-full object-cover" alt="" />
+                           <img src={l.image} className="w-full h-full object-cover" alt="" />
                         ) : (
                            <span className="w-full h-full flex items-center justify-center material-icons text-slate-400 text-sm">image</span>
                         )}

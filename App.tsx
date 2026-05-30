@@ -22,6 +22,7 @@ const SafetyTips = React.lazy(() => import('./pages/SafetyTips'));
 const SellingAdvice = React.lazy(() => import('./pages/SellingAdvice'));
 const MarketTrends = React.lazy(() => import('./pages/MarketTrends'));
 const Terms = React.lazy(() => import('./pages/Terms'));
+const PaymentPortal = React.lazy(() => import('./pages/PaymentPortal'));
 
 // ── SEO Landing Pages ──
 const TorontoClassifieds = React.lazy(() => import('./pages/TorontoClassifieds'));
@@ -109,6 +110,7 @@ const App: React.FC = () => {
             <Route path="/selling-advice" element={<SellingAdvice />} />
             <Route path="/market-trends" element={<MarketTrends />} />
             <Route path="/terms" element={<Terms />} />
+            <Route path="/payment-portal" element={isLoggedIn ? <PaymentPortal /> : <Navigate to="/login" replace state={{ from: '/payment-portal' }} />} />
 
             {/* SEO Landing Pages */}
             <Route path="/toronto-classifieds" element={<TorontoClassifieds />} />
