@@ -58,10 +58,21 @@ const AdminDashboard: React.FC = () => {
     { id: 'overview', label: 'Overview', icon: 'dashboard' },
     { id: 'listings', label: 'Listings', icon: 'inventory_2' },
     { id: 'users', label: 'Users', icon: 'people' },
+    { id: 'menu', label: 'Menu Layout', icon: 'menu_open' },
     { id: 'lookups', label: 'Sub Masters', icon: 'category' },
     { id: 'email', label: 'Email Setup', icon: 'email' },
     { id: 'seo', label: 'SEO Settings', icon: 'manage_search' }
   ];
+
+  // Category menu layout states
+  const [menuCategories, setMenuCategories] = useState<any[]>([]);
+  const [isAddingSubcat, setIsAddingSubcat] = useState<number | null>(null);
+  const [newSubcatName, setNewSubcatName] = useState('');
+  const [newRootCatName, setNewRootCatName] = useState('');
+  const [newRootCatIcon, setNewRootCatIcon] = useState('category');
+  const [isSavingCat, setIsSavingCat] = useState(false);
+  const [isDeletingCat, setIsDeletingCat] = useState<number | null>(null);
+  const [catMsg, setCatMsg] = useState<{type: 'success' | 'error', text: string} | null>(null);
 
   // SEO Settings State
   const [seoSettings, setSeoSettings] = useState<any>({
@@ -120,6 +131,7 @@ const AdminDashboard: React.FC = () => {
     fetchEmailConfig();
     fetchUsers();
     fetchSeoSettings();
+    fetchMenuCategories();
   }, []);
 
   const fetchSeoSettings = () => {
@@ -154,6 +166,80 @@ const AdminDashboard: React.FC = () => {
     } finally {
       setIsSavingSeo(false);
       setTimeout(() => setSeoSaveMsg(null), 5000);
+    }
+  };
+
+  const fetchMenuCategories = () => {
+    fetch('/api/categories/read.php')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && Array.isArray(data.data)) {
+          setMenuCategories(data.data);
+        }
+      })
+      .catch(console.error);
+  };
+
+  const handleCreateCategory = async (parentID: number | null, name: string, icon: string | null = null) => {
+    if (!name.trim()) return;
+    setIsSavingCat(true);
+    setCatMsg(null);
+    try {
+      const response = await fetch('/api/categories/create.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ParentCategoryID: parentID,
+          CategoryName: name.trim(),
+          Icon: icon
+        })
+      });
+      const data = await response.json();
+      if (data.success) {
+        setCatMsg({ type: 'success', text: data.message || 'Category created successfully.' });
+        if (parentID === null) {
+          setNewRootCatName('');
+          setNewRootCatIcon('category');
+        } else {
+          setNewSubcatName('');
+          setIsAddingSubcat(null);
+        }
+        fetchMenuCategories();
+      } else {
+        setCatMsg({ type: 'error', text: data.message || 'Failed to create category.' });
+      }
+    } catch (err) {
+      setCatMsg({ type: 'error', text: 'Network error creating category.' });
+    } finally {
+      setIsSavingCat(false);
+      setTimeout(() => setCatMsg(null), 5000);
+    }
+  };
+
+  const handleDeleteCategory = async (id: number) => {
+    if (!window.confirm('WARNING: Deleting this category will delete all its subcategories and listings. This action CANNOT be undone! Are you sure you want to proceed?')) {
+      return;
+    }
+    setIsDeletingCat(id);
+    setCatMsg(null);
+    try {
+      const response = await fetch('/api/categories/delete.php', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ CategoryID: id })
+      });
+      const data = await response.json();
+      if (data.success) {
+        setCatMsg({ type: 'success', text: data.message || 'Category deleted successfully.' });
+        fetchMenuCategories();
+      } else {
+        setCatMsg({ type: 'error', text: data.message || 'Failed to delete category.' });
+      }
+    } catch (err) {
+      setCatMsg({ type: 'error', text: 'Network error deleting category.' });
+    } finally {
+      setIsDeletingCat(null);
+      setTimeout(() => setCatMsg(null), 5000);
     }
   };
 
@@ -411,21 +497,13 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
-  const data = [
-    { name: '30d ago', value: 400 },
-    { name: '25d ago', value: 300 },
-    { name: '20d ago', value: 600 },
-    { name: '15d ago', value: 800 },
-    { name: '10d ago', value: 500 },
-    { name: '5d ago', value: 700 },
-    { name: 'Today', value: 900 },
-  ];
+  const chartData = (adminStats && Array.isArray(adminStats.listingTrends)) ? adminStats.listingTrends : [];
 
   const stats = adminStats ? [
-    { label: 'Total Listings', value: adminStats.totalListings.toLocaleString(), change: '+12%', icon: 'inventory_2', color: 'blue' },
-    { label: 'New Users Today', value: adminStats.newUsersToday.toLocaleString(), change: '+5.2%', icon: 'person_add', color: 'purple' },
-    { label: 'Total Users', value: adminStats.totalUsers.toLocaleString(), change: '+18%', icon: 'people', color: 'red' },
-    { label: 'Total Listing Value', value: '$' + Number(adminStats.revenue).toLocaleString(), change: '+3%', icon: 'payments', color: 'green' },
+    { label: 'Total Listings', value: adminStats.totalListings.toLocaleString(), change: adminStats.listingsChange || '0%', icon: 'inventory_2', color: 'blue' },
+    { label: 'New Users Today', value: adminStats.newUsersToday.toLocaleString(), change: adminStats.newUsersTodayChange || '0%', icon: 'person_add', color: 'purple' },
+    { label: 'Total Users', value: adminStats.totalUsers.toLocaleString(), change: adminStats.usersChange || '0%', icon: 'people', color: 'red' },
+    { label: 'Total Listing Value', value: '$' + Number(adminStats.revenue).toLocaleString(), change: adminStats.revenueChange || '0%', icon: 'payments', color: 'green' },
   ] : [
     { label: 'Total Listings', value: '-', change: '0%', icon: 'inventory_2', color: 'blue' },
     { label: 'New Users Today', value: '-', change: '0%', icon: 'person_add', color: 'purple' },
@@ -504,7 +582,7 @@ const AdminDashboard: React.FC = () => {
               </div>
               <div className="h-80 w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={data}>
+                  <BarChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                     <XAxis dataKey="name" stroke="#94a3b8" fontSize={10} axisLine={false} tickLine={false} />
                     <YAxis stroke="#94a3b8" fontSize={10} axisLine={false} tickLine={false} />
@@ -517,24 +595,35 @@ const AdminDashboard: React.FC = () => {
 
             <div className="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm">
               <h2 className="text-xl font-black mb-8">Recent Activity</h2>
-              <div className="space-y-8">
+              <div className="space-y-6">
                 {adminStats?.recentActivity ? adminStats.recentActivity.map((activity: any, i: number) => (
-                  <div key={i} className="flex gap-4">
-                    <div className={`w-10 h-10 rounded-xl bg-green-50 flex-shrink-0 flex items-center justify-center text-green-500`}>
+                  <Link
+                    key={activity.id || i}
+                    to={`/item/${activity.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex gap-4 group/item hover:bg-slate-50/60 p-2 -m-2 rounded-2xl transition-all"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-green-50 flex-shrink-0 flex items-center justify-center text-green-500 group-hover/item:bg-primary/10 group-hover/item:text-primary transition-all">
                       <span className="material-icons text-lg">inventory_2</span>
                     </div>
                     <div>
-                      <p className="text-sm">
-                        <span className="font-bold">{activity.title}</span> was posted as a new listing.
+                      <p className="text-sm text-slate-700">
+                        <span className="font-bold text-slate-900 group-hover/item:text-primary transition-colors">{activity.title}</span> was posted as a new listing.
                       </p>
                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Recently</p>
                     </div>
-                  </div>
+                  </Link>
                 )) : (
                   <p className="text-sm text-slate-400">Loading recent activity...</p>
                 )}
               </div>
-              <button className="w-full mt-10 py-3 font-bold text-primary hover:bg-primary/5 rounded-xl transition-all uppercase tracking-widest text-xs">View All Activity</button>
+              <button
+                onClick={() => { setActiveTab('listings'); window.scrollTo(0, 0); }}
+                className="w-full mt-10 py-3 font-bold text-primary hover:bg-primary/5 rounded-xl border border-primary/20 hover:border-primary/40 transition-all uppercase tracking-widest text-xs"
+              >
+                View All Activity
+              </button>
             </div>
           </div>
         </div>
@@ -842,6 +931,300 @@ const AdminDashboard: React.FC = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Menu Layout Tab */}
+      {activeTab === 'menu' && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
+          {/* Left Panel: Add Root Category Form */}
+          <div className="bg-white p-6 sm:p-8 rounded-[2rem] border border-slate-200 shadow-sm h-fit">
+            <h2 className="text-xl font-black mb-2 flex items-center gap-2">
+              <span className="material-icons text-primary">add_circle</span>
+              New Root Category
+            </h2>
+            <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mb-6">
+              Create a primary menu item
+            </p>
+
+            {catMsg && catMsg.type === 'success' && (
+              <div className="mb-4 p-4 bg-green-50 border border-green-100 text-green-700 rounded-xl text-xs font-bold flex items-center gap-2">
+                <span className="material-icons text-sm">check_circle</span>
+                {catMsg.text}
+              </div>
+            )}
+            {catMsg && catMsg.type === 'error' && (
+              <div className="mb-4 p-4 bg-red-50 border border-red-100 text-red-700 rounded-xl text-xs font-bold flex items-center gap-2">
+                <span className="material-icons text-sm">error</span>
+                {catMsg.text}
+              </div>
+            )}
+
+            <form onSubmit={(e) => { e.preventDefault(); handleCreateCategory(null, newRootCatName, newRootCatIcon); }} className="space-y-4">
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">
+                  Category Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Electronics, Vehicles"
+                  value={newRootCatName}
+                  onChange={(e) => setNewRootCatName(e.target.value)}
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">
+                  Menu Icon (Material Icon Name)
+                </label>
+                <div className="relative">
+                  <span className="material-icons absolute left-4 top-3 text-slate-400 text-lg">
+                    {newRootCatIcon}
+                  </span>
+                  <select
+                    value={newRootCatIcon}
+                    onChange={(e) => setNewRootCatIcon(e.target.value)}
+                    className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium"
+                  >
+                    <option value="category">Category (Default)</option>
+                    <option value="directions_car">Car / Automotive</option>
+                    <option value="home">Home / Real Estate</option>
+                    <option value="work">Jobs / Careers</option>
+                    <option value="shopping_bag">Shopping / Retail</option>
+                    <option value="pets">Pets / Animals</option>
+                    <option value="sports_esports">Games / Hobbies</option>
+                    <option value="build">Services / Tools</option>
+                    <option value="star">Star / Popular</option>
+                    <option value="smartphone">Mobile / Gadgets</option>
+                    <option value="chair">Furniture</option>
+                    <option value="restaurant">Food / Dining</option>
+                  </select>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isSavingCat || !newRootCatName.trim()}
+                className="w-full bg-primary hover:bg-primary-hover text-white font-black py-3.5 px-6 rounded-xl transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2 disabled:opacity-50 text-xs uppercase tracking-widest mt-6"
+              >
+                {isSavingCat ? (
+                  <span className="material-icons text-sm animate-spin">sync</span>
+                ) : (
+                  <span className="material-icons text-sm">save</span>
+                )}
+                Create Category
+              </button>
+            </form>
+          </div>
+
+          {/* Right Panel: Interactive Tree Viewer */}
+          <div className="lg:col-span-2 bg-white p-6 sm:p-8 rounded-[2rem] border border-slate-200 shadow-sm flex flex-col min-w-0">
+            <div className="mb-6 pb-4 border-b border-slate-100">
+              <h2 className="text-xl font-black text-slate-800">Menu & Subcategory Structure</h2>
+              <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">
+                Manage nested categories and header navigation sub-menus.
+              </p>
+            </div>
+
+            {/* Tree View */}
+            <div className="space-y-4 max-h-[700px] overflow-y-auto pr-2 custom-scrollbar">
+              {menuCategories.map((root) => (
+                <div
+                  key={root.CategoryID}
+                  className="border border-slate-100 bg-slate-50/30 rounded-2xl p-4 shadow-sm transition-all hover:border-slate-200/80"
+                >
+                  {/* Root Category Row */}
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                        <span className="material-icons text-xl">{root.Icon || 'category'}</span>
+                      </div>
+                      <div>
+                        <h3 className="font-extrabold text-sm text-slate-800">{root.CategoryName}</h3>
+                        <p className="text-[10px] font-medium text-slate-400">/{root.Slug} • ID: #{root.CategoryID}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          setIsAddingSubcat(root.CategoryID);
+                          setNewSubcatName('');
+                        }}
+                        className="text-xs font-bold text-slate-600 hover:text-primary px-3 py-1.5 rounded-lg bg-white border border-slate-200 shadow-sm transition-all hover:bg-slate-50 flex items-center gap-1"
+                        title="Add sub-category"
+                      >
+                        <span className="material-icons text-sm">add</span>
+                        Add Sub
+                      </button>
+
+                      <button
+                        onClick={() => handleDeleteCategory(root.CategoryID)}
+                        disabled={isDeletingCat === root.CategoryID}
+                        className="w-8 h-8 rounded-lg bg-red-50 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center transition-colors disabled:opacity-50"
+                        title="Delete category and all children"
+                      >
+                        {isDeletingCat === root.CategoryID ? (
+                          <span className="material-icons text-xs animate-spin">sync</span>
+                        ) : (
+                          <span className="material-icons text-sm">delete_outline</span>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Inline adding form for Root Sub-category */}
+                  {isAddingSubcat === root.CategoryID && (
+                    <div className="mt-3 ml-12 p-3 bg-white rounded-xl border border-slate-200 animate-in slide-in-from-top-2 duration-200">
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">
+                        Add Subcategory under {root.CategoryName}
+                      </p>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          required
+                          placeholder="e.g. Computers, Used Cars"
+                          value={newSubcatName}
+                          onChange={(e) => setNewSubcatName(e.target.value)}
+                          className="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-xs"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleCreateCategory(root.CategoryID, newSubcatName)}
+                          disabled={isSavingCat || !newSubcatName.trim()}
+                          className="bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg font-bold text-xs transition-all shadow-md disabled:opacity-50"
+                        >
+                          Save
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsAddingSubcat(null);
+                            setNewSubcatName('');
+                          }}
+                          className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg font-bold text-xs transition-all"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Level 2 Sub-categories */}
+                  {root.children && root.children.length > 0 && (
+                    <div className="mt-3 ml-10 pl-4 border-l-2 border-slate-200 space-y-3 pt-2">
+                      {root.children.map((sub: any) => (
+                        <div key={sub.CategoryID} className="group/sub">
+                          <div className="flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-2">
+                              <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0"></span>
+                              <div>
+                                <span className="font-bold text-xs text-slate-700">{sub.CategoryName}</span>
+                                <span className="text-[9px] text-slate-400 ml-2 font-medium">/{sub.Slug} • ID: #{sub.CategoryID}</span>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-1.5 opacity-0 group-hover/sub:opacity-100 transition-opacity">
+                              <button
+                                onClick={() => {
+                                  setIsAddingSubcat(sub.CategoryID);
+                                  setNewSubcatName('');
+                                }}
+                                className="text-[10px] font-bold text-slate-500 hover:text-primary px-2 py-1 rounded bg-white border border-slate-200 transition-all"
+                                title="Add sub-subcategory"
+                              >
+                                + Add Sub
+                              </button>
+                              <button
+                                onClick={() => handleDeleteCategory(sub.CategoryID)}
+                                disabled={isDeletingCat === sub.CategoryID}
+                                className="w-6 h-6 rounded bg-red-50 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center transition-colors disabled:opacity-50"
+                                title="Delete subcategory"
+                              >
+                                <span className="material-icons text-[14px]">delete</span>
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Inline adding form for Sub-subcategory */}
+                          {isAddingSubcat === sub.CategoryID && (
+                            <div className="mt-2 ml-4 p-3 bg-white rounded-lg border border-slate-200 animate-in slide-in-from-top-2 duration-200">
+                              <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">
+                                Add Child under {sub.CategoryName}
+                              </p>
+                              <div className="flex gap-2">
+                                <input
+                                  type="text"
+                                  required
+                                  placeholder="e.g. Laptops, Sedans"
+                                  value={newSubcatName}
+                                  onChange={(e) => setNewSubcatName(e.target.value)}
+                                  className="flex-1 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-xs"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => handleCreateCategory(sub.CategoryID, newSubcatName)}
+                                  disabled={isSavingCat || !newSubcatName.trim()}
+                                  className="bg-primary hover:bg-primary-hover text-white px-3 py-1.5 rounded-lg font-bold text-xs transition-all shadow-md disabled:opacity-50"
+                                >
+                                  Save
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setIsAddingSubcat(null);
+                                    setNewSubcatName('');
+                                  }}
+                                  className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-1.5 rounded-lg font-bold text-xs transition-all"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Level 3 Sub-subcategories */}
+                          {sub.children && sub.children.length > 0 && (
+                            <div className="mt-2 ml-4 pl-4 border-l border-slate-100 space-y-2">
+                              {sub.children.map((nested: any) => (
+                                <div key={nested.CategoryID} className="flex items-center justify-between gap-4 group/nested">
+                                  <div className="flex items-center gap-2">
+                                    <span className="w-1 h-1 rounded-full bg-slate-300 shrink-0"></span>
+                                    <div>
+                                      <span className="text-xs text-slate-600 font-medium">{nested.CategoryName}</span>
+                                      <span className="text-[8px] text-slate-400 ml-2">/{nested.Slug} • ID: #{nested.CategoryID}</span>
+                                    </div>
+                                  </div>
+
+                                  <button
+                                    onClick={() => handleDeleteCategory(nested.CategoryID)}
+                                    disabled={isDeletingCat === nested.CategoryID}
+                                    className="w-5 h-5 rounded bg-red-50 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center transition-colors disabled:opacity-50 opacity-0 group-hover/nested:opacity-100"
+                                    title="Delete sub-subcategory"
+                                  >
+                                    <span className="material-icons text-[12px]">delete</span>
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+
+              {menuCategories.length === 0 && (
+                <div className="text-center py-12 text-slate-400 bg-slate-50 rounded-2xl border border-slate-100">
+                  <span className="material-icons text-4xl mb-2 opacity-50">category</span>
+                  <p className="text-sm font-medium">No menu categories found. Create a root category to start.</p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
