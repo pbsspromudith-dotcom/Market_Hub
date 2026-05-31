@@ -122,6 +122,50 @@ const getCleanAddressString = (place: any) => {
   return parts.filter((val, index, self) => self.indexOf(val) === index && val !== "").join(", ");
 };
 
+const getTitlePlaceholder = (category: string) => {
+  if (!category) return "e.g. Ad Title";
+  const catLower = category.toLowerCase();
+  
+  if (catLower.startsWith("vehicles")) {
+    return "e.g. 2018 Honda Civic LX - Excellent Condition";
+  }
+  if (catLower.startsWith("real estate")) {
+    return "e.g. Beautiful 3 Bedroom House for Sale in Toronto";
+  }
+  if (catLower.startsWith("jobs")) {
+    return "e.g. Experienced Software Engineer Needed / Part-Time Line Cook";
+  }
+  if (catLower.startsWith("local services")) {
+    return "e.g. Professional Home Cleaning & Janitorial Services";
+  }
+  if (catLower.startsWith("buy & sell") || catLower.startsWith("buy and sell")) {
+    return "e.g. Solid Oak Dining Table with 6 Chairs";
+  }
+  if (catLower.startsWith("business & industrial") || catLower.startsWith("business and industrial")) {
+    return "e.g. Commercial Grade Printing Press / Industrial Forklift";
+  }
+  if (catLower.startsWith("community")) {
+    return "e.g. Neighborhood Garage Sale this Saturday / Lost Golden Retriever";
+  }
+  if (catLower.startsWith("pets")) {
+    return "e.g. Friendly 8-Week-Old Golden Retriever Puppies";
+  }
+  if (catLower.startsWith("home & garden") || catLower.startsWith("home and garden")) {
+    return "e.g. Brand New Premium Gas BBQ Grill for Patio";
+  }
+  if (catLower.startsWith("electronics")) {
+    return "e.g. PlayStation 5 Console 825GB - Like New in Box";
+  }
+  if (catLower.startsWith("fashion")) {
+    return "e.g. Authentic Men's Rolex Submariner Watch";
+  }
+  if (catLower.startsWith("events")) {
+    return "e.g. Live Wedding DJ & Lighting Services / Concert Tickets";
+  }
+  
+  return "e.g. Brand Name, Model, or Key Details";
+};
+
 const PostAd: React.FC = () => {
   const [step, setStep] = useState(1);
   const navigate = useNavigate();
@@ -149,6 +193,8 @@ const PostAd: React.FC = () => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
+  const [priceType, setPriceType] = useState("amount");
+  const [priceOptions, setPriceOptions] = useState<any[]>([]);
   const [location, setLocation] = useState("");
   const [postalCode, setPostalCode] = useState("");
   const [contactEmail, setContactEmail] = useState("");
@@ -169,6 +215,8 @@ const PostAd: React.FC = () => {
   const [carDoors, setCarDoors] = useState("");
   const [carSeatingCapacity, setCarSeatingCapacity] = useState("");
   const [carFeatures, setCarFeatures] = useState<string[]>([]);
+  const [youtubeLink, setYoutubeLink] = useState("");
+  const [facebookLink, setFacebookLink] = useState("");
   // Job-specific fields
   const [jobType, setJobType] = useState("");
   const [jobEmploymentType, setJobEmploymentType] = useState("");
@@ -201,6 +249,17 @@ const PostAd: React.FC = () => {
       .catch(console.error);
   }, []);
 
+  useEffect(() => {
+    fetch("/api/options/read.php?type=price_option")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.data)) {
+          setPriceOptions(data.data);
+        }
+      })
+      .catch(console.error);
+  }, []);
+
   const handleReset = () => {
     if (window.confirm("Are you sure you want to clear the entire form?")) {
       setStep(1);
@@ -208,6 +267,7 @@ const PostAd: React.FC = () => {
       setTitle("");
       setDescription("");
       setPrice("");
+      setPriceType("amount");
       setLocation("");
       setPostalCode("");
       setContactEmail("");
@@ -228,6 +288,8 @@ const PostAd: React.FC = () => {
       setCarDoors("");
       setCarSeatingCapacity("");
       setCarFeatures([]);
+      setYoutubeLink("");
+      setFacebookLink("");
       setImageFiles(Array(10).fill(null));
       setImagePreviews(Array(10).fill(null));
     }
@@ -309,6 +371,7 @@ const PostAd: React.FC = () => {
           setIsEditMode(true);
           setTitle(l.title);
           setPrice(l.price.toString());
+          setPriceType(l.price_type || "amount");
           setCategory(l.category || "");
           setLocation(l.location || "");
           setPostalCode(l.postal_code || "");
@@ -316,6 +379,8 @@ const PostAd: React.FC = () => {
           setContactPhone(l.contact_phone || "");
           setIncludeEmail(!!l.contact_email);
           setIncludePhone(!!l.contact_phone);
+          setYoutubeLink(l.youtube_link || "");
+          setFacebookLink(l.facebook_link || "");
 
           // Populate imagePreviews with existing image URLs
           const previews = Array(10).fill(null);
@@ -407,11 +472,15 @@ const PostAd: React.FC = () => {
         .then((res) => {
           if (res.success && Array.isArray(res.data)) {
             setDynamicAttributesList(res.data);
-            const initialVals: Record<string, string> = {};
-            res.data.forEach((attr: any) => {
-              initialVals[attr.AttributeName] = "";
+            setDynamicAttributesValues((prev) => {
+              const nextVals = { ...prev };
+              res.data.forEach((attr: any) => {
+                if (nextVals[attr.AttributeName] === undefined) {
+                  nextVals[attr.AttributeName] = "";
+                }
+              });
+              return nextVals;
             });
-            setDynamicAttributesValues(initialVals);
           }
         })
         .catch((err) => console.error("Error loading attributes", err));
@@ -507,6 +576,15 @@ const PostAd: React.FC = () => {
       if (carFeatures.length > 0 && category.startsWith("Vehicles")) {
         attrDetails.push(`Features: ${carFeatures.join(", ")}`);
       }
+      if (
+        !category.startsWith("Jobs") &&
+        !category.startsWith("Real Estate") &&
+        !category.startsWith("Community") &&
+        !category.startsWith("Local Services") &&
+        !category.startsWith("Events")
+      ) {
+        attrDetails.push(`Condition: ${condition}`);
+      }
       if (attrDetails.length > 0) {
         finalDescription = attrDetails.join("\n") + "\n\n" + description;
       }
@@ -515,7 +593,8 @@ const PostAd: React.FC = () => {
       
       const payload: any = {
         title,
-        price: parseFloat(price) || 0,
+        price: priceType === "amount" ? (parseFloat(price) || 0) : 0,
+        price_type: priceType,
         category: category || "Other",
         location: location || "Unknown",
         description: finalDescription,
@@ -524,6 +603,8 @@ const PostAd: React.FC = () => {
         contact_email: contactEmail,
         contact_phone: contactPhone,
         postal_code: postalCode,
+        youtube_link: youtubeLink,
+        facebook_link: facebookLink,
       };
 
       if (isEditMode) {
@@ -786,7 +867,7 @@ const PostAd: React.FC = () => {
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     className="w-full px-5 py-4 bg-slate-50 border-slate-100 rounded-xl focus:ring-primary focus:border-primary text-sm"
-                    placeholder="e.g. 2018 Honda Civic LX - Excellent Condition"
+                    placeholder={getTitlePlaceholder(category)}
                   />
                 </div>
                 {dynamicAttributesList.length > 0 && (
@@ -926,23 +1007,59 @@ const PostAd: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">
-                      Price ($) {category.startsWith("Jobs") ? "/ Year" : ""}
+                      Price {category.startsWith("Jobs") ? "/ Year" : ""}
                     </label>
-                    <input
-                      type="number"
-                      value={price}
-                      onChange={(e) => setPrice(e.target.value)}
-                      className="w-full px-5 py-4 bg-slate-50 border-slate-100 rounded-xl focus:ring-primary focus:border-primary text-sm font-bold"
-                      placeholder={
-                        category.startsWith("Jobs")
-                          ? "Annual salary or 0 for negotiable"
-                          : "0.00"
-                      }
-                    />
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-3">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="priceType"
+                            value="amount"
+                            checked={priceType === "amount"}
+                            onChange={() => setPriceType("amount")}
+                            className="w-4 h-4 text-primary border-slate-300 focus:ring-primary"
+                          />
+                          <span className="text-sm font-bold text-slate-700">$</span>
+                        </label>
+                        <input
+                          type="number"
+                          value={priceType === "amount" ? price : ""}
+                          disabled={priceType !== "amount"}
+                          onChange={(e) => setPrice(e.target.value)}
+                          className="flex-1 px-5 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-bold disabled:opacity-50 disabled:bg-slate-100"
+                          placeholder={
+                            category.startsWith("Jobs")
+                              ? "Annual salary or 0 for negotiable"
+                              : "0.00"
+                          }
+                          required={priceType === "amount"}
+                        />
+                      </div>
+                      {priceOptions.map((opt: any) => (
+                        <label key={opt.id} className="flex items-center gap-2 cursor-pointer w-fit">
+                          <input
+                            type="radio"
+                            name="priceType"
+                            value={opt.option_key}
+                            checked={priceType === opt.option_key}
+                            onChange={() => {
+                              setPriceType(opt.option_key);
+                              setPrice("0");
+                            }}
+                            className="w-4 h-4 text-primary border-slate-300 focus:ring-primary"
+                          />
+                          <span className="text-sm font-bold text-slate-700">{opt.option_value}</span>
+                        </label>
+                      ))}
+                    </div>
                   </div>
                   {/* Condition — only for relevant categories */}
                   {!category.startsWith("Jobs") &&
-                    !category.startsWith("Real Estate") && (
+                    !category.startsWith("Real Estate") &&
+                    !category.startsWith("Community") &&
+                    !category.startsWith("Local Services") &&
+                    !category.startsWith("Events") && (
                       <div>
                         <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">
                           Condition
@@ -981,7 +1098,7 @@ const PostAd: React.FC = () => {
                   Back
                 </button>
                 <button
-                  disabled={!title || !price}
+                  disabled={!title || (priceType === "amount" && !price)}
                   onClick={() => setStep(3)}
                   className="bg-primary hover:bg-primary-hover text-white px-10 py-4 rounded-xl font-bold transition-all shadow-lg shadow-primary/20 flex items-center gap-2 disabled:opacity-50"
                 >
@@ -1252,6 +1369,46 @@ const PostAd: React.FC = () => {
                         />
                       </div>
                     )}
+                  </div>
+                </div>
+              </section>
+
+              <section className="pt-6 border-t border-slate-100">
+                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-4">
+                  Social Media Links (Optional)
+                </label>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                      <span className="material-icons text-red-500 text-sm">play_circle</span>
+                      YouTube Video Link
+                    </label>
+                    <input
+                      type="url"
+                      value={youtubeLink}
+                      onChange={(e) => setYoutubeLink(e.target.value)}
+                      className="w-full px-5 py-4 bg-slate-50 border-slate-100 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium"
+                      placeholder="e.g. https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+                    />
+                    <p className="text-[10px] text-slate-400 mt-1 font-medium">
+                      Add a YouTube video walkthrough of your item/property/service to attract more interest.
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                      <span className="material-icons text-blue-600 text-sm">facebook</span>
+                      Facebook Page or Listing Link
+                    </label>
+                    <input
+                      type="url"
+                      value={facebookLink}
+                      onChange={(e) => setFacebookLink(e.target.value)}
+                      className="w-full px-5 py-4 bg-slate-50 border-slate-100 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium"
+                      placeholder="e.g. https://www.facebook.com/yourpage"
+                    />
+                    <p className="text-[10px] text-slate-400 mt-1 font-medium">
+                      Provide a link to your Facebook page or listing for buyer credibility.
+                    </p>
                   </div>
                 </div>
               </section>

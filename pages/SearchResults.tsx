@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { formatPrice } from '../constants';
 
 const CATEGORY_SYNONYMS: Record<string, string[]> = {
   'Vehicles': ['vehicle', 'vehicles', 'car', 'cars', 'truck', 'trucks', 'suv', 'suvs', 'motorcycle', 'motorcycles', 'auto', 'automotive', 'boat', 'boats', 'rv', 'rvs', 'van', 'vans', 'atv', 'atvs', 'classic car', 'classic cars', 'heavy equipment', 'trailers', 'trailer', 'auto parts', 'motor', 'motors', 'wheel', 'wheels', 'drive'],
@@ -488,7 +489,7 @@ const SearchResults: React.FC = () => {
                     <div className="flex justify-between items-start gap-2 mb-2">
                       <h3 className="text-base font-bold group-hover:text-primary transition-colors leading-tight line-clamp-2">{item.title}</h3>
                     </div>
-                    <span className="text-xl font-black text-slate-900 mb-2 block">${Number(item.price).toLocaleString()}</span>
+                     <span className="text-xl font-black text-slate-900 mb-2 block">{formatPrice(item.price, item.price_type)}</span>
                     <div className="flex flex-wrap gap-2 mb-4">
                       <span className="px-2 py-1 bg-slate-100 rounded-md text-[10px] font-bold text-slate-500 uppercase tracking-wide truncate max-w-full">{item.category}</span>
                     </div>

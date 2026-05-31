@@ -1,8 +1,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-
 import { Link } from 'react-router-dom';
+import { formatPrice } from '../constants';
 
 const AdminDashboard: React.FC = () => {
   const [adminStats, setAdminStats] = useState<any>(null);
@@ -32,7 +32,8 @@ const AdminDashboard: React.FC = () => {
     { id: 'car_type', label: 'Car Types', icon: 'local_taxi' },
     { id: 'vehicle_type', label: 'Vehicle Types', icon: 'two_wheeler' },
     { id: 'fuel_type', label: 'Fuel Types', icon: 'local_gas_station' },
-    { id: 'drivetrain', label: 'Drivetrains', icon: 'settings' }
+    { id: 'drivetrain', label: 'Drivetrains', icon: 'settings' },
+    { id: 'price_option', label: 'Price Options', icon: 'payments' }
   ];
 
   // Email Config State
@@ -901,7 +902,7 @@ const AdminDashboard: React.FC = () => {
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 font-bold">${Number(l.price).toLocaleString()}</td>
+                    <td className="px-6 py-4 font-bold">{formatPrice(l.price, l.price_type)}</td>
                     <td className="px-6 py-4">
                       <span className="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-[10px] uppercase font-black tracking-widest">
                         {l.category}
@@ -1048,7 +1049,7 @@ const AdminDashboard: React.FC = () => {
                   required
                   value={editingUser.email}
                   onChange={e => setEditingUser({...editingUser, email: e.target.value})}
-                  className="w-full px-4 py-3 bg-slate-50 border-slate-100 rounded-xl focus:ring-primary text-sm"
+                  className="w-full px-4 py-3 bg-slate-100 rounded-xl focus:ring-primary text-sm"
                 />
               </div>
               <div>
@@ -1867,7 +1868,7 @@ const AdminDashboard: React.FC = () => {
                             <td className="px-4 py-3 text-xs text-slate-400 font-mono">#{listing.id}</td>
                             <td className="px-4 py-3">
                               <p className="font-bold text-slate-800 truncate max-w-[220px]">{listing.title}</p>
-                              <p className="text-[10px] text-slate-400 font-bold mt-0.5">${Number(listing.price).toLocaleString()}</p>
+                              <p className="text-[10px] text-slate-400 font-bold mt-0.5">{formatPrice(listing.price, listing.price_type)}</p>
                             </td>
                             <td className="px-4 py-3 hidden lg:table-cell">
                               <span className="text-xs text-slate-500 font-medium truncate max-w-[140px] inline-block">{listing.category}</span>
@@ -1961,7 +1962,7 @@ const AdminDashboard: React.FC = () => {
                     {seoForm.meta_title || `${editingSeoListing.title} for Sale in ${editingSeoListing.location} | HitAds.ca`}
                   </p>
                   <p className="text-[13px] text-slate-600 mt-1 line-clamp-2 leading-snug">
-                    {seoForm.meta_desc || `Buy ${editingSeoListing.title} in ${editingSeoListing.location} for $${Number(editingSeoListing.price).toLocaleString()}. Check pictures, description, seller info on HitAds.ca.`}
+                    {seoForm.meta_desc || `Buy ${editingSeoListing.title} in ${editingSeoListing.location} for ${formatPrice(editingSeoListing.price, editingSeoListing.price_type)}. Check pictures, description, seller info on HitAds.ca.`}
                   </p>
                 </div>
               </div>

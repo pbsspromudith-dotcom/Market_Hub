@@ -12,13 +12,14 @@ try {
     $optionType = isset($_GET['type']) ? $_GET['type'] : null;
 
     $queries = [
-        "SELECT id, 'category' AS option_type, name AS option_value, NULL as parent_id FROM categories",
-        "SELECT id, 'car_make' AS option_type, name AS option_value, NULL as parent_id FROM car_makes",
-        "SELECT id, 'car_model' AS option_type, name AS option_value, make_id as parent_id FROM car_models",
-        "SELECT id, 'car_type' AS option_type, name AS option_value, NULL as parent_id FROM car_types",
-        "SELECT id, 'vehicle_type' AS option_type, name AS option_value, NULL as parent_id FROM vehicle_types",
-        "SELECT id, 'fuel_type' AS option_type, name AS option_value, NULL as parent_id FROM fuel_types",
-        "SELECT id, 'drivetrain' AS option_type, name AS option_value, NULL as parent_id FROM drivetrains"
+        "SELECT id, 'category' AS option_type, name AS option_value, NULL as parent_id, NULL as option_key FROM categories",
+        "SELECT id, 'car_make' AS option_type, name AS option_value, NULL as parent_id, NULL as option_key FROM car_makes",
+        "SELECT id, 'car_model' AS option_type, name AS option_value, make_id as parent_id, NULL as option_key FROM car_models",
+        "SELECT id, 'car_type' AS option_type, name AS option_value, NULL as parent_id, NULL as option_key FROM car_types",
+        "SELECT id, 'vehicle_type' AS option_type, name AS option_value, NULL as parent_id, NULL as option_key FROM vehicle_types",
+        "SELECT id, 'fuel_type' AS option_type, name AS option_value, NULL as parent_id, NULL as option_key FROM fuel_types",
+        "SELECT id, 'drivetrain' AS option_type, name AS option_value, NULL as parent_id, NULL as option_key FROM drivetrains",
+        "SELECT id, 'price_option' AS option_type, name AS option_value, NULL as parent_id, option_key FROM price_options"
     ];
 
     if ($optionType) {
@@ -29,15 +30,18 @@ try {
             'car_type' => 'car_types',
             'vehicle_type' => 'vehicle_types',
             'fuel_type' => 'fuel_types',
-            'drivetrain' => 'drivetrains'
+            'drivetrain' => 'drivetrains',
+            'price_option' => 'price_options'
         ];
         
         if (array_key_exists($optionType, $tableMap)) {
             $table = $tableMap[$optionType];
-            if ($optionType === 'car_model') {
-                $stmt = $conn->prepare("SELECT id, 'car_model' AS option_type, name AS option_value, make_id as parent_id FROM {$table} ORDER BY name ASC");
+            if ($optionType === 'price_option') {
+                $stmt = $conn->prepare("SELECT id, 'price_option' AS option_type, name AS option_value, NULL as parent_id, option_key FROM price_options ORDER BY sort_order ASC, id ASC");
+            } else if ($optionType === 'car_model') {
+                $stmt = $conn->prepare("SELECT id, 'car_model' AS option_type, name AS option_value, make_id as parent_id, NULL as option_key FROM {$table} ORDER BY name ASC");
             } else {
-                $stmt = $conn->prepare("SELECT id, :type AS option_type, name AS option_value, NULL as parent_id FROM {$table} ORDER BY name ASC");
+                $stmt = $conn->prepare("SELECT id, :type AS option_type, name AS option_value, NULL as parent_id, NULL as option_key FROM {$table} ORDER BY name ASC");
                 $stmt->bindParam(':type', $optionType);
             }
             $stmt->execute();

@@ -23,7 +23,8 @@ $tableMap = [
     'car_type' => 'car_types',
     'vehicle_type' => 'vehicle_types',
     'fuel_type' => 'fuel_types',
-    'drivetrain' => 'drivetrains'
+    'drivetrain' => 'drivetrains',
+    'price_option' => 'price_options'
 ];
 
 $type = $data->option_type;

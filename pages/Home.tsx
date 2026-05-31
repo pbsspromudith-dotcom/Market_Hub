@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { formatPrice } from "../constants";
 
 interface HomeProps {
   isLoggedIn: boolean;
@@ -430,7 +431,7 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn }) => {
                   </div>
                   <div className="p-8">
                     <div className="text-primary font-black text-2xl mb-2">
-                      ${Number(item.price).toLocaleString()}
+                      {formatPrice(item.price, item.price_type)}
                     </div>
                     <h3 className="font-bold text-slate-800 line-clamp-2 min-h-[3rem] text-lg group-hover:text-primary-light transition-colors mb-4">
                       {item.title}

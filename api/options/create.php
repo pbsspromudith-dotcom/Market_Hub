@@ -23,7 +23,8 @@ $tableMap = [
     'car_type' => 'car_types',
     'vehicle_type' => 'vehicle_types',
     'fuel_type' => 'fuel_types',
-    'drivetrain' => 'drivetrains'
+    'drivetrain' => 'drivetrains',
+    'price_option' => 'price_options'
 ];
 
 $type = $data->option_type;
@@ -41,6 +42,12 @@ try {
         $stmt = $conn->prepare($query);
         $stmt->bindParam(':val', $data->option_value);
         $stmt->bindParam(':parent_id', $parentId);
+    } else if ($type === 'price_option') {
+        $key = strtolower(preg_replace('/[^a-zA-Z0-9\-]/', '', str_replace([' ', '/'], '-', trim($data->option_value))));
+        $query = "INSERT INTO price_options (name, option_key) VALUES (:val, :key)";
+        $stmt = $conn->prepare($query);
+        $stmt->bindParam(':val', $data->option_value);
+        $stmt->bindParam(':key', $key);
     } else {
         $query = "INSERT INTO {$table} (name) VALUES (:val)";
         $stmt = $conn->prepare($query);

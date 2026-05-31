@@ -278,7 +278,7 @@ try {
     };
 
     // ── 1. Vehicles Attributes (seeded for all motorized vehicle types) ──
-    $vehicleSubcats = ["Cars & Trucks", "SUVs", "Pickup Trucks", "Vans", "Commercial Vehicles", "Classic Cars", "Salvage Vehicles", "Motorcycles", "ATVs", "RVs"];
+    $vehicleSubcats = ["Cars & Trucks", "SUVs", "Pickup Trucks", "Vans", "Commercial Vehicles", "Classic Cars", "Salvage Vehicles", "Motorcycles", "ATVs", "RVs", "Boats", "Trailers", "Heavy Equipment", "Snowmobiles", "Dirt Bikes"];
     foreach ($vehicleSubcats as $vSub) {
         $vId = $categoryMap["Vehicles > $vSub"] ?? null;
         if ($vId) {

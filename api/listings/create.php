@@ -24,8 +24,8 @@ if (isset($data->image) && is_array($data->image) && count($data->image) > 0) {
 }
 
 try {
-    $query = "INSERT INTO listings (title, price, category, location, description, image, user_id, time, contact_email, contact_phone, postal_code) 
-              VALUES (:title, :price, :category, :location, :description, :image, :user_id, :time, :contact_email, :contact_phone, :postal_code)";
+    $query = "INSERT INTO listings (title, price, category, location, description, image, user_id, time, contact_email, contact_phone, postal_code, youtube_link, facebook_link, price_type) 
+              VALUES (:title, :price, :category, :location, :description, :image, :user_id, :time, :contact_email, :contact_phone, :postal_code, :youtube_link, :facebook_link, :price_type)";
     
     $stmt = $conn->prepare($query);
     
@@ -41,6 +41,9 @@ try {
     $stmt->bindValue(':contact_email', $data->contact_email ?? null);
     $stmt->bindValue(':contact_phone', $data->contact_phone ?? null);
     $stmt->bindValue(':postal_code', $data->postal_code ?? null);
+    $stmt->bindValue(':youtube_link', $data->youtube_link ?? null);
+    $stmt->bindValue(':facebook_link', $data->facebook_link ?? null);
+    $stmt->bindValue(':price_type', $data->price_type ?? 'amount');
 
     if ($stmt->execute()) {
         $insertId = $conn->lastInsertId();

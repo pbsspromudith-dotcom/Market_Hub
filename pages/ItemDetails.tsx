@@ -1,7 +1,17 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { CURRENT_USER } from '../constants';
+import { CURRENT_USER, formatPrice } from '../constants';
 import { trackContactClick } from '../analytics';
+
+function getYouTubeEmbedUrl(url: string): string | null {
+  if (!url) return null;
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+  const match = url.match(regExp);
+  if (match && match[2].length === 11) {
+    return `https://www.youtube.com/embed/${match[2]}`;
+  }
+  return null;
+}
 
 const ItemDetails: React.FC = () => {
   const { id } = useParams();
@@ -201,6 +211,81 @@ const ItemDetails: React.FC = () => {
               {listing.description || 'No description provided.'}
             </div>
           </div>
+
+          {/* Location Map Section */}
+          <div className="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm">
+            <h2 className="text-xl font-black mb-6 flex items-center gap-2">
+              <span className="material-icons text-primary text-2xl">map</span>
+              Location Map
+            </h2>
+            <div className="text-slate-600 mb-4 text-sm font-semibold flex items-center gap-1.5">
+              <span className="material-icons text-base text-primary">location_on</span>
+              {listing.location} {listing.postal_code ? `(${listing.postal_code})` : ''}
+            </div>
+            <div className="aspect-video md:aspect-[21/9] w-full rounded-2xl overflow-hidden shadow-sm border border-slate-200 bg-slate-50">
+              <iframe
+                src={`/map.html?q=${encodeURIComponent(listing.postal_code || listing.location)}`}
+                className="w-full h-full border-0"
+                title="Location Map"
+              ></iframe>
+            </div>
+          </div>
+
+          {/* YouTube Video Section */}
+          {listing.youtube_link && (
+            <div className="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm">
+              <h2 className="text-xl font-black mb-6 flex items-center gap-2">
+                <span className="material-icons text-red-500 text-2xl">play_circle</span>
+                Video Walkthrough
+              </h2>
+              {getYouTubeEmbedUrl(listing.youtube_link) ? (
+                <div className="aspect-video rounded-2xl overflow-hidden shadow-sm border border-slate-200 bg-slate-50">
+                  <iframe
+                    src={getYouTubeEmbedUrl(listing.youtube_link)!}
+                    className="w-full h-full border-0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    title="YouTube Video Walkthrough"
+                  ></iframe>
+                </div>
+              ) : (
+                <a
+                  href={listing.youtube_link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between p-5 bg-red-50/50 hover:bg-red-50 text-red-600 rounded-2xl font-bold transition-all border border-red-100/50"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="material-icons text-2xl">open_in_new</span>
+                    <span>Watch Video on YouTube</span>
+                  </div>
+                  <span className="material-icons">chevron_right</span>
+                </a>
+              )}
+            </div>
+          )}
+
+          {/* Facebook Link Section */}
+          {listing.facebook_link && (
+            <div className="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm">
+              <h2 className="text-xl font-black mb-6 flex items-center gap-2">
+                <span className="material-icons text-blue-600 text-2xl">facebook</span>
+                Facebook Profile / Page
+              </h2>
+              <a
+                href={listing.facebook_link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-between p-5 bg-blue-50/50 hover:bg-blue-50 text-blue-600 rounded-2xl font-bold transition-all border border-blue-100/50"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="material-icons text-2xl">link</span>
+                  <span>View Facebook Link</span>
+                </div>
+                <span className="material-icons">chevron_right</span>
+              </a>
+            </div>
+          )}
         </div>
 
         {/* Sidebar Sticky */}
@@ -208,7 +293,7 @@ const ItemDetails: React.FC = () => {
           <div className="sticky top-28 space-y-8">
             <div className="bg-white rounded-[2rem] border border-slate-200 p-8 shadow-xl shadow-slate-100">
               <div className="mb-8">
-                <span className="text-4xl font-black text-slate-900">${Number(listing.price).toLocaleString()}</span>
+                <span className="text-4xl font-black text-slate-900">{formatPrice(listing.price, listing.price_type)}</span>
               </div>
 
               <div className="space-y-6">

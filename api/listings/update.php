@@ -59,7 +59,10 @@ try {
                 image = :image, 
                 contact_email = :contact_email, 
                 contact_phone = :contact_phone, 
-                postal_code = :postal_code 
+                postal_code = :postal_code,
+                youtube_link = :youtube_link,
+                facebook_link = :facebook_link,
+                price_type = :price_type
               WHERE id = :id";
     
     $stmt = $conn->prepare($query);
@@ -74,6 +77,9 @@ try {
     $stmt->bindValue(':contact_email', $data->contact_email ?? null);
     $stmt->bindValue(':contact_phone', $data->contact_phone ?? null);
     $stmt->bindValue(':postal_code', $data->postal_code ?? null);
+    $stmt->bindValue(':youtube_link', $data->youtube_link ?? null);
+    $stmt->bindValue(':facebook_link', $data->facebook_link ?? null);
+    $stmt->bindValue(':price_type', $data->price_type ?? 'amount');
     $stmt->bindParam(':id', $data->id);
 
     if ($stmt->execute()) {

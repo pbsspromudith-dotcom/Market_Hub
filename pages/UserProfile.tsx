@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import MonerisPayModal from '../components/MonerisPayModal';
+import { formatPrice } from '../constants';
 
 const UserProfile: React.FC = () => {
   const navigate = useNavigate();
@@ -364,7 +365,7 @@ const UserProfile: React.FC = () => {
                   <Link to={`/item/${listing.id}`} className="p-6 flex-1 flex flex-col justify-center">
                     <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">{listing.category}</p>
                     <h3 className="text-xl font-black text-slate-800 mb-2 line-clamp-2 leading-tight">{listing.title}</h3>
-                    <p className="text-2xl font-black text-slate-900 mb-3">${Number(listing.price).toLocaleString()}</p>
+                    <p className="text-2xl font-black text-slate-900 mb-3">{formatPrice(listing.price, listing.price_type)}</p>
                     <p className="text-xs text-slate-400 font-bold flex items-center gap-1 mt-auto">
                       <span className="material-icons text-sm">location_on</span>
                       {listing.location}

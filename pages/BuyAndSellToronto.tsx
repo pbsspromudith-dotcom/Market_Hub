@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { formatPrice } from '../constants';
 
 const BuyAndSellToronto: React.FC = () => {
   const [listings, setListings] = useState<any[]>([]);
@@ -86,7 +87,7 @@ const BuyAndSellToronto: React.FC = () => {
                     <img src={item.image || 'https://picsum.photos/seed/default/800/600'} alt={item.title} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                   </div>
                   <div className="p-5">
-                    <div className="text-lg font-black text-slate-900 mb-1">${Number(item.price).toLocaleString()}</div>
+                    <div className="text-lg font-black text-slate-900 mb-1">{formatPrice(item.price, item.price_type)}</div>
                     <h3 className="text-sm font-bold text-slate-600 line-clamp-2 group-hover:text-primary transition-colors">{item.title}</h3>
                     <div className="mt-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
                       <span className="material-icons text-xs">location_on</span> {item.location}

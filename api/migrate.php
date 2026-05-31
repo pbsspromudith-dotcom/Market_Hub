@@ -216,5 +216,64 @@ try {
 } catch(PDOException $e) {
     echo "messages: " . $e->getMessage() . "<br/>";
 }
+
+try {
+    $checkQuery = "SHOW COLUMNS FROM listings LIKE 'youtube_link'";
+    $stmt = $conn->prepare($checkQuery);
+    $stmt->execute();
+    if ($stmt->rowCount() == 0) {
+        $alterQuery = "ALTER TABLE listings 
+            ADD COLUMN youtube_link VARCHAR(500) NULL,
+            ADD COLUMN facebook_link VARCHAR(500) NULL";
+        $conn->exec($alterQuery);
+        echo "Added youtube_link and facebook_link columns to listings table.<br/>";
+    } else {
+        echo "youtube_link and facebook_link columns already exist on listings.<br/>";
+    }
+} catch(PDOException $e) {
+    echo "listings social columns error: " . $e->getMessage() . "<br/>";
+}
+
+try {
+    $checkQuery = "SHOW COLUMNS FROM listings LIKE 'price_type'";
+    $stmt = $conn->prepare($checkQuery);
+    $stmt->execute();
+    if ($stmt->rowCount() == 0) {
+        $alterQuery = "ALTER TABLE listings ADD COLUMN price_type VARCHAR(50) DEFAULT 'amount'";
+        $conn->exec($alterQuery);
+        echo "Added price_type column to listings table.<br/>";
+    } else {
+        echo "price_type column already exists on listings.<br/>";
+    }
+} catch(PDOException $e) {
+    echo "listings price_type column error: " . $e->getMessage() . "<br/>";
+}
+
+try {
+    // Create price_options table
+    $conn->exec("CREATE TABLE IF NOT EXISTS price_options (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        option_key VARCHAR(255) NOT NULL UNIQUE,
+        sort_order INT DEFAULT 0,
+        is_active TINYINT(1) DEFAULT 1,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;");
+    echo "Created price_options table.<br/>";
+
+    // Insert Default Values (Only if empty)
+    $check_price_opt = $conn->query("SELECT COUNT(*) FROM price_options")->fetchColumn();
+    if ($check_price_opt == 0) {
+        $defaults = [
+            "('Free', 'free', 1)",
+            "('Please Contact', 'contact', 2)",
+            "('Swap/Trade', 'swap', 3)"
+        ];
+        $conn->exec("INSERT INTO price_options (name, option_key, sort_order) VALUES " . implode(",", $defaults));
+        echo "Seeded default price options.<br/>";
+    }
+} catch(PDOException $e) {
+    echo "price_options error: " . $e->getMessage() . "<br/>";
+}
 ?>
 
