@@ -15,6 +15,113 @@ const CAR_FEATURES_LIST = [
   "Heated Seats",
 ];
 
+const getGoogleStyleAddress = (place: any) => {
+  const addr = place.address || {};
+  
+  // 1. Determine main text (e.g., "123 Yonge Street" or "McDonald's")
+  let mainText = "";
+  if (addr.amenity || addr.shop || addr.tourism || addr.office || addr.leisure) {
+    mainText = addr.amenity || addr.shop || addr.tourism || addr.office || addr.leisure;
+  } else if (addr.house_number && addr.road) {
+    mainText = `${addr.house_number} ${addr.road}`;
+  } else if (addr.road) {
+    mainText = addr.road;
+  } else {
+    mainText = place.display_name.split(",")[0];
+  }
+
+  // 2. Determine secondary text (e.g., "Toronto, ON")
+  const city = addr.city || addr.town || addr.village || addr.suburb || addr.city_district || "";
+  
+  const provinceMap: Record<string, string> = {
+    "Ontario": "ON",
+    "Quebec": "QC",
+    "British Columbia": "BC",
+    "Alberta": "AB",
+    "Manitoba": "MB",
+    "Saskatchewan": "SK",
+    "Nova Scotia": "NS",
+    "New Brunswick": "NB",
+    "Newfoundland and Labrador": "NL",
+    "Prince Edward Island": "PE",
+    "Northwest Territories": "NT",
+    "Yukon": "YT",
+    "Nunavut": "NU"
+  };
+  
+  let state = addr.state || "";
+  if (provinceMap[state]) {
+    state = provinceMap[state];
+  }
+  
+  let secondaryText = "";
+  if (city && state) {
+    secondaryText = `${city}, ${state}`;
+  } else if (city) {
+    secondaryText = city;
+  } else if (state) {
+    secondaryText = state;
+  } else {
+    const parts = place.display_name.split(",");
+    secondaryText = parts.slice(1).map((p: string) => p.trim()).join(", ");
+  }
+  
+  return { mainText, secondaryText };
+};
+
+const getCleanAddressString = (place: any) => {
+  const addr = place.address || {};
+  const parts: string[] = [];
+  
+  if (addr.amenity || addr.shop || addr.tourism || addr.office || addr.leisure) {
+    const name = addr.amenity || addr.shop || addr.tourism || addr.office || addr.leisure;
+    parts.push(name);
+    if (addr.house_number && addr.road) {
+      parts.push(`${addr.house_number} ${addr.road}`);
+    } else if (addr.road) {
+      parts.push(addr.road);
+    }
+  } else if (addr.house_number && addr.road) {
+    parts.push(`${addr.house_number} ${addr.road}`);
+  } else if (addr.road) {
+    parts.push(addr.road);
+  } else {
+    parts.push(place.display_name.split(",")[0]);
+  }
+  
+  const city = addr.city || addr.town || addr.village || addr.suburb || addr.city_district || "";
+  
+  const provinceMap: Record<string, string> = {
+    "Ontario": "ON",
+    "Quebec": "QC",
+    "British Columbia": "BC",
+    "Alberta": "AB",
+    "Manitoba": "MB",
+    "Saskatchewan": "SK",
+    "Nova Scotia": "NS",
+    "New Brunswick": "NB",
+    "Newfoundland and Labrador": "NL",
+    "Prince Edward Island": "PE",
+    "Northwest Territories": "NT",
+    "Yukon": "YT",
+    "Nunavut": "NU"
+  };
+  
+  let state = addr.state || "";
+  if (provinceMap[state]) {
+    state = provinceMap[state];
+  }
+  
+  if (city) {
+    parts.push(city);
+  }
+  if (state) {
+    parts.push(state);
+  }
+  
+  return parts.filter((val, index, self) => self.indexOf(val) === index && val !== "").join(", ");
+};
+
 const PostAd: React.FC = () => {
   const [step, setStep] = useState(1);
   const navigate = useNavigate();
@@ -43,6 +150,8 @@ const PostAd: React.FC = () => {
   const [postalCode, setPostalCode] = useState("");
   const [contactEmail, setContactEmail] = useState("");
   const [contactPhone, setContactPhone] = useState("");
+  const [includeEmail, setIncludeEmail] = useState(false);
+  const [includePhone, setIncludePhone] = useState(false);
   const [carMake, setCarMake] = useState("");
   const [carModel, setCarModel] = useState("");
   const [carYear, setCarYear] = useState("");
@@ -100,6 +209,8 @@ const PostAd: React.FC = () => {
       setPostalCode("");
       setContactEmail("");
       setContactPhone("");
+      setIncludeEmail(false);
+      setIncludePhone(false);
       setCarMake("");
       setCarModel("");
       setCarYear("");
@@ -142,7 +253,8 @@ const PostAd: React.FC = () => {
   }, [location, showSuggestions]);
 
   const handleSelectLocation = (place: any) => {
-    setLocation(place.display_name);
+    const cleanAddr = getCleanAddressString(place);
+    setLocation(cleanAddr);
     if (place.address && place.address.postcode) {
       setPostalCode(place.address.postcode);
     }
@@ -849,9 +961,14 @@ const PostAd: React.FC = () => {
               </section>
 
               <section>
-                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-4">
-                  Item Location
-                </label>
+                <div className="flex flex-col gap-1 mb-4">
+                  <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">
+                    Item Location
+                  </label>
+                  <p className="text-xs text-slate-400 font-medium">
+                    Provide either a street address/city or a postal code. If you prefer to keep your exact home address private, you can enter just your city or postal code.
+                  </p>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                   <div className="relative">
                     <span className="material-icons absolute left-4 top-3.5 text-slate-400">
@@ -868,7 +985,7 @@ const PostAd: React.FC = () => {
                         setTimeout(() => setShowSuggestions(false), 200)
                       }
                       className="w-full pl-12 pr-4 py-4 bg-slate-50 border-slate-100 rounded-xl focus:ring-primary focus:border-primary text-sm"
-                      placeholder="Enter street address or city in Canada..."
+                      placeholder="Street address or City (e.g. Toronto, ON)"
                       autoComplete="off"
                     />
 
@@ -881,25 +998,28 @@ const PostAd: React.FC = () => {
                           </div>
                         ) : locationSuggestions.length > 0 ? (
                           <ul>
-                            {locationSuggestions.map((place, idx) => (
-                              <li
-                                key={idx}
-                                onClick={() => handleSelectLocation(place)}
-                                className="px-4 py-3 hover:bg-slate-50 cursor-pointer border-b border-slate-50 last:border-0 flex items-start gap-3 transition-colors"
-                              >
-                                <span className="material-icons text-slate-300 text-lg mt-0.5">
-                                  place
-                                </span>
-                                <div>
-                                  <p className="text-sm font-bold text-slate-700 leading-tight mb-0.5">
-                                    {place.display_name.split(",")[0]}
-                                  </p>
-                                  <p className="text-xs text-slate-400 leading-tight">
-                                    {place.display_name}
-                                  </p>
-                                </div>
-                              </li>
-                            ))}
+                            {locationSuggestions.map((place, idx) => {
+                              const { mainText, secondaryText } = getGoogleStyleAddress(place);
+                              return (
+                                <li
+                                  key={idx}
+                                  onClick={() => handleSelectLocation(place)}
+                                  className="px-4 py-3 hover:bg-slate-50 cursor-pointer border-b border-slate-50 last:border-0 flex items-start gap-3 transition-colors"
+                                >
+                                  <span className="material-icons text-slate-300 text-lg mt-0.5">
+                                    place
+                                  </span>
+                                  <div>
+                                    <p className="text-sm font-bold text-slate-700 leading-tight mb-0.5">
+                                      {mainText}
+                                    </p>
+                                    <p className="text-xs text-slate-400 leading-tight">
+                                      {secondaryText}
+                                    </p>
+                                  </div>
+                                </li>
+                              );
+                            })}
                           </ul>
                         ) : (
                           <div className="p-4 text-xs font-bold text-slate-400 text-center">
@@ -917,7 +1037,7 @@ const PostAd: React.FC = () => {
                       value={postalCode}
                       onChange={(e) => setPostalCode(e.target.value)}
                       className="w-full pl-12 pr-4 py-4 bg-slate-50 border-slate-100 rounded-xl focus:ring-primary focus:border-primary text-sm"
-                      placeholder="Postal Code"
+                      placeholder="Postal Code (e.g. M5C 1X6)"
                     />
                   </div>
                 </div>
@@ -927,30 +1047,106 @@ const PostAd: React.FC = () => {
                 <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-4">
                   Contact Details
                 </label>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="relative">
-                    <span className="material-icons absolute left-4 top-3.5 text-slate-400">
-                      email
-                    </span>
-                    <input
-                      type="email"
-                      value={contactEmail}
-                      onChange={(e) => setContactEmail(e.target.value)}
-                      className="w-full pl-12 pr-4 py-4 bg-slate-50 border-slate-100 rounded-xl focus:ring-primary focus:border-primary text-sm"
-                      placeholder="Contact Email"
-                    />
+                <div className="space-y-6">
+                  {/* Email Toggle Option */}
+                  <div className="space-y-3">
+                    <label className="flex items-center gap-3 cursor-pointer group w-fit">
+                      <div
+                        className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
+                          includeEmail ? "bg-primary border-primary" : "bg-white border-slate-300 group-hover:border-primary"
+                        }`}
+                      >
+                        {includeEmail && (
+                          <span className="material-icons text-white text-[14px]">
+                            check
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-sm font-bold text-slate-700 select-none">
+                        Show Email Address on Ad
+                      </span>
+                      <input
+                        type="checkbox"
+                        className="hidden"
+                        checked={includeEmail}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          setIncludeEmail(checked);
+                          if (!checked) {
+                            setContactEmail("");
+                          } else {
+                            // Pre-fill with user's email if logged in
+                            const userStr = localStorage.getItem("user");
+                            const user = userStr ? JSON.parse(userStr) : null;
+                            if (user && user.email) {
+                              setContactEmail(user.email);
+                            }
+                          }
+                        }}
+                      />
+                    </label>
+
+                    {includeEmail && (
+                      <div className="relative animate-fadeIn max-w-md">
+                        <span className="material-icons absolute left-4 top-3.5 text-slate-400">
+                          email
+                        </span>
+                        <input
+                          type="email"
+                          value={contactEmail}
+                          onChange={(e) => setContactEmail(e.target.value)}
+                          className="w-full pl-12 pr-4 py-4 bg-slate-50 border-slate-100 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium"
+                          placeholder="Contact Email (e.g. user@example.com)"
+                        />
+                      </div>
+                    )}
                   </div>
-                  <div className="relative">
-                    <span className="material-icons absolute left-4 top-3.5 text-slate-400">
-                      phone
-                    </span>
-                    <input
-                      type="tel"
-                      value={contactPhone}
-                      onChange={(e) => setContactPhone(e.target.value)}
-                      className="w-full pl-12 pr-4 py-4 bg-slate-50 border-slate-100 rounded-xl focus:ring-primary focus:border-primary text-sm"
-                      placeholder="Contact Phone Number"
-                    />
+
+                  {/* Phone Toggle Option */}
+                  <div className="space-y-3">
+                    <label className="flex items-center gap-3 cursor-pointer group w-fit">
+                      <div
+                        className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
+                          includePhone ? "bg-primary border-primary" : "bg-white border-slate-300 group-hover:border-primary"
+                        }`}
+                      >
+                        {includePhone && (
+                          <span className="material-icons text-white text-[14px]">
+                            check
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-sm font-bold text-slate-700 select-none">
+                        Show Phone Number on Ad
+                      </span>
+                      <input
+                        type="checkbox"
+                        className="hidden"
+                        checked={includePhone}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          setIncludePhone(checked);
+                          if (!checked) {
+                            setContactPhone("");
+                          }
+                        }}
+                      />
+                    </label>
+
+                    {includePhone && (
+                      <div className="relative animate-fadeIn max-w-md">
+                        <span className="material-icons absolute left-4 top-3.5 text-slate-400">
+                          phone
+                        </span>
+                        <input
+                          type="tel"
+                          value={contactPhone}
+                          onChange={(e) => setContactPhone(e.target.value)}
+                          className="w-full pl-12 pr-4 py-4 bg-slate-50 border-slate-100 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium"
+                          placeholder="Contact Phone Number (e.g. 416-555-0199)"
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
               </section>
@@ -1096,7 +1292,7 @@ const PostAd: React.FC = () => {
                   )}
                   <button
                     disabled={
-                      !location || isPublishing || imageFiles[0] === null
+                      (!location && !postalCode) || isPublishing || imageFiles[0] === null
                     }
                     onClick={handlePublish}
                     className="bg-primary hover:bg-primary-hover text-white px-10 py-4 rounded-xl font-bold transition-all shadow-lg shadow-primary/20 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"

@@ -124,7 +124,7 @@ const ItemDetails: React.FC = () => {
                   >
                     {images.map((img: string, idx: number) => (
                       <div key={idx} className="flex-shrink-0 w-full h-full flex items-center justify-center bg-slate-100 p-4">
-                        <img src={img} alt={`Image ${idx + 1}`} className="max-w-full max-h-full object-contain" />
+                        <img src={img} alt={`${listing.title} — Photo ${idx + 1} of ${total}${listing.category ? ' | ' + listing.category : ''}${listing.location ? ' in ' + listing.location : ''}`} className="max-w-full max-h-full object-contain" />
                       </div>
                     ))}
                   </div>
@@ -185,7 +185,7 @@ const ItemDetails: React.FC = () => {
                             : 'border-transparent opacity-60 hover:opacity-90 hover:border-slate-200'
                         }`}
                       >
-                        <img src={img} alt={`Thumb ${idx + 1}`} className="w-full h-full object-contain p-1" />
+                        <img src={img} alt={`${listing.title} thumbnail ${idx + 1}`} className="w-full h-full object-contain p-1" />
                       </div>
                     ))}
                   </div>

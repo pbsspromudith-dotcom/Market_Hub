@@ -90,6 +90,8 @@ try {
             'gtm_id' => 'GTM-XXXXXXX',
             'ga4_id' => 'G-XXXXXXXXXX',
             'meta_pixel_id' => 'XXXXXXXXXXXXXXXX',
+            'google_ads_id' => 'AW-XXXXXXXXXX',
+            'google_site_verification' => '',
             'robots_txt' => "User-agent: *\nAllow: /\n\nSitemap: https://hitads.ca/sitemap.xml",
             'homepage_schema_markup' => '
 <script type="application/ld+json">
@@ -160,8 +162,32 @@ try {
         }
         echo "Seeded default SEO settings.<br/>";
     }
+
+    // Ensure new tracking fields exist even if table was already seeded
+    $conn->exec("INSERT IGNORE INTO seo_settings (setting_key, setting_value) VALUES 
+        ('google_ads_id', 'AW-XXXXXXXXXX'),
+        ('google_site_verification', '')");
 } catch(PDOException $e) {
     echo "seo_settings error: " . $e->getMessage() . "<br/>";
+}
+
+try {
+    // Create listing_seo table for per-listing SEO overrides & keyword tracking
+    $conn->exec("CREATE TABLE IF NOT EXISTS listing_seo (
+        id              INT AUTO_INCREMENT PRIMARY KEY,
+        listing_id      INT NOT NULL UNIQUE,
+        meta_title      VARCHAR(255) DEFAULT NULL,
+        meta_desc       TEXT DEFAULT NULL,
+        keywords        TEXT DEFAULT NULL,
+        image_alt_text  TEXT DEFAULT NULL,
+        focus_keyword   VARCHAR(255) DEFAULT NULL,
+        seo_score       TINYINT DEFAULT NULL,
+        updated_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (listing_id) REFERENCES listings(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;");
+    echo "Created listing_seo table.<br/>";
+} catch(PDOException $e) {
+    echo "listing_seo: " . $e->getMessage() . "<br/>";
 }
 ?>
 

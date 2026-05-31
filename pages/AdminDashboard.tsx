@@ -60,6 +60,7 @@ const AdminDashboard: React.FC = () => {
     { id: 'users', label: 'Users', icon: 'people' },
     { id: 'menu', label: 'Menu Layout', icon: 'menu_open' },
     { id: 'lookups', label: 'Sub Masters', icon: 'category' },
+    { id: 'listing-seo', label: 'Listing SEO', icon: 'travel_explore' },
     { id: 'email', label: 'Email Setup', icon: 'email' },
     { id: 'seo', label: 'SEO Settings', icon: 'manage_search' }
   ];
@@ -79,6 +80,8 @@ const AdminDashboard: React.FC = () => {
     gtm_id: '',
     ga4_id: '',
     meta_pixel_id: '',
+    google_ads_id: '',
+    google_site_verification: '',
     robots_txt: '',
     homepage_schema_markup: '',
     page_title_home: '',
@@ -115,6 +118,21 @@ const AdminDashboard: React.FC = () => {
   const [isSavingSeo, setIsSavingSeo] = useState(false);
   const [seoSaveMsg, setSeoSaveMsg] = useState<{type: 'success' | 'error', text: string} | null>(null);
   const [activeSeoSubTab, setActiveSeoSubTab] = useState('general');
+
+  // Listing SEO Management States
+  const [seoListings, setSeoListings] = useState<any[]>([]);
+  const [seoTotal, setSeoTotal] = useState(0);
+  const [seoPage, setSeoPage] = useState(1);
+  const [seoSearch, setSeoSearch] = useState('');
+  const [seoCategoryFilter, setSeoCategoryFilter] = useState('');
+  const [seoStatusFilter, setSeoStatusFilter] = useState('');
+  const [seoCategories, setSeoCategories] = useState<string[]>([]);
+  const [seoLoading, setSeoLoading] = useState(false);
+  const [editingSeoListing, setEditingSeoListing] = useState<any>(null);
+  const [seoForm, setSeoForm] = useState({ meta_title: '', meta_desc: '', keywords: '', focus_keyword: '', image_alt_text: '' });
+  const [isSavingListingSeo, setIsSavingListingSeo] = useState(false);
+  const [isGeneratingSeo, setIsGeneratingSeo] = useState(false);
+  const [listingSeoMsg, setListingSeoMsg] = useState<{type: 'success' | 'error', text: string} | null>(null);
 
   useEffect(() => {
     fetch('/api/admin/stats.php')
@@ -241,6 +259,104 @@ const AdminDashboard: React.FC = () => {
       setIsDeletingCat(null);
       setTimeout(() => setCatMsg(null), 5000);
     }
+  };
+
+  const fetchListingSeo = (pageNum = 1) => {
+    setSeoLoading(true);
+    const params = new URLSearchParams({ all: '1', page: String(pageNum), limit: '50' });
+    if (seoSearch) params.append('search', seoSearch);
+    if (seoCategoryFilter) params.append('category', seoCategoryFilter);
+    if (seoStatusFilter) params.append('seo_status', seoStatusFilter);
+    fetch('/api/listings/seo_read.php?' + params.toString())
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          setSeoListings(data.data || []);
+          setSeoTotal(data.total || 0);
+          setSeoPage(data.page || 1);
+          if (data.categories) setSeoCategories(data.categories);
+        }
+      })
+      .catch(console.error)
+      .finally(() => setSeoLoading(false));
+  };
+
+  const handleSaveListingSeo = async () => {
+    if (!editingSeoListing) return;
+    setIsSavingListingSeo(true);
+    setListingSeoMsg(null);
+    try {
+      const res = await fetch('/api/listings/seo_update.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ listing_id: editingSeoListing.id, ...seoForm }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setListingSeoMsg({ type: 'success', text: data.message || 'SEO data saved.' });
+        fetchListingSeo(seoPage);
+      } else {
+        setListingSeoMsg({ type: 'error', text: data.message || 'Failed to save.' });
+      }
+    } catch {
+      setListingSeoMsg({ type: 'error', text: 'Network error saving SEO data.' });
+    } finally {
+      setIsSavingListingSeo(false);
+      setTimeout(() => setListingSeoMsg(null), 5000);
+    }
+  };
+
+  const handleGenerateListingSeo = async (listingId: number) => {
+    setIsGeneratingSeo(true);
+    try {
+      const res = await fetch('/api/listings/seo_generate.php?listing_id=' + listingId);
+      const data = await res.json();
+      if (data.success && data.generated) {
+        setSeoForm({
+          meta_title: data.generated.meta_title || '',
+          meta_desc: data.generated.meta_desc || '',
+          keywords: data.generated.keywords || '',
+          focus_keyword: data.generated.focus_keyword || '',
+          image_alt_text: data.generated.image_alt_text || '',
+        });
+      }
+    } catch {
+      setListingSeoMsg({ type: 'error', text: 'Failed to auto-generate SEO data.' });
+    } finally {
+      setIsGeneratingSeo(false);
+    }
+  };
+
+  const handleResetListingSeo = async (listingId: number) => {
+    if (!confirm('Reset this listing\'s SEO to auto-generation? Manual overrides will be removed.')) return;
+    try {
+      const res = await fetch('/api/listings/seo_update.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ listing_id: listingId, reset: true }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setListingSeoMsg({ type: 'success', text: 'Reset to auto-generation.' });
+        setSeoForm({ meta_title: '', meta_desc: '', keywords: '', focus_keyword: '', image_alt_text: '' });
+        fetchListingSeo(seoPage);
+      }
+    } catch {
+      setListingSeoMsg({ type: 'error', text: 'Failed to reset.' });
+    }
+    setTimeout(() => setListingSeoMsg(null), 5000);
+  };
+
+  const openSeoEditor = (listing: any) => {
+    setEditingSeoListing(listing);
+    setSeoForm({
+      meta_title: listing.meta_title || '',
+      meta_desc: listing.meta_desc || '',
+      keywords: listing.keywords || '',
+      focus_keyword: listing.focus_keyword || '',
+      image_alt_text: listing.image_alt_text || '',
+    });
+    setListingSeoMsg(null);
   };
 
   const fetchUsers = () => {
@@ -1609,6 +1725,322 @@ const AdminDashboard: React.FC = () => {
         </div>
       )}
 
+      {/* Listing SEO Tab */}
+      {activeTab === 'listing-seo' && (
+        <div className="mt-10 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
+          {/* Header */}
+          <div className="bg-white p-6 sm:p-8 rounded-[2rem] border border-slate-200 shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+              <div>
+                <h2 className="text-2xl font-black text-slate-900">Listing SEO Manager</h2>
+                <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Manage meta titles, descriptions, keywords & image alt text per listing</p>
+              </div>
+              <button
+                onClick={() => fetchListingSeo(1)}
+                className="self-start bg-slate-900 hover:bg-slate-800 text-white font-black py-3 px-6 rounded-xl transition-all text-xs uppercase tracking-widest flex items-center gap-2 shadow-md"
+              >
+                <span className="material-icons text-sm">refresh</span> Load Listings
+              </button>
+            </div>
+
+            {/* Alert Messages */}
+            {listingSeoMsg && (
+              <div className={`mb-4 p-4 rounded-xl text-xs font-bold ${listingSeoMsg.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-600 border border-red-200'}`}>
+                <span className="material-icons text-sm mr-2 align-middle">{listingSeoMsg.type === 'success' ? 'check_circle' : 'error'}</span>
+                {listingSeoMsg.text}
+              </div>
+            )}
+
+            {/* Filters Row */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+              <div className="relative">
+                <span className="material-icons text-slate-300 absolute left-3 top-1/2 -translate-y-1/2 text-lg">search</span>
+                <input
+                  type="text"
+                  value={seoSearch}
+                  onChange={e => setSeoSearch(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && fetchListingSeo(1)}
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium"
+                  placeholder="Search by title or keyword..."
+                />
+              </div>
+              <select
+                value={seoCategoryFilter}
+                onChange={e => { setSeoCategoryFilter(e.target.value); }}
+                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium"
+              >
+                <option value="">All Categories</option>
+                {seoCategories.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+              <select
+                value={seoStatusFilter}
+                onChange={e => { setSeoStatusFilter(e.target.value); }}
+                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium"
+              >
+                <option value="">All SEO Status</option>
+                <option value="custom">Custom (Manual Override)</option>
+                <option value="none">None (Auto Only)</option>
+              </select>
+              <button
+                onClick={() => fetchListingSeo(1)}
+                className="w-full bg-primary hover:bg-primary-hover text-white font-black py-2.5 rounded-xl transition-all text-xs uppercase tracking-widest flex items-center justify-center gap-2"
+              >
+                <span className="material-icons text-sm">filter_list</span> Apply Filters
+              </button>
+            </div>
+
+            {/* Keywords Overview Table */}
+            {seoLoading ? (
+              <div className="text-center py-16">
+                <span className="material-icons text-4xl text-slate-300 animate-spin">sync</span>
+                <p className="text-sm text-slate-400 font-bold mt-3">Loading listings...</p>
+              </div>
+            ) : seoListings.length === 0 ? (
+              <div className="text-center py-16">
+                <span className="material-icons text-5xl text-slate-200 mb-3">travel_explore</span>
+                <p className="text-sm text-slate-400 font-bold">Click "Load Listings" to populate SEO data</p>
+              </div>
+            ) : (
+              <>
+                <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">
+                  Showing {seoListings.length} of {seoTotal} listings
+                </div>
+                <div className="overflow-x-auto rounded-2xl border border-slate-100">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="bg-slate-50 border-b border-slate-100">
+                        <th className="text-left px-4 py-3 font-black text-[10px] text-slate-500 uppercase tracking-widest">ID</th>
+                        <th className="text-left px-4 py-3 font-black text-[10px] text-slate-500 uppercase tracking-widest">Title</th>
+                        <th className="text-left px-4 py-3 font-black text-[10px] text-slate-500 uppercase tracking-widest hidden lg:table-cell">Category</th>
+                        <th className="text-left px-4 py-3 font-black text-[10px] text-slate-500 uppercase tracking-widest hidden md:table-cell">Location</th>
+                        <th className="text-left px-4 py-3 font-black text-[10px] text-slate-500 uppercase tracking-widest hidden xl:table-cell">Focus Keyword</th>
+                        <th className="text-left px-4 py-3 font-black text-[10px] text-slate-500 uppercase tracking-widest">Status</th>
+                        <th className="text-left px-4 py-3 font-black text-[10px] text-slate-500 uppercase tracking-widest">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {seoListings.map((listing: any) => {
+                        const hasCustom = listing.meta_title || listing.meta_desc || listing.keywords;
+                        const status = hasCustom ? 'Custom' : 'Auto';
+                        return (
+                          <tr key={listing.id} className={`border-b border-slate-50 hover:bg-slate-50/50 transition-colors ${editingSeoListing?.id === listing.id ? 'bg-primary/5' : ''}`}>
+                            <td className="px-4 py-3 text-xs text-slate-400 font-mono">#{listing.id}</td>
+                            <td className="px-4 py-3">
+                              <p className="font-bold text-slate-800 truncate max-w-[220px]">{listing.title}</p>
+                              <p className="text-[10px] text-slate-400 font-bold mt-0.5">${Number(listing.price).toLocaleString()}</p>
+                            </td>
+                            <td className="px-4 py-3 hidden lg:table-cell">
+                              <span className="text-xs text-slate-500 font-medium truncate max-w-[140px] inline-block">{listing.category}</span>
+                            </td>
+                            <td className="px-4 py-3 hidden md:table-cell">
+                              <span className="text-xs text-slate-500 font-medium">{listing.location}</span>
+                            </td>
+                            <td className="px-4 py-3 hidden xl:table-cell">
+                              {listing.focus_keyword ? (
+                                <span className="text-xs bg-indigo-50 text-indigo-600 px-2 py-1 rounded-lg font-bold">{listing.focus_keyword}</span>
+                              ) : (
+                                <span className="text-xs text-slate-300">—</span>
+                              )}
+                            </td>
+                            <td className="px-4 py-3">
+                              <span className={`text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full ${
+                                status === 'Custom' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'
+                              }`}>{status}</span>
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="flex gap-1.5">
+                                <button
+                                  onClick={() => openSeoEditor(listing)}
+                                  className="w-8 h-8 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 flex items-center justify-center transition-colors"
+                                  title="Edit SEO"
+                                >
+                                  <span className="material-icons text-sm">edit</span>
+                                </button>
+                                {hasCustom && (
+                                  <button
+                                    onClick={() => handleResetListingSeo(listing.id)}
+                                    className="w-8 h-8 rounded-lg bg-slate-100 text-slate-500 hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition-colors"
+                                    title="Reset to auto"
+                                  >
+                                    <span className="material-icons text-sm">restart_alt</span>
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Pagination */}
+                {seoTotal > 50 && (
+                  <div className="flex justify-center gap-2 mt-4">
+                    {Array.from({ length: Math.ceil(seoTotal / 50) }, (_, i) => i + 1).map(p => (
+                      <button
+                        key={p}
+                        onClick={() => fetchListingSeo(p)}
+                        className={`w-9 h-9 rounded-xl text-xs font-black transition-all ${
+                          seoPage === p ? 'bg-primary text-white shadow-md' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'
+                        }`}
+                      >{p}</button>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+
+          {/* Single Listing SEO Editor Panel */}
+          {editingSeoListing && (
+            <div className="bg-white p-6 sm:p-8 rounded-[2rem] border border-slate-200 shadow-sm">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="text-xl font-black text-slate-900">Edit SEO — #{editingSeoListing.id} {editingSeoListing.title}</h3>
+                  <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Fine-tune search engine appearance for this listing</p>
+                </div>
+                <button
+                  onClick={() => setEditingSeoListing(null)}
+                  className="w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 transition-colors"
+                >
+                  <span className="material-icons">close</span>
+                </button>
+              </div>
+
+              {/* SERP Preview */}
+              <div className="mb-8 p-5 bg-slate-50 rounded-2xl border border-slate-200/80">
+                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                  <span className="material-icons text-sm text-primary">preview</span> Google Search Preview
+                </h4>
+                <div className="bg-white p-4 rounded-xl border border-slate-100 max-w-xl">
+                  <p className="text-[11px] text-green-700 font-medium truncate">
+                    hitads.ca › item › {editingSeoListing.id}
+                  </p>
+                  <p className="text-lg text-blue-800 font-medium hover:underline cursor-pointer truncate leading-tight mt-0.5">
+                    {seoForm.meta_title || `${editingSeoListing.title} for Sale in ${editingSeoListing.location} | HitAds.ca`}
+                  </p>
+                  <p className="text-[13px] text-slate-600 mt-1 line-clamp-2 leading-snug">
+                    {seoForm.meta_desc || `Buy ${editingSeoListing.title} in ${editingSeoListing.location} for $${Number(editingSeoListing.price).toLocaleString()}. Check pictures, description, seller info on HitAds.ca.`}
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Meta Title */}
+                <div>
+                  <label className="flex items-center justify-between mb-1.5 px-1">
+                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Meta Title</span>
+                    <span className={`text-[10px] font-black ${seoForm.meta_title.length > 60 ? 'text-red-500' : seoForm.meta_title.length > 50 ? 'text-amber-500' : 'text-emerald-500'}`}>
+                      {seoForm.meta_title.length}/60
+                    </span>
+                  </label>
+                  <input
+                    type="text"
+                    value={seoForm.meta_title}
+                    onChange={e => setSeoForm({ ...seoForm, meta_title: e.target.value })}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium"
+                    placeholder="e.g. Used MacBook Pro in Markham | Buy on HitAds.ca"
+                  />
+                  <div className="w-full bg-slate-200 rounded-full h-1 mt-1.5">
+                    <div className={`h-1 rounded-full transition-all ${seoForm.meta_title.length > 60 ? 'bg-red-500' : seoForm.meta_title.length > 50 ? 'bg-amber-400' : 'bg-emerald-400'}`} style={{ width: `${Math.min(100, (seoForm.meta_title.length / 60) * 100)}%` }} />
+                  </div>
+                </div>
+
+                {/* Focus Keyword */}
+                <div>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 px-1">Focus Keyword</label>
+                  <input
+                    type="text"
+                    value={seoForm.focus_keyword}
+                    onChange={e => setSeoForm({ ...seoForm, focus_keyword: e.target.value })}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium"
+                    placeholder="e.g. used macbook pro markham"
+                  />
+                </div>
+
+                {/* Meta Description */}
+                <div className="lg:col-span-2">
+                  <label className="flex items-center justify-between mb-1.5 px-1">
+                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Meta Description</span>
+                    <span className={`text-[10px] font-black ${seoForm.meta_desc.length > 160 ? 'text-red-500' : seoForm.meta_desc.length > 140 ? 'text-amber-500' : 'text-emerald-500'}`}>
+                      {seoForm.meta_desc.length}/160
+                    </span>
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={seoForm.meta_desc}
+                    onChange={e => setSeoForm({ ...seoForm, meta_desc: e.target.value })}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium"
+                    placeholder="Compelling description for search results (120-160 characters ideal)"
+                  />
+                  <div className="w-full bg-slate-200 rounded-full h-1 mt-1.5">
+                    <div className={`h-1 rounded-full transition-all ${seoForm.meta_desc.length > 160 ? 'bg-red-500' : seoForm.meta_desc.length > 140 ? 'bg-amber-400' : 'bg-emerald-400'}`} style={{ width: `${Math.min(100, (seoForm.meta_desc.length / 160) * 100)}%` }} />
+                  </div>
+                </div>
+
+                {/* Keywords */}
+                <div>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 px-1">Keywords (comma-separated)</label>
+                  <textarea
+                    rows={2}
+                    value={seoForm.keywords}
+                    onChange={e => setSeoForm({ ...seoForm, keywords: e.target.value })}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium"
+                    placeholder="macbook pro, used laptop, electronics markham"
+                  />
+                  {seoForm.keywords && (
+                    <div className="flex flex-wrap gap-1.5 mt-2">
+                      {seoForm.keywords.split(',').map((kw: string, i: number) => kw.trim() && (
+                        <span key={i} className="bg-indigo-50 text-indigo-600 text-[10px] font-bold px-2 py-0.5 rounded-md">{kw.trim()}</span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Image Alt Text */}
+                <div>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 px-1">Image Alt Text</label>
+                  <textarea
+                    rows={2}
+                    value={seoForm.image_alt_text}
+                    onChange={e => setSeoForm({ ...seoForm, image_alt_text: e.target.value })}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium"
+                    placeholder="Used MacBook Pro — Electronics for sale in Markham"
+                  />
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-wrap items-center gap-3 mt-8 pt-6 border-t border-slate-100">
+                <button
+                  onClick={() => handleGenerateListingSeo(editingSeoListing.id)}
+                  disabled={isGeneratingSeo}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-black py-3 px-6 rounded-xl transition-all text-xs uppercase tracking-widest flex items-center gap-2 shadow-md disabled:opacity-50"
+                >
+                  <span className="material-icons text-sm">{isGeneratingSeo ? 'sync' : 'auto_fix_high'}</span>
+                  {isGeneratingSeo ? 'Generating...' : 'Auto-Generate'}
+                </button>
+                <button
+                  onClick={handleSaveListingSeo}
+                  disabled={isSavingListingSeo}
+                  className="bg-slate-900 hover:bg-slate-800 text-white font-black py-3 px-6 rounded-xl transition-all text-xs uppercase tracking-widest flex items-center gap-2 shadow-md disabled:opacity-50"
+                >
+                  <span className="material-icons text-sm">{isSavingListingSeo ? 'sync' : 'save'}</span>
+                  {isSavingListingSeo ? 'Saving...' : 'Save SEO Data'}
+                </button>
+                <button
+                  onClick={() => handleResetListingSeo(editingSeoListing.id)}
+                  className="bg-white hover:bg-red-50 text-red-600 font-black py-3 px-6 rounded-xl transition-all text-xs uppercase tracking-widest flex items-center gap-2 border border-red-200"
+                >
+                  <span className="material-icons text-sm">restart_alt</span> Reset to Auto
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* 6. SEO Settings Tab */}
       {activeTab === 'seo' && (
         <div className="mt-10 bg-white p-6 sm:p-8 rounded-[2rem] border border-slate-200 shadow-sm flex flex-col md:flex-row gap-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
@@ -1699,6 +2131,29 @@ const AdminDashboard: React.FC = () => {
                         onChange={e => setSeoSettings({...seoSettings, meta_pixel_id: e.target.value})}
                         className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium"
                         placeholder="XXXXXXXXXXXXXXXX"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mt-4">
+                    <div>
+                      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Google Ads Tag ID</label>
+                      <input 
+                        type="text"
+                        value={seoSettings.google_ads_id || ''}
+                        onChange={e => setSeoSettings({...seoSettings, google_ads_id: e.target.value})}
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium"
+                        placeholder="AW-XXXXXXXXXX"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Google Search Console Verification Tag</label>
+                      <input 
+                        type="text"
+                        value={seoSettings.google_site_verification || ''}
+                        onChange={e => setSeoSettings({...seoSettings, google_site_verification: e.target.value})}
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium"
+                        placeholder="e.g. c-cidgyEcNErCFJpYOhfp_RQm8Cqm9Xn1uHpVmNkvVM"
                       />
                     </div>
                   </div>

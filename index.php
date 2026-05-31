@@ -23,15 +23,20 @@ $meta_desc = $seo_settings['meta_desc_home'] ?? "HitAds.ca is Canada's modern cl
 $og_image = "https://hitads.ca/assets/logo.png";
 $canonical_url = "https://hitads.ca" . rtrim($clean_path, '/');
 $schema_markup = '';
+$meta_keywords = '';
 
 // ── Analytics IDs ──
 $gtm_id = $seo_settings['gtm_id'] ?? 'GTM-XXXXXXX';
 $ga4_id = $seo_settings['ga4_id'] ?? 'G-XXXXXXXXXX';
 $meta_pixel_id = $seo_settings['meta_pixel_id'] ?? 'XXXXXXXXXXXXXXXX';
+$google_ads_id = $seo_settings['google_ads_id'] ?? 'AW-XXXXXXXXXX';
+$google_site_verification = $seo_settings['google_site_verification'] ?? '';
 
-$has_gtm = (strpos($gtm_id, 'XXXX') === false);
-$has_ga4 = (strpos($ga4_id, 'XXXX') === false);
-$has_pixel = (strpos($meta_pixel_id, 'XXXX') === false);
+$has_gtm = (strpos($gtm_id, 'XXXX') === false && !empty($gtm_id));
+$has_ga4 = (strpos($ga4_id, 'XXXX') === false && !empty($ga4_id));
+$has_pixel = (strpos($meta_pixel_id, 'XXXX') === false && !empty($meta_pixel_id));
+$has_google_ads = (strpos($google_ads_id, 'XXXX') === false && !empty($google_ads_id));
+$has_verification = !empty($google_site_verification);
 
 // ── Organization + LocalBusiness Schema (shown on homepage) ──
 $org_schema = $seo_settings['homepage_schema_markup'] ?? '
@@ -66,6 +71,79 @@ $org_schema = $seo_settings['homepage_schema_markup'] ?? '
 }
 </script>';
 
+// ── SEO Helper Functions ──
+
+/**
+ * Extracts key-value attributes from listing description text.
+ * Parses lines like "Make: Toyota", "Condition: Used", "Year: 2020".
+ */
+function extractListingAttributes($description) {
+    $attrs = [];
+    if (empty($description)) return $attrs;
+    $lines = preg_split('/[\r\n]+/', $description);
+    foreach ($lines as $line) {
+        $line = trim($line);
+        if (preg_match('/^([A-Za-z\s]+):\s*(.+)$/', $line, $m)) {
+            $key = trim($m[1]);
+            $val = trim($m[2]);
+            if (strlen($key) <= 30 && strlen($val) <= 200) {
+                $attrs[$key] = $val;
+            }
+        }
+    }
+    return $attrs;
+}
+
+/**
+ * Builds a smart, keyword-rich meta title from listing fields.
+ */
+function buildSmartTitle($listing, $attrs = []) {
+    $title = $listing['title'] ?? '';
+    $location = $listing['location'] ?? '';
+    $condition = $attrs['Condition'] ?? '';
+
+    $parts = [];
+    if ($condition && stripos($title, $condition) === false) {
+        $parts[] = $condition;
+    }
+    $parts[] = $title;
+    if ($location) {
+        $parts[] = "in " . $location;
+    }
+    $meta = htmlspecialchars(implode(' ', $parts)) . " | Buy on HitAds.ca";
+    if (strlen($meta) > 60) {
+        $meta = htmlspecialchars(implode(' ', $parts)) . " | HitAds.ca";
+    }
+    if (strlen($meta) > 60) {
+        $meta = substr($meta, 0, 57) . '...';
+    }
+    return $meta;
+}
+
+/**
+ * Builds a smart meta description from listing fields.
+ */
+function buildSmartDescription($listing, $attrs = [], $image_count = 0) {
+    $title = $listing['title'] ?? '';
+    $location = $listing['location'] ?? '';
+    $price = $listing['price'] ?? 0;
+    $category = $listing['category'] ?? '';
+    $condition = $attrs['Condition'] ?? '';
+    $category_short = explode(' > ', $category)[0];
+
+    $parts = [];
+    $parts[] = $condition ? "Find {$condition}" : "Find";
+    $parts[] = htmlspecialchars($title);
+    if ($price > 0) $parts[] = "for $" . number_format($price, 0);
+    $parts[] = $location ? "in " . htmlspecialchars($location) . "." : ".";
+    $parts[] = htmlspecialchars($category_short) . " listing";
+    if ($image_count > 0) $parts[] = "with {$image_count} photo" . ($image_count > 1 ? 's' : '');
+    $parts[] = "on HitAds.ca. Contact seller directly.";
+
+    $desc = implode(' ', $parts);
+    return strlen($desc) > 160 ? substr($desc, 0, 157) . '...' : $desc;
+}
+
 // ── Route Matching ──
 
 // Homepage
@@ -77,20 +155,59 @@ if ($clean_path === '/' || $clean_path === '') {
 elseif (preg_match('/^\/item\/([0-9]+)$/', $clean_path, $matches)) {
     $listing_id = intval($matches[1]);
     try {
-        $stmt = $conn->prepare("SELECT title, description, price, location, image, created_at FROM listings WHERE id = ?");
+        // Fetch listing with seller info
+        $stmt = $conn->prepare("SELECT l.*, u.name as seller_name FROM listings l LEFT JOIN users u ON l.user_id = u.id WHERE l.id = ?");
         $stmt->execute([$listing_id]);
         $listing = $stmt->fetch();
 
         if ($listing) {
-            $page_title = htmlspecialchars($listing['title']) . " for Sale in " . htmlspecialchars($listing['location']) . " | HitAds.ca";
-            $meta_desc = "Buy " . htmlspecialchars($listing['title']) . " in " . htmlspecialchars($listing['location']) . " for $" . number_format($listing['price'], 2) . ". Check pictures, description, seller info, and contact details on HitAds.ca.";
-            if (strlen($meta_desc) > 160) {
-                $meta_desc = substr($meta_desc, 0, 157) . '...';
+            // Extract structured attributes from description
+            $attrs = extractListingAttributes($listing['description'] ?? '');
+            $condition = $attrs['Condition'] ?? '';
+            $make = $attrs['Make'] ?? '';
+
+            // Count images
+            $image_count = 0;
+            $images = json_decode($listing['image'], true);
+            if (is_array($images)) {
+                $image_count = count($images);
+            } elseif (!empty($listing['image'])) {
+                $image_count = 1;
             }
+
+            // Check for manual SEO override
+            $seo_row = null;
+            try {
+                $seo_stmt = $conn->prepare("SELECT * FROM listing_seo WHERE listing_id = ?");
+                $seo_stmt->execute([$listing_id]);
+                $seo_row = $seo_stmt->fetch();
+            } catch (Exception $e) {
+                // listing_seo table may not exist yet
+            }
+
+            // Priority: manual override → smart auto-generated
+            if ($seo_row && !empty($seo_row['meta_title'])) {
+                $page_title = htmlspecialchars($seo_row['meta_title']);
+            } else {
+                $page_title = buildSmartTitle($listing, $attrs);
+            }
+
+            if ($seo_row && !empty($seo_row['meta_desc'])) {
+                $meta_desc = htmlspecialchars($seo_row['meta_desc']);
+            } else {
+                $meta_desc = buildSmartDescription($listing, $attrs, $image_count);
+            }
+
+            // Keywords meta tag
+            if ($seo_row && !empty($seo_row['keywords'])) {
+                $meta_keywords = htmlspecialchars($seo_row['keywords']);
+            } elseif ($seo_row && !empty($seo_row['focus_keyword'])) {
+                $meta_keywords = htmlspecialchars($seo_row['focus_keyword']);
+            }
+
             $canonical_url = "https://hitads.ca/item/" . $listing_id;
 
-            // Handle image parsing (can be JSON array or single URL)
-            $images = json_decode($listing['image'], true);
+            // Handle image parsing for OG image
             if (is_array($images) && count($images) > 0) {
                 $first_img = $images[0];
                 $og_image = (strpos($first_img, 'http') === 0) ? $first_img : "https://hitads.ca" . $first_img;
@@ -98,26 +215,64 @@ elseif (preg_match('/^\/item\/([0-9]+)$/', $clean_path, $matches)) {
                 $og_image = (strpos($listing['image'], 'http') === 0) ? $listing['image'] : "https://hitads.ca" . $listing['image'];
             }
 
-            // Product + Offer Schema
+            // Build image alt text
+            $img_alt = '';
+            if ($seo_row && !empty($seo_row['image_alt_text'])) {
+                $img_alt = $seo_row['image_alt_text'];
+            } else {
+                $alt_parts = [];
+                if ($condition) $alt_parts[] = $condition;
+                $alt_parts[] = $listing['title'];
+                $category_short = explode(' > ', $listing['category'] ?? '')[0];
+                if ($category_short) $alt_parts[] = "— " . $category_short;
+                $alt_parts[] = "for sale";
+                if ($listing['location']) $alt_parts[] = "in " . $listing['location'];
+                $img_alt = implode(' ', $alt_parts);
+            }
+
+            // Determine Schema.org condition URL
+            $schema_condition = 'https://schema.org/UsedCondition';
+            if ($condition) {
+                $cond_lower = strtolower($condition);
+                if (strpos($cond_lower, 'new') !== false) $schema_condition = 'https://schema.org/NewCondition';
+                elseif (strpos($cond_lower, 'refurbished') !== false) $schema_condition = 'https://schema.org/RefurbishedCondition';
+            }
+
+            // Enhanced Product + Offer Schema with Brand, Condition, Seller, ImageObject
             $price_valid = date('Y-m-d', strtotime($listing['created_at'] . ' +1 year'));
-            $schema_markup = '
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "Product",
-  "name": ' . json_encode($listing['title']) . ',
-  "description": ' . json_encode(substr(strip_tags($listing['description'] ?? ''), 0, 250)) . ',
-  "image": ' . json_encode($og_image) . ',
-  "offers": {
-    "@type": "Offer",
-    "price": "' . $listing['price'] . '",
-    "priceCurrency": "CAD",
-    "availability": "https://schema.org/InStock",
-    "url": "https://hitads.ca/item/' . $listing_id . '",
-    "priceValidUntil": "' . $price_valid . '"
-  }
-}
-</script>';
+            $schema_data = [
+                '@context' => 'https://schema.org',
+                '@type' => 'Product',
+                'name' => $listing['title'],
+                'description' => substr(strip_tags($listing['description'] ?? ''), 0, 250),
+                'image' => [
+                    '@type' => 'ImageObject',
+                    'url' => $og_image,
+                    'name' => $img_alt
+                ],
+                'itemCondition' => $schema_condition,
+                'category' => $listing['category'] ?? '',
+                'offers' => [
+                    '@type' => 'Offer',
+                    'price' => (string)$listing['price'],
+                    'priceCurrency' => 'CAD',
+                    'availability' => 'https://schema.org/InStock',
+                    'url' => 'https://hitads.ca/item/' . $listing_id,
+                    'priceValidUntil' => $price_valid
+                ]
+            ];
+
+            // Add brand if available
+            if ($make) {
+                $schema_data['brand'] = ['@type' => 'Brand', 'name' => $make];
+            }
+
+            // Add seller info if available
+            if (!empty($listing['seller_name'])) {
+                $schema_data['offers']['seller'] = ['@type' => 'Person', 'name' => $listing['seller_name']];
+            }
+
+            $schema_markup = '<script type="application/ld+json">' . json_encode($schema_data, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT) . '</script>';
         }
     } catch (Exception $e) {
         // Fallback silently to default tags
@@ -174,7 +329,14 @@ else {
     <link rel="icon" type="image/png" href="/assets/logo.png" />
     <title><?php echo $page_title; ?></title>
     <meta name="description" content="<?php echo $meta_desc; ?>">
+    <?php if (!empty($meta_keywords)): ?>
+    <meta name="keywords" content="<?php echo $meta_keywords; ?>">
+    <?php endif; ?>
     <link rel="canonical" href="<?php echo $canonical_url; ?>" />
+    <?php if ($has_verification): ?>
+    <!-- Google Search Console -->
+    <meta name="google-site-verification" content="<?php echo htmlspecialchars($google_site_verification); ?>" />
+    <?php endif; ?>
 
     <!-- Open Graph (Facebook / LinkedIn) -->
     <meta property="og:type" content="website">
@@ -226,6 +388,17 @@ else {
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
       gtag('config', '<?php echo $ga4_id; ?>');
+    </script>
+    <?php endif; ?>
+
+    <?php if ($has_google_ads): ?>
+    <!-- Google Ads (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=<?php echo $google_ads_id; ?>"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', '<?php echo $google_ads_id; ?>');
     </script>
     <?php endif; ?>
 

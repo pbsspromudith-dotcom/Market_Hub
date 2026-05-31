@@ -5,6 +5,113 @@ interface HomeProps {
   isLoggedIn: boolean;
 }
 
+const getGoogleStyleAddress = (place: any) => {
+  const addr = place.address || {};
+  
+  // 1. Determine main text (e.g., "123 Yonge Street" or "McDonald's")
+  let mainText = "";
+  if (addr.amenity || addr.shop || addr.tourism || addr.office || addr.leisure) {
+    mainText = addr.amenity || addr.shop || addr.tourism || addr.office || addr.leisure;
+  } else if (addr.house_number && addr.road) {
+    mainText = `${addr.house_number} ${addr.road}`;
+  } else if (addr.road) {
+    mainText = addr.road;
+  } else {
+    mainText = place.display_name.split(",")[0];
+  }
+
+  // 2. Determine secondary text (e.g., "Toronto, ON")
+  const city = addr.city || addr.town || addr.village || addr.suburb || addr.city_district || "";
+  
+  const provinceMap: Record<string, string> = {
+    "Ontario": "ON",
+    "Quebec": "QC",
+    "British Columbia": "BC",
+    "Alberta": "AB",
+    "Manitoba": "MB",
+    "Saskatchewan": "SK",
+    "Nova Scotia": "NS",
+    "New Brunswick": "NB",
+    "Newfoundland and Labrador": "NL",
+    "Prince Edward Island": "PE",
+    "Northwest Territories": "NT",
+    "Yukon": "YT",
+    "Nunavut": "NU"
+  };
+  
+  let state = addr.state || "";
+  if (provinceMap[state]) {
+    state = provinceMap[state];
+  }
+  
+  let secondaryText = "";
+  if (city && state) {
+    secondaryText = `${city}, ${state}`;
+  } else if (city) {
+    secondaryText = city;
+  } else if (state) {
+    secondaryText = state;
+  } else {
+    const parts = place.display_name.split(",");
+    secondaryText = parts.slice(1).map((p: string) => p.trim()).join(", ");
+  }
+  
+  return { mainText, secondaryText };
+};
+
+const getCleanAddressString = (place: any) => {
+  const addr = place.address || {};
+  const parts: string[] = [];
+  
+  if (addr.amenity || addr.shop || addr.tourism || addr.office || addr.leisure) {
+    const name = addr.amenity || addr.shop || addr.tourism || addr.office || addr.leisure;
+    parts.push(name);
+    if (addr.house_number && addr.road) {
+      parts.push(`${addr.house_number} ${addr.road}`);
+    } else if (addr.road) {
+      parts.push(addr.road);
+    }
+  } else if (addr.house_number && addr.road) {
+    parts.push(`${addr.house_number} ${addr.road}`);
+  } else if (addr.road) {
+    parts.push(addr.road);
+  } else {
+    parts.push(place.display_name.split(",")[0]);
+  }
+  
+  const city = addr.city || addr.town || addr.village || addr.suburb || addr.city_district || "";
+  
+  const provinceMap: Record<string, string> = {
+    "Ontario": "ON",
+    "Quebec": "QC",
+    "British Columbia": "BC",
+    "Alberta": "AB",
+    "Manitoba": "MB",
+    "Saskatchewan": "SK",
+    "Nova Scotia": "NS",
+    "New Brunswick": "NB",
+    "Newfoundland and Labrador": "NL",
+    "Prince Edward Island": "PE",
+    "Northwest Territories": "NT",
+    "Yukon": "YT",
+    "Nunavut": "NU"
+  };
+  
+  let state = addr.state || "";
+  if (provinceMap[state]) {
+    state = provinceMap[state];
+  }
+  
+  if (city) {
+    parts.push(city);
+  }
+  if (state) {
+    parts.push(state);
+  }
+  
+  return parts.filter((val, index, self) => self.indexOf(val) === index && val !== "").join(", ");
+};
+
 const Home: React.FC<HomeProps> = ({ isLoggedIn }) => {
   const [categories, setCategories] = useState<any[]>([]);
 
@@ -40,9 +147,8 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn }) => {
   }, [locationSearch, showSuggestions]);
 
   const handleSelectLocation = (place: any) => {
-    setLocationSearch(
-      place.display_name.split(",")[0] + ", " + (place.address?.state || "CA"),
-    );
+    const cleanAddr = getCleanAddressString(place);
+    setLocationSearch(cleanAddr);
     setShowSuggestions(false);
   };
 
@@ -147,25 +253,28 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn }) => {
                     </div>
                   ) : locationSuggestions.length > 0 ? (
                     <ul>
-                      {locationSuggestions.map((place, idx) => (
-                        <li
-                          key={idx}
-                          onClick={() => handleSelectLocation(place)}
-                          className="px-4 py-3 hover:bg-slate-50 cursor-pointer border-b border-slate-50 last:border-0 flex items-start gap-3 transition-colors"
-                        >
-                          <span className="material-icons text-slate-300 text-lg mt-0.5">
-                            place
-                          </span>
-                          <div>
-                            <p className="text-sm font-bold text-slate-700 leading-tight mb-0.5">
-                              {place.display_name.split(",")[0]}
-                            </p>
-                            <p className="text-xs text-slate-400 leading-tight">
-                              {place.display_name}
-                            </p>
-                          </div>
-                        </li>
-                      ))}
+                      {locationSuggestions.map((place, idx) => {
+                        const { mainText, secondaryText } = getGoogleStyleAddress(place);
+                        return (
+                          <li
+                            key={idx}
+                            onClick={() => handleSelectLocation(place)}
+                            className="px-4 py-3 hover:bg-slate-50 cursor-pointer border-b border-slate-50 last:border-0 flex items-start gap-3 transition-colors"
+                          >
+                            <span className="material-icons text-slate-300 text-lg mt-0.5">
+                              place
+                            </span>
+                            <div>
+                              <p className="text-sm font-bold text-slate-700 leading-tight mb-0.5">
+                                {mainText}
+                              </p>
+                              <p className="text-xs text-slate-400 leading-tight">
+                                {secondaryText}
+                              </p>
+                            </div>
+                          </li>
+                        );
+                      })}
                     </ul>
                   ) : (
                     <div className="p-4 text-xs font-bold text-slate-400 text-center">
