@@ -1207,60 +1207,6 @@ const PostAd: React.FC = () => {
                   Contact Details
                 </label>
                 <div className="space-y-6">
-                  {/* Email Toggle Option */}
-                  <div className="space-y-3">
-                    <label className="flex items-center gap-3 cursor-pointer group w-fit">
-                      <div
-                        className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
-                          includeEmail ? "bg-primary border-primary" : "bg-white border-slate-300 group-hover:border-primary"
-                        }`}
-                      >
-                        {includeEmail && (
-                          <span className="material-icons text-white text-[14px]">
-                            check
-                          </span>
-                        )}
-                      </div>
-                      <span className="text-sm font-bold text-slate-700 select-none">
-                        Show Email Address on Ad
-                      </span>
-                      <input
-                        type="checkbox"
-                        className="hidden"
-                        checked={includeEmail}
-                        onChange={(e) => {
-                          const checked = e.target.checked;
-                          setIncludeEmail(checked);
-                          if (!checked) {
-                            setContactEmail("");
-                          } else {
-                            // Pre-fill with user's email if logged in
-                            const userStr = localStorage.getItem("user");
-                            const user = userStr ? JSON.parse(userStr) : null;
-                            if (user && user.email) {
-                              setContactEmail(user.email);
-                            }
-                          }
-                        }}
-                      />
-                    </label>
-
-                    {includeEmail && (
-                      <div className="relative animate-fadeIn max-w-md">
-                        <span className="material-icons absolute left-4 top-3.5 text-slate-400">
-                          email
-                        </span>
-                        <input
-                          type="email"
-                          value={contactEmail}
-                          onChange={(e) => setContactEmail(e.target.value)}
-                          className="w-full pl-12 pr-4 py-4 bg-slate-50 border-slate-100 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium"
-                          placeholder="Contact Email (e.g. user@example.com)"
-                        />
-                      </div>
-                    )}
-                  </div>
-
                   {/* Phone Toggle Option */}
                   <div className="space-y-3">
                     <label className="flex items-center gap-3 cursor-pointer group w-fit">

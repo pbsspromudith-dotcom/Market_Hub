@@ -29,9 +29,13 @@ try {
     $conn->exec("SET FOREIGN_KEY_CHECKS = 0;");
 
     // Drop tables if they already exist to allow clean re-runs
+    // Drop both uppercase and lowercase versions to resolve case-sensitivity conflicts on Linux servers
     $conn->exec("DROP TABLE IF EXISTS CategoryAttributeOption;");
+    $conn->exec("DROP TABLE IF EXISTS categoryattributeoption;");
     $conn->exec("DROP TABLE IF EXISTS CategoryAttribute;");
+    $conn->exec("DROP TABLE IF EXISTS categoryattribute;");
     $conn->exec("DROP TABLE IF EXISTS Category;");
+    $conn->exec("DROP TABLE IF EXISTS category;");
 
     $conn->exec("SET FOREIGN_KEY_CHECKS = 1;");
 
@@ -46,7 +50,7 @@ try {
         SortOrder INT DEFAULT 0,
         IsActive TINYINT(1) DEFAULT 1,
         CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (ParentCategoryID) REFERENCES Category(CategoryID) ON DELETE CASCADE
+        CONSTRAINT fk_category_parent_self FOREIGN KEY (ParentCategoryID) REFERENCES Category(CategoryID) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
 
     // 2. Create CategoryAttribute Table
@@ -56,7 +60,7 @@ try {
         AttributeName VARCHAR(100) NOT NULL,
         AttributeType VARCHAR(50) NOT NULL,
         IsRequired TINYINT(1) DEFAULT 0,
-        FOREIGN KEY (CategoryID) REFERENCES Category(CategoryID) ON DELETE CASCADE
+        CONSTRAINT fk_category_attribute_category_rel FOREIGN KEY (CategoryID) REFERENCES Category(CategoryID) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
 
     // 3. Create CategoryAttributeOption Table
@@ -64,7 +68,7 @@ try {
         OptionID INT AUTO_INCREMENT PRIMARY KEY,
         AttributeID INT NOT NULL,
         OptionValue VARCHAR(100) NOT NULL,
-        FOREIGN KEY (AttributeID) REFERENCES CategoryAttribute(AttributeID) ON DELETE CASCADE
+        CONSTRAINT fk_category_option_attribute_rel FOREIGN KEY (AttributeID) REFERENCES CategoryAttribute(AttributeID) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
 
     // 4. Create Recommended Indexes

@@ -254,31 +254,18 @@ const ItemDetails: React.FC = () => {
                   </button>
                 </div>
                 
-                {(listing.contact_email || listing.seller_email || listing.contact_phone || listing.seller_phone) && (
+                {listing.contact_phone && listing.contact_phone.trim() !== "" && (
                   <div className="bg-slate-50 rounded-2xl border border-slate-100 p-5 mt-6">
                     <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Direct Contact Info</h4>
                     <div className="space-y-3">
-                      {(listing.contact_phone || listing.seller_phone) && (
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600 flex-shrink-0">
-                            <span className="material-icons text-sm">phone</span>
-                          </div>
-                          <a href={`tel:${listing.contact_phone || listing.seller_phone}`} className="text-sm font-bold text-slate-700 hover:text-green-600 transition-colors">
-                            {listing.contact_phone || listing.seller_phone}
-                          </a>
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600 flex-shrink-0">
+                          <span className="material-icons text-sm">phone</span>
                         </div>
-                      )}
-                      
-                      {(listing.contact_email || listing.seller_email) && (
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 flex-shrink-0">
-                            <span className="material-icons text-sm">email</span>
-                          </div>
-                          <a href={`mailto:${listing.contact_email || listing.seller_email}`} className="text-sm font-bold text-slate-700 hover:text-blue-600 transition-colors break-all">
-                            {listing.contact_email || listing.seller_email}
-                          </a>
-                        </div>
-                      )}
+                        <a href={`tel:${listing.contact_phone}`} className="text-sm font-bold text-slate-700 hover:text-green-600 transition-colors">
+                          {listing.contact_phone}
+                        </a>
+                      </div>
                     </div>
                   </div>
                 )}
