@@ -277,19 +277,22 @@ try {
         }
     };
 
-    // ── 1. Vehicles (specifically Cars & Trucks) Attributes ──
-    $carsId = $categoryMap["Vehicles > Cars & Trucks"] ?? null;
-    if ($carsId) {
-        $insertAttribute($carsId, 'Year', 'Number', 1);
-        $insertAttribute($carsId, 'Mileage (km)', 'Number', 1);
-        $insertAttribute($carsId, 'Transmission', 'Dropdown', 1, ['Automatic', 'Manual', 'Other']);
-        $insertAttribute($carsId, 'Fuel Type', 'Dropdown', 1, ['Gas', 'Diesel', 'Hybrid', 'Electric', 'Other']);
-        $insertAttribute($carsId, 'Body Type', 'Dropdown', 0, ['SUV', 'Sedan', 'Coupe', 'Hatchback', 'Truck', 'Van', 'Wagon', 'Other']);
-        $insertAttribute($carsId, 'Drivetrain', 'Dropdown', 0, ['FWD', 'RWD', 'AWD', '4WD']);
-        $insertAttribute($carsId, 'Exterior Color', 'Text', 0);
-        $insertAttribute($carsId, 'Doors', 'Dropdown', 0, ['2', '3', '4', '5', 'Other']);
-        $insertAttribute($carsId, 'Seating Capacity', 'Number', 0);
-        $insertAttribute($carsId, 'VIN Number', 'Text', 0);
+    // ── 1. Vehicles Attributes (seeded for all motorized vehicle types) ──
+    $vehicleSubcats = ["Cars & Trucks", "SUVs", "Pickup Trucks", "Vans", "Commercial Vehicles", "Classic Cars", "Salvage Vehicles", "Motorcycles", "ATVs", "RVs"];
+    foreach ($vehicleSubcats as $vSub) {
+        $vId = $categoryMap["Vehicles > $vSub"] ?? null;
+        if ($vId) {
+            $insertAttribute($vId, 'Year', 'Number', 1);
+            $insertAttribute($vId, 'Mileage (km)', 'Number', 1);
+            $insertAttribute($vId, 'Transmission', 'Dropdown', 1, ['Automatic', 'Manual', 'Other']);
+            $insertAttribute($vId, 'Fuel Type', 'Dropdown', 1, ['Gas', 'Diesel', 'Hybrid', 'Electric', 'Other']);
+            $insertAttribute($vId, 'Body Type', 'Dropdown', 0, ['SUV', 'Sedan', 'Coupe', 'Hatchback', 'Truck', 'Van', 'Wagon', 'Other']);
+            $insertAttribute($vId, 'Drivetrain', 'Dropdown', 0, ['FWD', 'RWD', 'AWD', '4WD']);
+            $insertAttribute($vId, 'Exterior Color', 'Text', 0);
+            $insertAttribute($vId, 'Doors', 'Dropdown', 0, ['2', '3', '4', '5', 'Other']);
+            $insertAttribute($vId, 'Seating Capacity', 'Number', 0);
+            $insertAttribute($vId, 'VIN Number', 'Text', 0);
+        }
     }
 
     // ── 2. Real Estate (Houses for Sale, Condos for Sale, Apartments for Rent, etc.) ──

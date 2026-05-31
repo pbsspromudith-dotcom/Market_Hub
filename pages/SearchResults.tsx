@@ -1,6 +1,27 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
+const CATEGORY_SYNONYMS: Record<string, string[]> = {
+  'Vehicles': ['vehicle', 'vehicles', 'car', 'cars', 'truck', 'trucks', 'suv', 'suvs', 'motorcycle', 'motorcycles', 'auto', 'automotive', 'boat', 'boats', 'rv', 'rvs', 'van', 'vans', 'atv', 'atvs', 'classic car', 'classic cars', 'heavy equipment', 'trailers', 'trailer', 'auto parts', 'motor', 'motors', 'wheel', 'wheels', 'drive'],
+  'Real Estate': ['real estate', 'estate', 'property', 'properties', 'house', 'houses', 'condo', 'condos', 'apartment', 'apartments', 'rent', 'rentals', 'rental', 'housing', 'land', 'basement', 'basements', 'room', 'rooms', 'office', 'commercial', 'storefront', 'storage', 'flat', 'flats', 'studio', 'accommodation', 'lease'],
+  'Jobs': ['job', 'jobs', 'work', 'career', 'careers', 'employment', 'hiring', 'recruitment', 'staff', 'position', 'positions', 'internship', 'internships', 'cash job', 'gig', 'gigs', 'part-time', 'full-time', 'vacancy', 'vacancies', 'hire', 'resume'],
+  'Local Services': ['service', 'services', 'handyman', 'trades', 'contractor', 'plumber', 'plumbing', 'electrician', 'electrical', 'mover', 'movers', 'moving', 'cleaner', 'cleaning', 'painter', 'painting', 'renovation', 'repair', 'pest control', 'roofing', 'tutor', 'lessons', 'helper', 'hauling', 'plumb', 'electric'],
+  'Buy & Sell': ['buy', 'sell', 'sale', 'item', 'items', 'furniture', 'tools', 'appliances', 'decor', 'musical', 'sports', 'collectibles', 'antique', 'antiques', 'tickets', 'garage sale', 'yard sale', 'free stuff', 'deals', 'closet', 'thrift'],
+  'Business & Industrial': ['business', 'industrial', 'machinery', 'equipment', 'wholesale', 'liquidation', 'supplies', 'manufacturing', 'warehouse', 'factory', 'commercial supply'],
+  'Community': ['community', 'events', 'event', 'volunteer', 'volunteers', 'news', 'lost & found', 'lost and found', 'artists', 'musicians', 'partners', 'club', 'clubs', 'group', 'groups', 'meetup'],
+  'Pets': ['pet', 'pets', 'dog', 'dogs', 'puppy', 'puppies', 'cat', 'cats', 'kitten', 'kittens', 'fish', 'bird', 'birds', 'adoption', 'accessories', 'veterinary', 'vet', 'animal', 'animals', 'food'],
+  'Home & Garden': ['home', 'garden', 'furniture', 'decor', 'kitchen', 'lighting', 'renovation', 'yard', 'patio', 'plants', 'plant', 'lawn', 'mower', 'sofa', 'chair', 'table', 'bed', 'mattress'],
+  'Electronics & Computers': ['electronic', 'electronics', 'computer', 'computers', 'tech', 'device', 'devices', 'laptop', 'laptops', 'phone', 'phones', 'smartphone', 'smartphones', 'tv', 'tvs', 'television', 'audio', 'console', 'consoles', 'ps5', 'playstation', 'xbox', 'nintendo', 'switch', 'camera', 'cameras', 'networking', 'gadget', 'gadgets', 'pc', 'monitor', 'screen', 'screens', 'ipad', 'tablet', 'tablets', 'iphone', 'android'],
+  'Fashion & Beauty': ['fashion', 'clothing', 'clothes', 'beauty', 'makeup', 'apparel', 'shoes', 'footwear', 'jewelry', 'bag', 'bags', 'wallet', 'wallets', 'watch', 'watches', 'skincare', 'fragrance', 'perfume', 'salon', 'barber', 'shirt', 'pants', 'dress', 'cosmetics', 'nails'],
+  'Events & Entertainment': ['event', 'events', 'entertainment', 'concert', 'concerts', 'ticket', 'tickets', 'party', 'wedding', 'dj', 'catering', 'show', 'shows', 'festival', 'gigs', 'performance']
+};
+
+const getSynonymCategoryKey = (rootCategory: string): string => {
+  if (rootCategory === 'Cars') return 'Vehicles';
+  if (rootCategory === 'Electronics') return 'Electronics & Computers';
+  return rootCategory;
+};
+
 const ITEMS_PER_PAGE = 10;
 
 const SearchResults: React.FC = () => {
@@ -86,9 +107,58 @@ const SearchResults: React.FC = () => {
     'Jobs': ['Jobs'],
   };
 
-  const filteredListings = listings.filter(item => {
-    // text search query
-    if (searchQuery && !item.title.toLowerCase().includes(searchQuery.toLowerCase()) && !item.description?.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+  const getSearchRelevanceScore = (item: any, query: string): number => {
+    if (!query) return 0;
+    
+    const terms = query.toLowerCase().split(/\s+/).filter(t => t.length > 1);
+    if (terms.length === 0) return 0;
+    
+    let score = 0;
+    const titleLower = item.title.toLowerCase();
+    const descLower = (item.description || '').toLowerCase();
+    const catLower = (item.category || '').toLowerCase();
+    const rootCat = item.category ? item.category.split(' > ')[0].trim() : '';
+    const synonymKey = getSynonymCategoryKey(rootCat);
+    const synonyms = CATEGORY_SYNONYMS[synonymKey] || [];
+    
+    terms.forEach(term => {
+      // 1. Title Exact / Word / Substring matches
+      if (titleLower === term) {
+        score += 20; // Exact match on title
+      } else if (titleLower.includes(` ${term} `) || titleLower.startsWith(`${term} `) || titleLower.endsWith(` ${term}`)) {
+        score += 15; // Whole word match in title
+      } else if (titleLower.includes(term)) {
+        score += 8;  // Substring match in title
+      }
+      
+      // 2. Category match
+      if (catLower.includes(term)) {
+        score += 10;
+      }
+      
+      // 3. Synonym matches
+      const isSynonym = synonyms.some(syn => syn === term || (term.length > 3 && syn.includes(term)) || (syn.length > 3 && term.includes(syn)));
+      if (isSynonym) {
+        score += 8;
+      }
+      
+      // 4. Description match
+      if (descLower.includes(` ${term} `) || descLower.startsWith(`${term} `) || descLower.endsWith(` ${term}`)) {
+        score += 4;
+      } else if (descLower.includes(term)) {
+        score += 2;
+      }
+    });
+    
+    return score;
+  };
+
+  const filteredListings = listings.map(item => {
+    const relevanceScore = searchQuery ? getSearchRelevanceScore(item, searchQuery) : 0;
+    return { ...item, relevanceScore };
+  }).filter(item => {
+    // If a text search query was entered, only keep items that have a relevance score > 0
+    if (searchQuery && item.relevanceScore === 0) return false;
     
     // category filter — support aliases so 'Vehicles' also matches 'Cars'
     if (selectedCategory) {
@@ -126,6 +196,13 @@ const SearchResults: React.FC = () => {
 
     return true;
   }).sort((a, b) => {
+    // If we have a search query and the sort option is "Most Recent" (default), sort by relevance score first!
+    if (searchQuery && sortOption === 'Most Recent') {
+      if (b.relevanceScore !== a.relevanceScore) {
+        return b.relevanceScore - a.relevanceScore;
+      }
+    }
+    // Fall back to standard sort options
     if (sortOption === 'Price: Low to High') return Number(a.price) - Number(b.price);
     if (sortOption === 'Price: High to Low') return Number(b.price) - Number(a.price);
     return b.id - a.id;
