@@ -35,6 +35,12 @@ const Layout: React.FC<LayoutProps> = ({
   }
 
   const [categoriesTree, setCategoriesTree] = useState<Category[]>([]);
+  const [socialLinks, setSocialLinks] = useState({
+    facebook: "",
+    x: "",
+    instagram: ""
+  });
+  const [footerText, setFooterText] = useState("© 2026 HitAds.ca — Post free ads, sell fast, buy local, and connect with buyers and sellers across Canada.");
 
   useEffect(() => {
     fetch("/api/categories/read.php")
@@ -45,6 +51,22 @@ const Layout: React.FC<LayoutProps> = ({
         }
       })
       .catch((err) => console.error("Error loading categories:", err));
+
+    fetch("/api/admin/seo_read.php?t=" + new Date().getTime())
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.settings) {
+          setSocialLinks({
+            facebook: data.settings.social_facebook || "",
+            x: data.settings.social_x || "",
+            instagram: data.settings.social_instagram || ""
+          });
+          if (data.settings.footer_copyright_text) {
+            setFooterText(data.settings.footer_copyright_text);
+          }
+        }
+      })
+      .catch((err) => console.error("Error loading social settings:", err));
   }, []);
 
   const CATEGORIES = categoriesTree.map((cat) => cat.CategoryName);
@@ -516,19 +538,25 @@ const Layout: React.FC<LayoutProps> = ({
           <div className="relative z-10 w-full px-4 sm:px-6 lg:px-10">
             <div className="flex gap-4 mb-12">
               <a
-                href="#"
+                href={socialLinks.facebook || "#"}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 hover:text-primary hover:border-primary transition-all"
               >
                 <span className="material-icons text-lg">facebook</span>
               </a>
               <a
-                href="#"
+                href={socialLinks.x || "#"}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 hover:text-primary hover:border-primary transition-all font-black text-xs"
               >
                 X
               </a>
               <a
-                href="#"
+                href={socialLinks.instagram || "#"}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 hover:text-primary hover:border-primary transition-all"
               >
                 <span className="material-icons text-lg">tag</span>
@@ -850,8 +878,7 @@ const Layout: React.FC<LayoutProps> = ({
 
             <div className="pt-8 border-t border-slate-200 flex flex-col md:flex-row justify-between items-center gap-4">
               <div className="text-[10px] font-black text-slate-400 lowercase">
-                © 2026 HitAds.ca — Post free ads, sell fast, buy local, and
-                connect with buyers and sellers across Canada.
+                {footerText}
               </div>
               <div className="flex gap-8 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                 <Link

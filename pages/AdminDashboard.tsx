@@ -51,6 +51,10 @@ const AdminDashboard: React.FC = () => {
   const [isSendingTest, setIsSendingTest] = useState(false);
   const [showSmtpPassword, setShowSmtpPassword] = useState(false);
 
+  // Social Profiles Tab State
+  const [isSavingSocial, setIsSavingSocial] = useState(false);
+  const [socialSaveMsg, setSocialSaveMsg] = useState<{type: 'success' | 'error', text: string} | null>(null);
+
   // Tab Navigation State
   const [activeTab, setActiveTab] = useState('overview');
 
@@ -62,7 +66,8 @@ const AdminDashboard: React.FC = () => {
     { id: 'lookups', label: 'Sub Masters', icon: 'category' },
     { id: 'listing-seo', label: 'Listing SEO', icon: 'travel_explore' },
     { id: 'email', label: 'Email Setup', icon: 'email' },
-    { id: 'seo', label: 'SEO Settings', icon: 'manage_search' }
+    { id: 'seo', label: 'SEO Settings', icon: 'manage_search' },
+    { id: 'social', label: 'Homepage & Footer', icon: 'home' }
   ];
 
   // Category menu layout states
@@ -153,7 +158,7 @@ const AdminDashboard: React.FC = () => {
   }, []);
 
   const fetchSeoSettings = () => {
-    fetch('/api/admin/seo_read.php')
+    fetch('/api/admin/seo_read.php?t=' + new Date().getTime())
       .then(res => res.json())
       .then(data => {
         if (data.success && data.settings) {
@@ -184,6 +189,41 @@ const AdminDashboard: React.FC = () => {
     } finally {
       setIsSavingSeo(false);
       setTimeout(() => setSeoSaveMsg(null), 5000);
+    }
+  };
+
+  const handleSaveSocialProfiles = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingSocial(true);
+    setSocialSaveMsg(null);
+    try {
+      const response = await fetch('/api/admin/seo_update.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          social_facebook: seoSettings.social_facebook,
+          social_x: seoSettings.social_x,
+          social_instagram: seoSettings.social_instagram,
+          footer_copyright_text: seoSettings.footer_copyright_text,
+          homepage_hero_title_1: seoSettings.homepage_hero_title_1,
+          homepage_hero_title_2: seoSettings.homepage_hero_title_2,
+          homepage_hero_tag_1: seoSettings.homepage_hero_tag_1,
+          homepage_hero_tag_2: seoSettings.homepage_hero_tag_2,
+          homepage_hero_tag_3: seoSettings.homepage_hero_tag_3,
+          homepage_hero_tag_4: seoSettings.homepage_hero_tag_4
+        }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        setSocialSaveMsg({ type: 'success', text: 'Social profiles saved successfully.' });
+      } else {
+        setSocialSaveMsg({ type: 'error', text: data.message || 'Failed to save profiles' });
+      }
+    } catch (err) {
+      setSocialSaveMsg({ type: 'error', text: 'Network error. Backend not reachable.' });
+    } finally {
+      setIsSavingSocial(false);
+      setTimeout(() => setSocialSaveMsg(null), 5000);
     }
   };
 
@@ -2237,6 +2277,51 @@ const AdminDashboard: React.FC = () => {
                 </div>
               )}
 
+              {/* Social Profiles Sub-tab */}
+              {activeSeoSubTab === 'social' && (
+                <div className="space-y-5">
+                  <div>
+                    <h3 className="font-black text-lg text-slate-800 mb-2">Social Media Profiles</h3>
+                    <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mb-4">Configure links to your official social media pages displayed in the website footer.</p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Facebook URL</label>
+                      <input
+                        type="url"
+                        value={seoSettings.social_facebook || ''}
+                        onChange={e => setSeoSettings({...seoSettings, social_facebook: e.target.value})}
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium"
+                        placeholder="https://facebook.com/yourpage"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Twitter / X URL</label>
+                      <input
+                        type="url"
+                        value={seoSettings.social_x || ''}
+                        onChange={e => setSeoSettings({...seoSettings, social_x: e.target.value})}
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium"
+                        placeholder="https://x.com/yourhandle"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Instagram URL</label>
+                      <input
+                        type="url"
+                        value={seoSettings.social_instagram || ''}
+                        onChange={e => setSeoSettings({...seoSettings, social_instagram: e.target.value})}
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium"
+                        placeholder="https://instagram.com/yourhandle"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Schema JSON-LD Sub-tab */}
               {activeSeoSubTab === 'schema' && (
                 <div className="space-y-5">
@@ -2274,6 +2359,175 @@ const AdminDashboard: React.FC = () => {
               </div>
             </form>
           </div>
+        </div>
+      )}
+
+      {/* 9. Homepage & Footer Tab */}
+      {activeTab === 'social' && (
+        <div className="bg-white p-6 sm:p-8 rounded-[2rem] border border-slate-200 shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <div className="mb-6">
+            <h2 className="text-xl font-black">Homepage & Footer Settings</h2>
+            <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">
+              Manage hero section text, tags, and footer profiles.
+            </p>
+          </div>
+
+          {socialSaveMsg && (
+            <div className={`mb-6 px-5 py-4 rounded-2xl text-sm font-bold flex items-center gap-3 animate-in fade-in duration-200 ${
+              socialSaveMsg.type === 'success' 
+                ? 'bg-green-50 border border-green-100 text-green-700' 
+                : 'bg-red-50 border border-red-100 text-red-700'
+            }`}>
+              <span className="material-icons text-lg">
+                {socialSaveMsg.type === 'success' ? 'check_circle' : 'error'}
+              </span>
+              {socialSaveMsg.text}
+            </div>
+          )}
+
+          <form onSubmit={handleSaveSocialProfiles} className="space-y-6">
+            {/* Hero Section Configuration */}
+            <div className="space-y-4">
+              <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest pb-3 border-b border-slate-100 flex items-center gap-2">
+                <span className="material-icons text-sm text-slate-300">branding_watermark</span>
+                Homepage Hero Wordings
+              </h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Hero Title Line 1</label>
+                  <input
+                    type="text"
+                    value={seoSettings.homepage_hero_title_1 || ''}
+                    onChange={e => setSeoSettings({...seoSettings, homepage_hero_title_1: e.target.value})}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium"
+                    placeholder="Find what you need,"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Hero Title Line 2 (Highlighted)</label>
+                  <input
+                    type="text"
+                    value={seoSettings.homepage_hero_title_2 || ''}
+                    onChange={e => setSeoSettings({...seoSettings, homepage_hero_title_2: e.target.value})}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium"
+                    placeholder="right in your community."
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Tag 1 (Slate)</label>
+                  <input
+                    type="text"
+                    value={seoSettings.homepage_hero_tag_1 || ''}
+                    onChange={e => setSeoSettings({...seoSettings, homepage_hero_tag_1: e.target.value})}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium"
+                    placeholder="Free Ads."
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Tag 2 (Red)</label>
+                  <input
+                    type="text"
+                    value={seoSettings.homepage_hero_tag_2 || ''}
+                    onChange={e => setSeoSettings({...seoSettings, homepage_hero_tag_2: e.target.value})}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium"
+                    placeholder="Sell Fast."
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Tag 3 (Blue)</label>
+                  <input
+                    type="text"
+                    value={seoSettings.homepage_hero_tag_3 || ''}
+                    onChange={e => setSeoSettings({...seoSettings, homepage_hero_tag_3: e.target.value})}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium"
+                    placeholder="Buy Local."
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Tag 4 (Red)</label>
+                  <input
+                    type="text"
+                    value={seoSettings.homepage_hero_tag_4 || ''}
+                    onChange={e => setSeoSettings({...seoSettings, homepage_hero_tag_4: e.target.value})}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium"
+                    placeholder="Canada-Wide."
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Social & Footer Profiles Section */}
+            <div className="space-y-4 pt-6 border-t border-slate-100">
+              <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest pb-3 border-b border-slate-100 flex items-center gap-2">
+                <span className="material-icons text-sm text-slate-300">share</span>
+                Social Profiles & Footer Copyright
+              </h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Facebook URL</label>
+                  <input
+                    type="url"
+                    value={seoSettings.social_facebook || ''}
+                    onChange={e => setSeoSettings({...seoSettings, social_facebook: e.target.value})}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium"
+                    placeholder="https://facebook.com/yourpage"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Twitter / X URL</label>
+                  <input
+                    type="url"
+                    value={seoSettings.social_x || ''}
+                    onChange={e => setSeoSettings({...seoSettings, social_x: e.target.value})}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium"
+                    placeholder="https://x.com/yourhandle"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Instagram / Hashtag URL</label>
+                  <input
+                    type="url"
+                    value={seoSettings.social_instagram || ''}
+                    onChange={e => setSeoSettings({...seoSettings, social_instagram: e.target.value})}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium"
+                    placeholder="https://instagram.com/yourhandle"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Footer Copyright / Description Text</label>
+                  <textarea
+                    rows={3}
+                    value={seoSettings.footer_copyright_text || ''}
+                    onChange={e => setSeoSettings({...seoSettings, footer_copyright_text: e.target.value})}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium"
+                    placeholder="© 2026 HitAds.ca — Post free ads, sell fast, buy local, and connect with buyers and sellers across Canada."
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-6 border-t border-slate-100 flex items-center justify-end">
+              <button 
+                type="submit"
+                disabled={isSavingSocial}
+                className="bg-primary hover:bg-primary-hover text-white font-black py-4 px-10 rounded-2xl transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2 disabled:opacity-50 text-xs uppercase tracking-widest"
+              >
+                {isSavingSocial ? (
+                  <><span className="material-icons text-sm animate-spin">sync</span> Saving...</>
+                ) : (
+                  <><span className="material-icons text-sm">save</span> Save Settings</>
+                )}
+              </button>
+            </div>
+          </form>
         </div>
       )}
     </div>

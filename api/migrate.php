@@ -163,10 +163,20 @@ try {
         echo "Seeded default SEO settings.<br/>";
     }
 
-    // Ensure new tracking fields exist even if table was already seeded
+    // Ensure new tracking fields and social links exist even if table was already seeded
     $conn->exec("INSERT IGNORE INTO seo_settings (setting_key, setting_value) VALUES 
         ('google_ads_id', 'AW-XXXXXXXXXX'),
-        ('google_site_verification', '')");
+        ('google_site_verification', ''),
+        ('social_facebook', 'https://www.facebook.com/hitads.ca'),
+        ('social_x', 'https://x.com'),
+        ('social_instagram', 'https://www.instagram.com/hitads.ca'),
+        ('footer_copyright_text', '© 2026 HitAds.ca — Post free ads, sell fast, buy local, and connect with buyers and sellers across Canada.'),
+        ('homepage_hero_title_1', 'Find what you need,'),
+        ('homepage_hero_title_2', 'right in your community.'),
+        ('homepage_hero_tag_1', 'Free Ads.'),
+        ('homepage_hero_tag_2', 'Sell Fast.'),
+        ('homepage_hero_tag_3', 'Buy Local.'),
+        ('homepage_hero_tag_4', 'Canada-Wide.')");
 } catch(PDOException $e) {
     echo "seo_settings error: " . $e->getMessage() . "<br/>";
 }
@@ -188,6 +198,23 @@ try {
     echo "Created listing_seo table.<br/>";
 } catch(PDOException $e) {
     echo "listing_seo: " . $e->getMessage() . "<br/>";
+}
+
+try {
+    // Create messages table
+    $conn->exec("CREATE TABLE IF NOT EXISTS messages (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        listing_id INT NOT NULL,
+        sender_id INT NOT NULL,
+        receiver_id INT NOT NULL,
+        message TEXT NOT NULL,
+        sender_name VARCHAR(255) DEFAULT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        is_read TINYINT(1) DEFAULT 0
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;");
+    echo "Created messages table.<br/>";
+} catch(PDOException $e) {
+    echo "messages: " . $e->getMessage() . "<br/>";
 }
 ?>
 

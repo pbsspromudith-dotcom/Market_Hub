@@ -126,6 +126,9 @@ const PostAd: React.FC = () => {
   const [step, setStep] = useState(1);
   const navigate = useNavigate();
 
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [loadingEditData, setLoadingEditData] = useState(false);
+
   // State for form
   const [category, setCategory] = useState("");
 
@@ -279,6 +282,122 @@ const PostAd: React.FC = () => {
       .catch((err) => console.error("Error loading categories", err));
   }, []);
 
+  const queryParams = new URLSearchParams(window.location.search);
+  const editId = queryParams.get("edit");
+
+  useEffect(() => {
+    if (editId && categoriesTree.length > 0) {
+      setLoadingEditData(true);
+      fetch(`/api/listings/read_single.php?id=${editId}`)
+        .then((res) => res.json())
+        .then((l) => {
+          if (l.error) {
+            alert("Listing not found or error loading listing.");
+            navigate("/profile");
+            return;
+          }
+          
+          // Verify owner or admin status
+          const userStr = localStorage.getItem("user");
+          const currentUser = userStr ? JSON.parse(userStr) : null;
+          if (!currentUser || (currentUser.id !== l.user_id && !currentUser.isAdmin && currentUser.role !== "admin")) {
+            alert("You are not authorized to edit this ad.");
+            navigate("/profile");
+            return;
+          }
+
+          setIsEditMode(true);
+          setTitle(l.title);
+          setPrice(l.price.toString());
+          setCategory(l.category || "");
+          setLocation(l.location || "");
+          setPostalCode(l.postal_code || "");
+          setContactEmail(l.contact_email || "");
+          setContactPhone(l.contact_phone || "");
+          setIncludeEmail(!!l.contact_email);
+          setIncludePhone(!!l.contact_phone);
+
+          // Populate imagePreviews with existing image URLs
+          const previews = Array(10).fill(null);
+          if (l.allImages && Array.isArray(l.allImages)) {
+            l.allImages.forEach((img: string, idx: number) => {
+              if (idx < 10) previews[idx] = img;
+            });
+          }
+          setImagePreviews(previews);
+
+          // Parse category path
+          if (l.category) {
+            const catParts = l.category.split(" > ").map((c: string) => c.trim());
+            const parsedPath: any[] = [];
+            let currentLevel = categoriesTree;
+            
+            for (const part of catParts) {
+              const matchedCat = currentLevel.find((c: any) => c.CategoryName === part);
+              if (matchedCat) {
+                parsedPath.push(matchedCat);
+                currentLevel = matchedCat.children || [];
+              } else {
+                break;
+              }
+            }
+            setCategoryPath(parsedPath);
+          }
+
+          // Parse description and extract attributes
+          if (l.description) {
+            const lines = l.description.split("\n");
+            const attrVals: Record<string, string> = {};
+            const features: string[] = [];
+            const descriptionLines: string[] = [];
+            let readingDesc = false;
+
+            for (let line of lines) {
+              const trimmed = line.trim();
+              if (trimmed === "") {
+                if (readingDesc || Object.keys(attrVals).length > 0 || features.length > 0) {
+                  readingDesc = true;
+                }
+                continue;
+              }
+              if (!readingDesc) {
+                const parts = trimmed.split(":");
+                if (parts.length >= 2) {
+                  const key = parts[0].trim();
+                  const val = parts.slice(1).join(":").trim();
+                  if (key === "Features") {
+                    features.push(...val.split(",").map(f => f.trim()));
+                  } else {
+                    attrVals[key] = val;
+                  }
+                } else {
+                  readingDesc = true;
+                  descriptionLines.push(trimmed);
+                }
+              } else {
+                descriptionLines.push(trimmed);
+              }
+            }
+            setDescription(descriptionLines.join("\n"));
+            setDynamicAttributesValues(attrVals);
+            setCarFeatures(features);
+            
+            // Set condition specifically if it exists in parsed attributes
+            if (attrVals["Condition"]) {
+              setCondition(attrVals["Condition"]);
+            }
+          }
+        })
+        .catch((err) => {
+          console.error("Error fetching listing details:", err);
+          alert("Error loading listing details.");
+          navigate("/profile");
+        })
+        .finally(() => setLoadingEditData(false));
+    }
+  }, [editId, categoriesTree, navigate]);
+
+
   useEffect(() => {
     if (category) {
       fetch(
@@ -334,9 +453,17 @@ const PostAd: React.FC = () => {
       const user = userStr ? JSON.parse(userStr) : null;
       const userId = user ? user.id : 1;
 
-      let imageUrls: string[] = [];
-      const validFiles = imageFiles.filter((f) => f !== null) as File[];
+      // 1. Gather any new files to upload
+      const newFilesIndices: number[] = [];
+      const validFiles: File[] = [];
+      imageFiles.forEach((file, idx) => {
+        if (file !== null) {
+          newFilesIndices.push(idx);
+          validFiles.push(file);
+        }
+      });
 
+      let uploadedUrls: string[] = [];
       if (validFiles.length > 0) {
         const formData = new FormData();
         validFiles.forEach((file: File) => {
@@ -348,7 +475,25 @@ const PostAd: React.FC = () => {
         });
         const uploadData = await uploadRes.json();
         if (uploadData.success) {
-          imageUrls = uploadData.imageUrls;
+          uploadedUrls = uploadData.imageUrls;
+        }
+      }
+
+      // 2. Reassemble the final images list (new uploaded + unchanged existing)
+      let nextUploadIdx = 0;
+      const imageUrls: string[] = [];
+      for (let i = 0; i < 10; i++) {
+        if (newFilesIndices.includes(i)) {
+          if (uploadedUrls[nextUploadIdx]) {
+            imageUrls.push(uploadedUrls[nextUploadIdx]);
+            nextUploadIdx++;
+          }
+        } else if (imagePreviews[i]) {
+          let url = imagePreviews[i] as string;
+          if (url.startsWith("/api/uploads/")) {
+            url = url.replace("/api/uploads/", "/uploads/");
+          }
+          imageUrls.push(url);
         }
       }
 
@@ -366,24 +511,38 @@ const PostAd: React.FC = () => {
         finalDescription = attrDetails.join("\n") + "\n\n" + description;
       }
 
-      const response = await fetch("/api/listings/create.php", {
+      const urlEndpoint = isEditMode ? "/api/listings/update.php" : "/api/listings/create.php";
+      
+      const payload: any = {
+        title,
+        price: parseFloat(price) || 0,
+        category: category || "Other",
+        location: location || "Unknown",
+        description: finalDescription,
+        image: imageUrls,
+        user_id: userId,
+        contact_email: contactEmail,
+        contact_phone: contactPhone,
+        postal_code: postalCode,
+      };
+
+      if (isEditMode) {
+        payload.id = parseInt(editId!);
+      }
+
+      const response = await fetch(urlEndpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title,
-          price: parseFloat(price) || 0,
-          category: category || "Other",
-          location: location || "Unknown",
-          description: finalDescription,
-          image: imageUrls,
-          user_id: userId,
-          contact_email: contactEmail,
-          contact_phone: contactPhone,
-          postal_code: postalCode,
-        }),
+        body: JSON.stringify(payload),
       });
       const data = await response.json();
       if (data.success) {
+        if (isEditMode) {
+          alert("Ad updated successfully!");
+          navigate("/item/" + editId);
+          return;
+        }
+
         trackListingSubmission(
           category || "Other",
           parseFloat(price) || 0,
@@ -518,7 +677,7 @@ const PostAd: React.FC = () => {
         <div className="lg:col-span-8 space-y-8">
           {step === 1 && (
             <div className="bg-white p-10 rounded-[2rem] border border-slate-200 shadow-sm">
-              <h2 className="text-2xl font-black mb-8">Select Category</h2>
+              <h2 className="text-2xl font-black mb-8">{isEditMode ? "Edit Category" : "Select Category"}</h2>
               <div className="mb-4">
                 <p className="text-sm text-slate-500 mb-4 tracking-widest uppercase font-bold text-center">
                   Manually select a category
@@ -617,7 +776,7 @@ const PostAd: React.FC = () => {
 
           {step === 2 && (
             <div className="bg-white p-10 rounded-[2rem] border border-slate-200 shadow-sm space-y-8">
-              <h2 className="text-2xl font-black">Ad Information</h2>
+              <h2 className="text-2xl font-black">{isEditMode ? "Edit Ad Information" : "Ad Information"}</h2>
               <div className="space-y-6">
                 <div>
                   <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">
@@ -835,7 +994,7 @@ const PostAd: React.FC = () => {
 
           {step === 3 && (
             <div className="bg-white p-10 rounded-[2rem] border border-slate-200 shadow-sm space-y-10">
-              <h2 className="text-2xl font-black">Media & Location</h2>
+              <h2 className="text-2xl font-black">{isEditMode ? "Edit Media & Location" : "Media & Location"}</h2>
 
               <section>
                 {/* Header + progress */}
@@ -846,12 +1005,12 @@ const PostAd: React.FC = () => {
                   </label>
                   <span
                     className={`text-xs font-black px-3 py-1 rounded-full ${
-                      imageFiles.filter((f) => f !== null).length > 0
+                      imagePreviews.filter((p) => p !== null).length > 0
                         ? "bg-green-100 text-green-600"
                         : "bg-amber-50 text-amber-600"
                     }`}
                   >
-                    {imageFiles.filter((f) => f !== null).length} / 10 photos
+                    {imagePreviews.filter((p) => p !== null).length} / 10 photos
                   </span>
                 </div>
 
@@ -860,14 +1019,14 @@ const PostAd: React.FC = () => {
                   <div
                     className="h-full rounded-full transition-all duration-500"
                     style={{
-                      width: `${(imageFiles.filter((f) => f !== null).length / 10) * 100}%`,
+                      width: `${(imagePreviews.filter((p) => p !== null).length / 10) * 100}%`,
                       background:
-                        imageFiles[0] !== null ? "#22c55e" : "#f59e0b",
+                        imagePreviews[0] !== null ? "#22c55e" : "#f59e0b",
                     }}
                   />
                 </div>
 
-                {imageFiles[0] === null && (
+                {imageFiles[0] === null && imagePreviews[0] === null && (
                   <p className="text-xs text-amber-600 font-bold mb-4 flex items-center gap-1.5">
                     <span className="material-icons text-sm">info</span>
                     Cover photo is required to publish your ad.
@@ -1285,19 +1444,19 @@ const PostAd: React.FC = () => {
                   Back
                 </button>
                 <div className="flex flex-col items-end gap-2">
-                  {imageFiles[0] === null && (
+                  {imageFiles[0] === null && imagePreviews[0] === null && (
                     <p className="text-xs text-red-500 font-bold">
                       Cover photo is required
                     </p>
                   )}
                   <button
                     disabled={
-                      (!location && !postalCode) || isPublishing || imageFiles[0] === null
+                      (!location && !postalCode) || isPublishing || (imageFiles[0] === null && imagePreviews[0] === null)
                     }
                     onClick={handlePublish}
                     className="bg-primary hover:bg-primary-hover text-white px-10 py-4 rounded-xl font-bold transition-all shadow-lg shadow-primary/20 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isPublishing ? "Publishing..." : "Publish Ad"}{" "}
+                    {isPublishing ? (isEditMode ? "Saving..." : "Publishing...") : (isEditMode ? "Save Changes" : "Publish Ad")}{" "}
                     <span className="material-icons">check</span>
                   </button>
                 </div>

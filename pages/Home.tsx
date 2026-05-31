@@ -114,6 +114,14 @@ const getCleanAddressString = (place: any) => {
 
 const Home: React.FC<HomeProps> = ({ isLoggedIn }) => {
   const [categories, setCategories] = useState<any[]>([]);
+  const [heroText, setHeroText] = useState({
+    title1: "Find what you need,",
+    title2: "right in your community.",
+    tag1: "Free Ads.",
+    tag2: "Sell Fast.",
+    tag3: "Buy Local.",
+    tag4: "Canada-Wide."
+  });
 
   const [serverMessage, setServerMessage] = useState<string>(
     "Checking backend connection...",
@@ -177,6 +185,22 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn }) => {
       .then((data) => setListings(data.slice(0, 6))) // get top 6 recent
       .catch((err) => console.error("DB fetch error", err));
 
+    fetch("/api/admin/seo_read.php?t=" + new Date().getTime())
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.settings) {
+          setHeroText({
+            title1: data.settings.homepage_hero_title_1 || "Find what you need,",
+            title2: data.settings.homepage_hero_title_2 || "right in your community.",
+            tag1: data.settings.homepage_hero_tag_1 || "Free Ads.",
+            tag2: data.settings.homepage_hero_tag_2 || "Sell Fast.",
+            tag3: data.settings.homepage_hero_tag_3 || "Buy Local.",
+            tag4: data.settings.homepage_hero_tag_4 || "Canada-Wide."
+          });
+        }
+      })
+      .catch((err) => console.error("Error loading hero text settings:", err));
+
     const handleLocationUpdate = () => {
       const loc = localStorage.getItem("user_location");
       if (loc) setLocationSearch(loc);
@@ -199,16 +223,16 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn }) => {
             Global Standards. Local Trading.
           </span>
           <h1 className="text-4xl md:text-7xl font-black mb-6 tracking-tight text-slate-900 leading-[1.1]">
-            Find what you need,
+            {heroText.title1}
             <br />
-            <span className="text-primary-light">right in your community.</span>
+            <span className="text-primary-light">{heroText.title2}</span>
           </h1>
           <p className="text-base md:text-xl mb-10 max-w-2xl mx-auto leading-relaxed font-bold flex items-center justify-center gap-3">
             <span className="w-10 h-[2px] bg-[#e63946] inline-block"></span>
-            <span className="text-slate-800">Free Ads.</span>
-            <span className="text-[#e63946]">Sell Fast.</span>
-            <span className="text-[#1a2e5a]">Buy Local.</span>
-            <span className="text-[#e63946]">Canada-Wide.</span>
+            <span className="text-slate-800">{heroText.tag1}</span>
+            <span className="text-[#e63946]">{heroText.tag2}</span>
+            <span className="text-[#1a2e5a]">{heroText.tag3}</span>
+            <span className="text-[#e63946]">{heroText.tag4}</span>
             <span className="w-10 h-[2px] bg-[#e63946] inline-block"></span>
           </p>
 

@@ -1,7 +1,7 @@
 <?php
 // api/messages/create.php
 require_once '../config.php';
-require_once '../smtp_mailer.php';
+require_once '../mailer.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -25,7 +25,7 @@ $sender_name = $data->sender_name ?? 'A Guest';
 try {
     // 1. Get listing and receiver details
     $stmt = $conn->prepare("
-        SELECT l.title, l.user_id as receiver_id, u.email as receiver_email, u.name as receiver_name 
+        SELECT l.title, l.contact_email, l.user_id as receiver_id, u.email as receiver_email, u.name as receiver_name 
         FROM listings l
         JOIN users u ON l.user_id = u.id
         WHERE l.id = :listing_id
@@ -42,7 +42,7 @@ try {
     }
     
     $receiver_id = $listing['receiver_id'];
-    $receiver_email = $listing['receiver_email'];
+    $receiver_email = !empty($listing['contact_email']) ? $listing['contact_email'] : $listing['receiver_email'];
     $receiver_name = $listing['receiver_name'];
     $listing_title = $listing['title'];
 
@@ -75,7 +75,10 @@ try {
         // Attempt to send email
         $mailSent = false;
         try {
-            $mailSent = sendSmtpEmail($receiver_email, $emailSubject, $emailBody);
+            $mailer = getMailer();
+            if ($mailer) {
+                $mailSent = $mailer->send($receiver_email, $emailSubject, $emailBody);
+            }
         } catch (Exception $e) {
             // Log error but don't fail the request
         }

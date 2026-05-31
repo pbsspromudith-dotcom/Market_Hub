@@ -387,6 +387,10 @@ const UserProfile: React.FC = () => {
                     <span className="material-icons text-base">campaign</span>
                     Promote Ad
                   </button>
+                  <Link to={`/post-ad?edit=${listing.id}`} className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-black uppercase tracking-widest py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all mt-3 text-center border border-slate-200/60 shadow-sm">
+                    <span className="material-icons text-base">edit</span>
+                    Edit Ad
+                  </Link>
                 </div>
 
               </div>
