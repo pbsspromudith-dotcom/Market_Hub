@@ -85,8 +85,11 @@ const SellingAdvice: React.FC = () => {
             </div>
             <div className="relative group overflow-hidden rounded-[2rem] shadow-xl">
               <img
-                src="https://images.unsplash.com/photo-1542744094-24638eff58bb?auto=format&fit=crop&q=80"
-                alt="Photography"
+                src="https://images.unsplash.com/photo-1542744094-24638eff58bb?auto=format&fit=crop&w=640&q=60"
+                alt="Product photography tips for selling on HitAds.ca"
+                loading="lazy"
+                width="320"
+                height="320"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-purple-900/60 to-transparent flex items-end p-6">

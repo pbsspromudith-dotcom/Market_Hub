@@ -273,6 +273,12 @@ elseif (preg_match('/^\/item\/([0-9]+)$/', $clean_path, $matches)) {
             }
 
             $schema_markup = '<script type="application/ld+json">' . json_encode($schema_data, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT) . '</script>';
+        } else {
+            // Listing not found — return proper 404 for SEO
+            http_response_code(404);
+            $page_title = "Listing Not Found | HitAds.ca";
+            $meta_desc = "This listing is no longer available on HitAds.ca. Browse thousands of other classified ads across Canada.";
+            $noindex = true;
         }
     } catch (Exception $e) {
         // Fallback silently to default tags
@@ -294,6 +300,8 @@ elseif ($clean_path === '/search') {
 // Static & Landing Pages
 else {
     $static_routes = [
+        '/login' => ['slug' => 'login', 'default_title' => 'Log In | HitAds.ca', 'default_desc' => 'Log in to your HitAds.ca account to post ads, message sellers, and manage your listings across Canada.'],
+        '/post-ad' => ['slug' => 'post-ad', 'default_title' => 'Post a Free Ad | HitAds.ca', 'default_desc' => 'Post your free classified ad on HitAds.ca. Sell items, list services, or advertise jobs to thousands of local buyers in Toronto and Canada.'],
         '/toronto-classifieds' => ['slug' => 'toronto-classifieds', 'default_title' => 'Toronto Classifieds & Local Marketplace - Buy & Sell | HitAds.ca', 'default_desc' => 'Search local classifieds listings in Toronto, ON. Post free advertisements for jobs, cars, real estate, and items for sale on HitAds.ca.'],
         '/buy-and-sell-toronto' => ['slug' => 'buy-and-sell-toronto', 'default_title' => 'Buy and Sell in Toronto - Free Classifieds | HitAds.ca', 'default_desc' => 'Buy and sell items in Toronto. Find electronics, furniture, vehicles, and more. Post your free ad today on HitAds.ca.'],
         '/local-services-toronto' => ['slug' => 'local-services-toronto', 'default_title' => 'Local Services in Toronto - Movers, Plumbers, Contractors | HitAds.ca', 'default_desc' => 'Find trusted local services in Toronto including movers, plumbing, electrical, renovation, cleaning, and more on HitAds.ca.'],
@@ -329,6 +337,9 @@ else {
     <link rel="icon" type="image/png" href="/assets/logo.png" />
     <title><?php echo $page_title; ?></title>
     <meta name="description" content="<?php echo $meta_desc; ?>">
+    <?php if (!empty($noindex)): ?>
+    <meta name="robots" content="noindex, nofollow">
+    <?php endif; ?>
     <?php if (!empty($meta_keywords)): ?>
     <meta name="keywords" content="<?php echo $meta_keywords; ?>">
     <?php endif; ?>
@@ -423,6 +434,11 @@ else {
     <?php
     // ── Load Vite build manifest to get hashed asset filenames ──
     $manifest_path = __DIR__ . '/dist/.vite/manifest.json';
+    $asset_prefix = '/dist/assets/';
+    if (!file_exists($manifest_path)) {
+        $manifest_path = __DIR__ . '/.vite/manifest.json';
+        $asset_prefix = '/assets/';
+    }
     $built_css = '';
     $built_js = '';
     $preload_chunks = [];
@@ -433,18 +449,35 @@ else {
             $entry = $manifest['index.html'];
             if (isset($entry['css'])) {
                 foreach ($entry['css'] as $css_file) {
-                    $built_css .= '<link rel="stylesheet" href="/assets/' . basename($css_file) . '">' . "\n    ";
+                    $built_css .= '<link rel="stylesheet" href="' . $asset_prefix . basename($css_file) . '">' . "\n    ";
                 }
             }
             if (isset($entry['file'])) {
-                $built_js = '/assets/' . basename($entry['file']);
+                $built_js = $asset_prefix . basename($entry['file']);
             }
             // Preload important chunks
             if (isset($entry['imports'])) {
                 foreach ($entry['imports'] as $import_key) {
                     if (isset($manifest[$import_key]['file'])) {
-                        $preload_chunks[] = '/assets/' . basename($manifest[$import_key]['file']);
+                        $preload_chunks[] = $asset_prefix . basename($manifest[$import_key]['file']);
                     }
+                }
+            }
+        }
+    } else {
+        // Fallback: manifest.json is missing (likely because hidden .vite folder was not uploaded)
+        // Scan the assets directory directly for the main index-*.js and index-*.css files
+        $assets_dir = __DIR__ . $asset_prefix;
+        if (is_dir($assets_dir)) {
+            $js_files = glob($assets_dir . 'index-*.js');
+            $css_files = glob($assets_dir . 'index-*.css');
+            
+            if (!empty($js_files)) {
+                $built_js = $asset_prefix . basename($js_files[0]);
+            }
+            if (!empty($css_files)) {
+                foreach ($css_files as $css_file) {
+                    $built_css .= '<link rel="stylesheet" href="' . $asset_prefix . basename($css_file) . '">' . "\n    ";
                 }
             }
         }

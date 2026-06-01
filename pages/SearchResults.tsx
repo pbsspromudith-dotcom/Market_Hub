@@ -220,7 +220,7 @@ const SearchResults: React.FC = () => {
       {selectedCategory === 'Vehicles' && (
         <div className="w-full bg-slate-900 relative flex flex-col items-center justify-center pt-24 pb-48 mb-20 overflow-visible">
           <div className="absolute inset-0 opacity-40 z-0">
-            <img src="https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&q=80" alt="Cars" loading="lazy" className="w-full h-full object-cover" />
+            <img src="https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=1280&q=70" alt="Find cars for sale on HitAds.ca" loading="lazy" className="w-full h-full object-cover" />
           </div>
           
           <div className="relative z-10 text-center text-white mb-8 px-4">

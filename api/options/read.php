@@ -12,14 +12,14 @@ try {
     $optionType = isset($_GET['type']) ? $_GET['type'] : null;
 
     $queries = [
-        "SELECT id, 'category' AS option_type, name AS option_value, NULL as parent_id, NULL as option_key FROM categories",
-        "SELECT id, 'car_make' AS option_type, name AS option_value, NULL as parent_id, NULL as option_key FROM car_makes",
-        "SELECT id, 'car_model' AS option_type, name AS option_value, make_id as parent_id, NULL as option_key FROM car_models",
-        "SELECT id, 'car_type' AS option_type, name AS option_value, NULL as parent_id, NULL as option_key FROM car_types",
-        "SELECT id, 'vehicle_type' AS option_type, name AS option_value, NULL as parent_id, NULL as option_key FROM vehicle_types",
-        "SELECT id, 'fuel_type' AS option_type, name AS option_value, NULL as parent_id, NULL as option_key FROM fuel_types",
-        "SELECT id, 'drivetrain' AS option_type, name AS option_value, NULL as parent_id, NULL as option_key FROM drivetrains",
-        "SELECT id, 'price_option' AS option_type, name AS option_value, NULL as parent_id, option_key FROM price_options"
+        "SELECT id, 'category' COLLATE utf8mb4_unicode_ci AS option_type, name COLLATE utf8mb4_unicode_ci AS option_value, NULL as parent_id, NULL as option_key FROM categories",
+        "SELECT id, 'car_make' COLLATE utf8mb4_unicode_ci AS option_type, name COLLATE utf8mb4_unicode_ci AS option_value, NULL as parent_id, NULL as option_key FROM car_makes",
+        "SELECT id, 'car_model' COLLATE utf8mb4_unicode_ci AS option_type, name COLLATE utf8mb4_unicode_ci AS option_value, make_id as parent_id, NULL as option_key FROM car_models",
+        "SELECT id, 'car_type' COLLATE utf8mb4_unicode_ci AS option_type, name COLLATE utf8mb4_unicode_ci AS option_value, NULL as parent_id, NULL as option_key FROM car_types",
+        "SELECT id, 'vehicle_type' COLLATE utf8mb4_unicode_ci AS option_type, name COLLATE utf8mb4_unicode_ci AS option_value, NULL as parent_id, NULL as option_key FROM vehicle_types",
+        "SELECT id, 'fuel_type' COLLATE utf8mb4_unicode_ci AS option_type, name COLLATE utf8mb4_unicode_ci AS option_value, NULL as parent_id, NULL as option_key FROM fuel_types",
+        "SELECT id, 'drivetrain' COLLATE utf8mb4_unicode_ci AS option_type, name COLLATE utf8mb4_unicode_ci AS option_value, NULL as parent_id, NULL as option_key FROM drivetrains",
+        "SELECT id, 'price_option' COLLATE utf8mb4_unicode_ci AS option_type, name COLLATE utf8mb4_unicode_ci AS option_value, NULL as parent_id, option_key COLLATE utf8mb4_unicode_ci FROM price_options"
     ];
 
     if ($optionType) {
