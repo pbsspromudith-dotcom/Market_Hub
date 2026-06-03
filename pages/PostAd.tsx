@@ -870,6 +870,19 @@ const PostAd: React.FC = () => {
                     placeholder={getTitlePlaceholder(category)}
                   />
                 </div>
+                <div>
+                  <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">
+                    Description <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    rows={6}
+                    className="w-full px-5 py-4 bg-slate-50 border-slate-100 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium resize-y"
+                    placeholder="Provide a detailed description of your item, service, or job..."
+                    required
+                  />
+                </div>
                 {dynamicAttributesList.length > 0 && (
                   <div className="bg-primary/5 p-6 rounded-xl border border-primary/20 space-y-4">
                     <h3 className="font-bold text-slate-800 flex items-center gap-2 mb-2">
@@ -1098,7 +1111,7 @@ const PostAd: React.FC = () => {
                   Back
                 </button>
                 <button
-                  disabled={!title || (priceType === "amount" && !price)}
+                  disabled={!title || !description || (priceType === "amount" && !price)}
                   onClick={() => setStep(3)}
                   className="bg-primary hover:bg-primary-hover text-white px-10 py-4 rounded-xl font-bold transition-all shadow-lg shadow-primary/20 flex items-center gap-2 disabled:opacity-50"
                 >
