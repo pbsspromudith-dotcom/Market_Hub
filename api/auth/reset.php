@@ -13,40 +13,48 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $data = json_decode(file_get_contents("php://input"));
 
 // Validate input
-if (!isset($data->email) || !isset($data->password)) {
+if (!isset($data->token) || !isset($data->password)) {
     http_response_code(400);
-    echo json_encode(["success" => false, "message" => "Email and new password required"]);
+    echo json_encode(["success" => false, "message" => "Token and new password required."]);
     exit();
 }
 
-$email = trim($data->email);
+$token = trim($data->token);
 $password = $data->password;
 
-if (empty($email) || empty($password)) {
+if (empty($token) || empty($password)) {
     http_response_code(400);
-    echo json_encode(["success" => false, "message" => "Email and new password required"]);
+    echo json_encode(["success" => false, "message" => "Token and new password required."]);
+    exit();
+}
+
+if (strlen($password) < 6) {
+    http_response_code(400);
+    echo json_encode(["success" => false, "message" => "Password must be at least 6 characters."]);
     exit();
 }
 
 try {
-    // Check if user exists
-    $stmt = $conn->prepare("SELECT id FROM users WHERE email = :email");
-    $stmt->bindParam(':email', $email);
+    // Check if token exists and is not expired
+    $stmt = $conn->prepare("SELECT id FROM users WHERE reset_token = :token AND reset_token_expiry > NOW()");
+    $stmt->bindParam(':token', $token);
     $stmt->execute();
     
     if ($stmt->rowCount() === 0) {
-        http_response_code(404);
-        echo json_encode(["success" => false, "message" => "No account found with that email address."]);
+        http_response_code(400);
+        echo json_encode(["success" => false, "message" => "Invalid or expired password reset token."]);
         exit();
     }
 
-    // Hash the new password
-    $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    // Update the password
-    $updateStmt = $conn->prepare("UPDATE users SET password = :password WHERE email = :email");
+    // Hash the new password using bcrypt, matching the registration settings
+    $hashed_password = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
+
+    // Update the password and clear token/expiry
+    $updateStmt = $conn->prepare("UPDATE users SET password = :password, reset_token = NULL, reset_token_expiry = NULL WHERE id = :id");
     $updateStmt->bindParam(':password', $hashed_password);
-    $updateStmt->bindParam(':email', $email);
+    $updateStmt->bindParam(':id', $user['id']);
     
     if ($updateStmt->execute()) {
         http_response_code(200);
@@ -58,6 +66,6 @@ try {
 
 } catch(PDOException $e) {
     http_response_code(500);
-    echo json_encode(["success" => false, "message" => "Database error"]);
+    echo json_encode(["success" => false, "message" => "Database error: " . $e->getMessage()]);
 }
 ?>

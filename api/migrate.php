@@ -275,5 +275,20 @@ try {
 } catch(PDOException $e) {
     echo "price_options error: " . $e->getMessage() . "<br/>";
 }
+
+try {
+    $checkQuery = "SHOW COLUMNS FROM listings LIKE 'parent_id'";
+    $stmt = $conn->prepare($checkQuery);
+    $stmt->execute();
+    if ($stmt->rowCount() == 0) {
+        $conn->exec("ALTER TABLE listings ADD COLUMN parent_id INT NULL DEFAULT NULL");
+        $conn->exec("ALTER TABLE listings ADD CONSTRAINT fk_listings_parent FOREIGN KEY (parent_id) REFERENCES listings(id) ON DELETE CASCADE");
+        echo "Added parent_id column with foreign key to listings table.<br/>";
+    } else {
+        echo "parent_id column already exists on listings.<br/>";
+    }
+} catch(PDOException $e) {
+    echo "listings parent_id column error: " . $e->getMessage() . "<br/>";
+}
 ?>
 

@@ -83,6 +83,34 @@ try {
     $stmt->bindParam(':id', $data->id);
 
     if ($stmt->execute()) {
+        // Sync edits to child listings (multi-city copies)
+        // Only sync shared fields — location and postal_code stay unique per city
+        $syncQuery = "UPDATE listings SET 
+                        title = :title, 
+                        price = :price, 
+                        category = :category, 
+                        description = :description, 
+                        image = :image, 
+                        contact_email = :contact_email, 
+                        contact_phone = :contact_phone, 
+                        youtube_link = :youtube_link, 
+                        facebook_link = :facebook_link, 
+                        price_type = :price_type
+                      WHERE parent_id = :parent_id";
+        $syncStmt = $conn->prepare($syncQuery);
+        $syncStmt->bindParam(':title', $data->title);
+        $syncStmt->bindParam(':price', $data->price);
+        $syncStmt->bindValue(':category', $data->category ?? null);
+        $syncStmt->bindValue(':description', $data->description ?? null);
+        $syncStmt->bindParam(':image', $imageToSave);
+        $syncStmt->bindValue(':contact_email', $data->contact_email ?? null);
+        $syncStmt->bindValue(':contact_phone', $data->contact_phone ?? null);
+        $syncStmt->bindValue(':youtube_link', $data->youtube_link ?? null);
+        $syncStmt->bindValue(':facebook_link', $data->facebook_link ?? null);
+        $syncStmt->bindValue(':price_type', $data->price_type ?? 'amount');
+        $syncStmt->bindParam(':parent_id', $data->id);
+        $syncStmt->execute();
+
         http_response_code(200);
         echo json_encode(["success" => true, "message" => "Listing updated successfully"]);
     } else {

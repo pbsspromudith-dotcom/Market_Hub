@@ -16,10 +16,27 @@ if (!isset($data->id)) {
     exit();
 }
 
+$deleteAll = isset($data->delete_all) && $data->delete_all;
+
 try {
+    // If delete_all is true, check if this listing is a child with a parent
+    // and delete the parent instead (cascade will handle children)
+    $targetId = $data->id;
+
+    if ($deleteAll) {
+        $parentCheck = $conn->prepare("SELECT parent_id FROM listings WHERE id = ?");
+        $parentCheck->execute([$data->id]);
+        $row = $parentCheck->fetch(PDO::FETCH_ASSOC);
+        if ($row && !empty($row['parent_id'])) {
+            // This is a child listing; delete the parent to cascade-delete all siblings
+            $targetId = $row['parent_id'];
+        }
+        // If it's already a parent (parent_id IS NULL), deleting it will cascade-delete children
+    }
+
     $query = "DELETE FROM listings WHERE id = :id";
     $stmt = $conn->prepare($query);
-    $stmt->bindParam(':id', $data->id);
+    $stmt->bindParam(':id', $targetId);
 
     if ($stmt->execute()) {
         http_response_code(200);

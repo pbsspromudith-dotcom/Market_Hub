@@ -112,9 +112,9 @@ try {
 
             if (count($updateFields) > 0) {
                 $updateFieldsStr = implode(', ', $updateFields);
-                $updateListing = "UPDATE listings SET {$updateFieldsStr} WHERE id = ?";
+                $updateListing = "UPDATE listings SET {$updateFieldsStr} WHERE id = ? OR parent_id = ?";
                 $listStmt = $conn->prepare($updateListing);
-                $listStmt->execute([$transaction['listing_id']]);
+                $listStmt->execute([$transaction['listing_id'], $transaction['listing_id']]);
             }
         }
 

@@ -18,8 +18,9 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [successMsg, setSuccessMsg] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [authMode, setAuthMode] = useState<'login' | 'register' | 'forgot' | 'verify-pending'>( location.state?.mode || 'login');
+  const [authMode, setAuthMode] = useState<'login' | 'register' | 'forgot' | 'verify-pending' | 'reset'>( location.state?.mode || 'login');
   const [pendingEmail, setPendingEmail] = useState('');
+  const [resetToken, setResetToken] = useState('');
   const [resending, setResending] = useState(false);
 
   useEffect(() => {
@@ -28,12 +29,10 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     }
   }, [location.state]);
 
-  // Handle ?verified=true or ?verified=already from verify.php redirect
+  // Handle ?verified=true or ?verified=already from verify.php redirect, or ?mode=reset&token=TOKEN
   useEffect(() => {
-    // HashRouter: params may be in location.search or inside window.location.hash
     let params = new URLSearchParams(location.search);
-    if (!params.get('verified')) {
-      // Fallback: parse from hash (e.g. /#/login?verified=true)
+    if (!params.get('verified') && !params.get('token')) {
       const hash = window.location.hash;
       const qIndex = hash.indexOf('?');
       if (qIndex !== -1) {
@@ -48,6 +47,15 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       setSuccessMsg('Your email is already verified. Please sign in.');
       setAuthMode('login');
     }
+
+    const mode = params.get('mode');
+    const token = params.get('token');
+    if (mode === 'reset' && token) {
+      setAuthMode('reset');
+      setResetToken(token);
+      setError('');
+      setSuccessMsg('');
+    }
   }, [location.search]);
 
   const handleResendVerification = async () => {
@@ -60,14 +68,23 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: pendingEmail }),
       });
+      if (!response.ok) {
+        try {
+          const errData = await response.json();
+          setError(errData.message || `Server error ${response.status}`);
+        } catch {
+          setError(`Server error ${response.status}: Please check if resend-verify.php is uploaded to the server.`);
+        }
+        return;
+      }
       const data = await response.json();
       if (data.success) {
         setSuccessMsg(data.message);
       } else {
         setError(data.message || 'Failed to resend verification email.');
       }
-    } catch {
-      setError('Network error. Please try again.');
+    } catch (err: any) {
+      setError(err?.message || 'Network error. Please try again.');
     } finally {
       setResending(false);
     }
@@ -88,6 +105,15 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           },
           body: JSON.stringify({ email, password }),
         });
+        if (!response.ok) {
+          try {
+            const errData = await response.json();
+            setError(errData.message || `Server error ${response.status}`);
+          } catch {
+            setError(`Server error ${response.status}: Please check if login.php is uploaded.`);
+          }
+          return;
+        }
         const data = await response.json();
         
         if (data.success) {
@@ -111,6 +137,15 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           },
           body: JSON.stringify({ name, email, password }),
         });
+        if (!response.ok) {
+          try {
+            const errData = await response.json();
+            setError(errData.message || `Server error ${response.status}`);
+          } catch {
+            setError(`Server error ${response.status}: Please check if register.php is uploaded.`);
+          }
+          return;
+        }
         const data = await response.json();
         
         if (data.success) {
@@ -123,25 +158,60 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           setError(data.message || 'Failed to register.');
         }
       } else if (authMode === 'forgot') {
+        const response = await fetch('/api/auth/forgot.php', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email }),
+        });
+        if (!response.ok) {
+          try {
+            const errData = await response.json();
+            setError(errData.message || `Server error ${response.status}`);
+          } catch {
+            setError(`Server error ${response.status}: Please check if forgot.php is uploaded.`);
+          }
+          return;
+        }
+        const data = await response.json();
+        
+        if (data.success) {
+          setSuccessMsg(data.message || 'Password reset link sent! Check your email.');
+          setEmail('');
+        } else {
+          setError(data.message || 'Failed to send reset link.');
+        }
+      } else if (authMode === 'reset') {
         const response = await fetch('/api/auth/reset.php', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ email, password }),
+          body: JSON.stringify({ token: resetToken, password }),
         });
+        if (!response.ok) {
+          try {
+            const errData = await response.json();
+            setError(errData.message || `Server error ${response.status}`);
+          } catch {
+            setError(`Server error ${response.status}: Please check if reset.php is uploaded.`);
+          }
+          return;
+        }
         const data = await response.json();
         
         if (data.success) {
-          setSuccessMsg('Password reset successful! You can now sign in.');
+          setSuccessMsg('Password updated successfully! You can now sign in.');
           setAuthMode('login');
           setPassword('');
+          setResetToken('');
         } else {
           setError(data.message || 'Failed to reset password.');
         }
       }
-    } catch (err) {
-      setError('Network error. Backend might not be running.');
+    } catch (err: any) {
+      setError(err?.message || 'Network error. Backend might not be running.');
     } finally {
       setIsLoading(false);
     }
@@ -218,10 +288,15 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     subtitleAction = 'Sign In';
     submitText = 'Sign Up';
   } else if (authMode === 'forgot') {
-    title = 'Reset Password';
+    title = 'Forgot Password';
     subtitleText = 'Remember your password?';
     subtitleAction = 'Sign In';
-    submitText = 'Reset Password';
+    submitText = 'Send Reset Link';
+  } else if (authMode === 'reset') {
+    title = 'Reset Password';
+    subtitleText = 'Back to';
+    subtitleAction = 'Sign In';
+    submitText = 'Update Password';
   }
 
   return (
@@ -290,56 +365,62 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                   </div>
                 </div>
               )}
-              <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Email Address</label>
-                <div className="relative">
-                  <span className="material-icons absolute left-4 top-3.5 text-slate-400 text-lg">alternate_email</span>
-                  <input 
-                    type="email" 
-                    required 
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-12 pr-4 py-4 bg-slate-50 border-slate-100 rounded-2xl focus:ring-primary focus:border-primary text-sm font-medium transition-all" 
-                    placeholder="alex.j@example.com" 
-                  />
+              {authMode !== 'reset' && (
+                <div>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Email Address</label>
+                  <div className="relative">
+                    <span className="material-icons absolute left-4 top-3.5 text-slate-400 text-lg">alternate_email</span>
+                    <input 
+                      type="email" 
+                      required 
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full pl-12 pr-4 py-4 bg-slate-50 border-slate-100 rounded-2xl focus:ring-primary focus:border-primary text-sm font-medium transition-all" 
+                      placeholder="alex.j@example.com" 
+                    />
+                  </div>
                 </div>
-              </div>
-              <div>
-                <div className="flex justify-between items-center mb-2 px-1">
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">{authMode === 'forgot' ? 'New Password' : 'Password'}</label>
-                  {authMode === 'login' && (
-                    <button 
+              )}
+              {authMode !== 'forgot' && (
+                <div>
+                  <div className="flex justify-between items-center mb-2 px-1">
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                      {authMode === 'reset' ? 'New Password' : 'Password'}
+                    </label>
+                    {authMode === 'login' && (
+                      <button 
+                        type="button"
+                        onClick={() => setAuthMode('forgot')}
+                        className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline"
+                      >
+                        Forgot?
+                      </button>
+                    )}
+                  </div>
+                  <div className="relative">
+                    <span className="material-icons absolute left-4 top-3.5 text-slate-400 text-lg">lock_outline</span>
+                    <input 
+                      type={showPassword ? 'text' : 'password'} 
+                      required 
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="w-full pl-12 pr-12 py-4 bg-slate-50 border-slate-100 rounded-2xl focus:ring-primary focus:border-primary text-sm font-medium transition-all" 
+                      placeholder="••••••••" 
+                    />
+                    <button
                       type="button"
-                      onClick={() => setAuthMode('forgot')}
-                      className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-4 top-3.5 text-slate-400 hover:text-primary transition-colors"
+                      tabIndex={-1}
                     >
-                      Forgot?
+                      <span className="material-icons text-lg">{showPassword ? 'visibility_off' : 'visibility'}</span>
                     </button>
-                  )}
+                  </div>
                 </div>
-                <div className="relative">
-                  <span className="material-icons absolute left-4 top-3.5 text-slate-400 text-lg">lock_outline</span>
-                  <input 
-                    type={showPassword ? 'text' : 'password'} 
-                    required 
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-12 pr-12 py-4 bg-slate-50 border-slate-100 rounded-2xl focus:ring-primary focus:border-primary text-sm font-medium transition-all" 
-                    placeholder="••••••••" 
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-3.5 text-slate-400 hover:text-primary transition-colors"
-                    tabIndex={-1}
-                  >
-                    <span className="material-icons text-lg">{showPassword ? 'visibility_off' : 'visibility'}</span>
-                  </button>
-                </div>
-              </div>
+              )}
             </div>
 
-            {authMode !== 'forgot' && (
+            {authMode !== 'forgot' && authMode !== 'reset' && (
               <div className="flex items-center px-1">
                 <input 
                   id="remember-me" 
@@ -363,24 +444,26 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
             </button>
           </form>
 
-          <div className="mt-10 pt-8 border-t border-slate-50">
-            <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
-              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-1">
-                <span className="material-icons text-xs">info</span> Demo Account
-              </h4>
-              <div className="flex justify-between items-center">
-                <code className="text-[11px] font-bold text-slate-600">alex.j@example.com</code>
-                <code className="text-[11px] font-bold text-slate-600">password123</code>
+          {authMode === 'login' && (
+            <div className="mt-10 pt-8 border-t border-slate-50">
+              <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
+                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-1">
+                  <span className="material-icons text-xs">info</span> Demo Account
+                </h4>
+                <div className="flex justify-between items-center">
+                  <code className="text-[11px] font-bold text-slate-600">alex.j@example.com</code>
+                  <code className="text-[11px] font-bold text-slate-600">password123</code>
+                </div>
+                <button 
+                  type="button"
+                  onClick={() => { setEmail('alex.j@example.com'); setPassword('password123'); }}
+                  className="mt-3 w-full text-[10px] font-black text-primary uppercase tracking-widest hover:underline"
+                >
+                  Auto-fill Credentials
+                </button>
               </div>
-              <button 
-                type="button"
-                onClick={() => { setEmail('alex.j@example.com'); setPassword('password123'); }}
-                className="mt-3 w-full text-[10px] font-black text-primary uppercase tracking-widest hover:underline"
-              >
-                Auto-fill Credentials
-              </button>
             </div>
-          </div>
+          )}
         </div>
         
         <p className="text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed">

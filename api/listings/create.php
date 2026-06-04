@@ -23,37 +23,76 @@ if (isset($data->image) && is_array($data->image) && count($data->image) > 0) {
     $imageToSave = json_encode($data->image);
 }
 
-try {
-    $query = "INSERT INTO listings (title, price, category, location, description, image, user_id, time, contact_email, contact_phone, postal_code, youtube_link, facebook_link, price_type) 
-              VALUES (:title, :price, :category, :location, :description, :image, :user_id, :time, :contact_email, :contact_phone, :postal_code, :youtube_link, :facebook_link, :price_type)";
-    
-    $stmt = $conn->prepare($query);
-    
-    // Bind parameters
-    $stmt->bindParam(':title', $data->title);
-    $stmt->bindParam(':price', $data->price);
-    $stmt->bindValue(':category', $data->category ?? null);
-    $stmt->bindValue(':location', $data->location ?? null);
-    $stmt->bindValue(':description', $data->description ?? null);
-    $stmt->bindParam(':image', $imageToSave);
-    $stmt->bindParam(':user_id', $data->user_id);
-    $stmt->bindParam(':time', $time);
-    $stmt->bindValue(':contact_email', $data->contact_email ?? null);
-    $stmt->bindValue(':contact_phone', $data->contact_phone ?? null);
-    $stmt->bindValue(':postal_code', $data->postal_code ?? null);
-    $stmt->bindValue(':youtube_link', $data->youtube_link ?? null);
-    $stmt->bindValue(':facebook_link', $data->facebook_link ?? null);
-    $stmt->bindValue(':price_type', $data->price_type ?? 'amount');
-
-    if ($stmt->execute()) {
-        $insertId = $conn->lastInsertId();
-        http_response_code(201);
-        echo json_encode(["success" => true, "id" => $insertId]);
-    } else {
-        http_response_code(500);
-        echo json_encode(["error" => "Failed to create listing"]);
+// Determine if multi-city or single-city posting
+$locations = [];
+if (isset($data->locations) && is_array($data->locations) && count($data->locations) > 1) {
+    // Multi-city mode
+    foreach ($data->locations as $loc) {
+        $locations[] = [
+            'location' => $loc->location ?? 'Unknown',
+            'postal_code' => $loc->postal_code ?? null,
+        ];
     }
+} else {
+    // Single-city (legacy) mode
+    $locations[] = [
+        'location' => $data->location ?? 'Unknown',
+        'postal_code' => $data->postal_code ?? null,
+    ];
+}
+
+try {
+    $conn->beginTransaction();
+
+    $parentId = null;
+    $allIds = [];
+
+    foreach ($locations as $index => $loc) {
+        $query = "INSERT INTO listings (title, price, category, location, description, image, user_id, time, contact_email, contact_phone, postal_code, youtube_link, facebook_link, price_type, parent_id) 
+                  VALUES (:title, :price, :category, :location, :description, :image, :user_id, :time, :contact_email, :contact_phone, :postal_code, :youtube_link, :facebook_link, :price_type, :parent_id)";
+        
+        $stmt = $conn->prepare($query);
+        
+        $stmt->bindParam(':title', $data->title);
+        $stmt->bindParam(':price', $data->price);
+        $stmt->bindValue(':category', $data->category ?? null);
+        $stmt->bindValue(':location', $loc['location']);
+        $stmt->bindValue(':description', $data->description ?? null);
+        $stmt->bindParam(':image', $imageToSave);
+        $stmt->bindParam(':user_id', $data->user_id);
+        $stmt->bindParam(':time', $time);
+        $stmt->bindValue(':contact_email', $data->contact_email ?? null);
+        $stmt->bindValue(':contact_phone', $data->contact_phone ?? null);
+        $stmt->bindValue(':postal_code', $loc['postal_code']);
+        $stmt->bindValue(':youtube_link', $data->youtube_link ?? null);
+        $stmt->bindValue(':facebook_link', $data->facebook_link ?? null);
+        $stmt->bindValue(':price_type', $data->price_type ?? 'amount');
+        $stmt->bindValue(':parent_id', $parentId); // null for first (parent), set for children
+
+        $stmt->execute();
+        $insertId = $conn->lastInsertId();
+        $allIds[] = $insertId;
+
+        // First listing becomes the parent
+        if ($index === 0) {
+            $parentId = $insertId;
+        }
+    }
+
+    $conn->commit();
+
+    http_response_code(201);
+    echo json_encode([
+        "success" => true,
+        "id" => $allIds[0], // Parent ID for redirect / promotions
+        "all_ids" => $allIds,
+        "cities_count" => count($allIds)
+    ]);
+
 } catch(PDOException $e) {
+    if ($conn->inTransaction()) {
+        $conn->rollBack();
+    }
     http_response_code(500);
     echo json_encode(["error" => "Database error: " . $e->getMessage()]);
 }
