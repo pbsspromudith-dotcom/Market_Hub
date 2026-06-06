@@ -218,10 +218,6 @@ const ItemDetails: React.FC = () => {
               <span className="material-icons text-primary text-2xl">map</span>
               Location Map
             </h2>
-            <div className="text-slate-600 mb-4 text-sm font-semibold flex items-center gap-1.5">
-              <span className="material-icons text-base text-primary">location_on</span>
-              {listing.location} {listing.postal_code ? `(${listing.postal_code})` : ''}
-            </div>
             <div className="aspect-video md:aspect-[21/9] w-full rounded-2xl overflow-hidden shadow-sm border border-slate-200 bg-slate-50">
               <iframe
                 src={`/map.html?q=${encodeURIComponent(listing.postal_code || listing.location)}`}
@@ -339,18 +335,31 @@ const ItemDetails: React.FC = () => {
                   </button>
                 </div>
                 
-                {listing.contact_phone && listing.contact_phone.trim() !== "" && (
+                {((listing.contact_phone && listing.contact_phone.trim() !== "") || listing.location) && (
                   <div className="bg-slate-50 rounded-2xl border border-slate-100 p-5 mt-6">
                     <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Direct Contact Info</h4>
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600 flex-shrink-0">
-                          <span className="material-icons text-sm">phone</span>
+                    <div className="space-y-4">
+                      {listing.contact_phone && listing.contact_phone.trim() !== "" && (
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600 flex-shrink-0">
+                            <span className="material-icons text-sm">phone</span>
+                          </div>
+                          <a href={`tel:${listing.contact_phone}`} className="text-sm font-bold text-slate-700 hover:text-green-600 transition-colors">
+                            {listing.contact_phone}
+                          </a>
                         </div>
-                        <a href={`tel:${listing.contact_phone}`} className="text-sm font-bold text-slate-700 hover:text-green-600 transition-colors">
-                          {listing.contact_phone}
-                        </a>
-                      </div>
+                      )}
+                      
+                      {listing.location && (
+                        <div className={`flex items-start gap-3 ${listing.contact_phone && listing.contact_phone.trim() !== "" ? 'border-t border-slate-200/60 pt-4' : ''}`}>
+                          <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 flex-shrink-0 mt-0.5">
+                            <span className="material-icons text-sm">location_on</span>
+                          </div>
+                          <div className="text-sm font-bold text-slate-700 leading-snug">
+                            {listing.location} {listing.postal_code ? `(${listing.postal_code})` : ''}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
