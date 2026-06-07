@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Link } from 'react-router-dom';
 import { formatPrice } from '../constants';
+import { useUI } from '../components/UIProvider';
 
 const AdminDashboard: React.FC = () => {
   const [adminStats, setAdminStats] = useState<any>(null);

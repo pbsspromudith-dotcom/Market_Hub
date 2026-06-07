@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { trackListingSubmission } from "../analytics";
 import MonerisPayModal from "../components/MonerisPayModal";
+import { useUI } from "../components/UIProvider";
 const CAR_FEATURES_LIST = [
   "Alloy Wheels",
   "Backup Camera",
