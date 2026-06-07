@@ -59,6 +59,217 @@ const AdminDashboard: React.FC = () => {
   // Tab Navigation State
   const [activeTab, setActiveTab] = useState('overview');
 
+  // ── Ad Templates Tab State ──
+  const [tplCategories, setTplCategories] = useState<any[]>([]);
+  const [tplMainCatId, setTplMainCatId] = useState<number | null>(null);
+  const [tplSubCatId, setTplSubCatId] = useState<number | null>(null);
+  const [tplL3CatId, setTplL3CatId] = useState<number | null>(null);
+  const [tplConfig, setTplConfig] = useState<any>({});
+  const [tplInheritedFrom, setTplInheritedFrom] = useState<string | null>(null);
+  const [tplIsOwn, setTplIsOwn] = useState(false);
+  const [tplAttributes, setTplAttributes] = useState<any[]>([]);
+  const [tplSaving, setTplSaving] = useState(false);
+  const [tplMsg, setTplMsg] = useState<{type: 'success' | 'error', text: string} | null>(null);
+  const [tplNewAttrName, setTplNewAttrName] = useState('');
+  const [tplNewAttrType, setTplNewAttrType] = useState('Text');
+  const [tplNewAttrRequired, setTplNewAttrRequired] = useState(false);
+  const [tplNewAttrOptions, setTplNewAttrOptions] = useState('');
+  const [tplAddingAttr, setTplAddingAttr] = useState(false);
+  const [tplDeletingAttr, setTplDeletingAttr] = useState<number | null>(null);
+  const { showAlert, showConfirm } = useUI();
+
+  const DEFAULT_TEMPLATE: any = {
+    hideTitle: false, hideDescription: false, hideLocation: false,
+    hidePrice: false, priceRequired: true, priceLabel: 'Price', pricePlaceholder: '0.00',
+    hideCondition: false, hidePhotos: false, photosRequired: true,
+    hidePhone: false, hideSocialLinks: false, hideCarFeatures: false, hideBrandModel: false
+  };
+
+  // Load categories tree for templates tab
+  useEffect(() => {
+    if (activeTab === 'templates' && tplCategories.length === 0) {
+      fetch('/api/categories/read.php')
+        .then(r => r.json())
+        .then(r => { if (r.success) setTplCategories(r.data); })
+        .catch(console.error);
+    }
+  }, [activeTab]);
+
+  // Resolve template when category selection changes
+  useEffect(() => {
+    const selectedId = tplL3CatId || tplSubCatId || tplMainCatId;
+    if (!selectedId) { setTplConfig({}); setTplInheritedFrom(null); setTplIsOwn(false); setTplAttributes([]); return; }
+
+    // Build path from main -> sub -> L3
+    const path: any[] = [];
+    const mainCat = tplCategories.find((c: any) => c.CategoryID == tplMainCatId);
+    if (mainCat) path.push(mainCat);
+    if (tplSubCatId && mainCat?.children) {
+      const subCat = mainCat.children.find((c: any) => c.CategoryID == tplSubCatId);
+      if (subCat) path.push(subCat);
+      if (tplL3CatId && subCat?.children) {
+        const l3Cat = subCat.children.find((c: any) => c.CategoryID == tplL3CatId);
+        if (l3Cat) path.push(l3Cat);
+      }
+    }
+
+    // Resolve: walk up from leaf to find first template_config
+    let resolved = null;
+    let resolvedFrom: string | null = null;
+    let isOwn = false;
+    for (let i = path.length - 1; i >= 0; i--) {
+      if (path[i].template_config) {
+        const cfg = typeof path[i].template_config === 'string' ? JSON.parse(path[i].template_config) : path[i].template_config;
+        resolved = cfg;
+        if (i === path.length - 1) {
+          isOwn = true;
+          resolvedFrom = null;
+        } else {
+          isOwn = false;
+          resolvedFrom = path[i].CategoryName;
+        }
+        break;
+      }
+    }
+    setTplConfig(resolved || {});
+    setTplInheritedFrom(isOwn ? null : resolvedFrom);
+    setTplIsOwn(isOwn || !resolvedFrom);
+
+    // Load attributes for the selected category
+    fetch(`/api/categories/attributes.php?category_id=${selectedId}`)
+      .then(r => r.json())
+      .then(r => { if (r.success) setTplAttributes(r.data); })
+      .catch(console.error);
+  }, [tplMainCatId, tplSubCatId, tplL3CatId, tplCategories]);
+
+  const handleTplSave = async () => {
+    const selectedId = tplL3CatId || tplSubCatId || tplMainCatId;
+    if (!selectedId) return;
+    setTplSaving(true);
+    setTplMsg(null);
+    try {
+      const res = await fetch('/api/categories/save_template.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ category_id: selectedId, template_config: tplConfig })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setTplMsg({ type: 'success', text: 'Template saved successfully!' });
+        setTplIsOwn(true);
+        setTplInheritedFrom(null);
+        // Update local tree
+        const updateTree = (cats: any[]): any[] => cats.map(c => {
+          if (c.CategoryID == selectedId) return { ...c, template_config: JSON.stringify(tplConfig) };
+          if (c.children) return { ...c, children: updateTree(c.children) };
+          return c;
+        });
+        setTplCategories(updateTree(tplCategories));
+      } else {
+        setTplMsg({ type: 'error', text: data.message || 'Failed to save template.' });
+      }
+    } catch { setTplMsg({ type: 'error', text: 'Network error.' }); }
+    setTplSaving(false);
+    setTimeout(() => setTplMsg(null), 4000);
+  };
+
+  const doTplReset = async () => {
+    const selectedId = tplL3CatId || tplSubCatId || tplMainCatId;
+    if (!selectedId) return;
+    setTplSaving(true);
+    try {
+      const res = await fetch('/api/categories/save_template.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ category_id: selectedId, template_config: null })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setTplMsg({ type: 'success', text: 'Template reset. Now inheriting from parent.' });
+        // Clear in local tree
+        const updateTree = (cats: any[]): any[] => cats.map(c => {
+          if (c.CategoryID == selectedId) return { ...c, template_config: null };
+          if (c.children) return { ...c, children: updateTree(c.children) };
+          return c;
+        });
+        setTplCategories(updateTree(tplCategories));
+        // Re-trigger resolution
+        setTplMainCatId(prev => prev);
+      }
+    } catch { setTplMsg({ type: 'error', text: 'Network error.' }); }
+    setTplSaving(false);
+    setTimeout(() => setTplMsg(null), 4000);
+  };
+
+  const handleTplAddAttr = async () => {
+    const selectedId = tplL3CatId || tplSubCatId || tplMainCatId;
+    if (!selectedId || !tplNewAttrName.trim()) return;
+    setTplAddingAttr(true);
+    try {
+      const opts = (tplNewAttrType === 'Dropdown' || tplNewAttrType === 'CheckboxGroup') ? tplNewAttrOptions.split(',').map(s => s.trim()).filter(Boolean) : [];
+      const res = await fetch('/api/categories/add_attribute.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          category_id: selectedId,
+          attribute_name: tplNewAttrName.trim(),
+          attribute_type: tplNewAttrType,
+          is_required: tplNewAttrRequired ? 1 : 0,
+          options: opts
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setTplNewAttrName(''); setTplNewAttrOptions(''); setTplNewAttrRequired(false);
+        // Reload attributes
+        const r2 = await fetch(`/api/categories/attributes.php?category_id=${selectedId}`);
+        const d2 = await r2.json();
+        if (d2.success) setTplAttributes(d2.data);
+        setTplMsg({ type: 'success', text: 'Attribute added!' });
+      } else {
+        setTplMsg({ type: 'error', text: data.message || 'Failed to add attribute.' });
+      }
+    } catch { setTplMsg({ type: 'error', text: 'Network error.' }); }
+    setTplAddingAttr(false);
+    setTimeout(() => setTplMsg(null), 4000);
+  };
+
+  const doTplDeleteAttr = async (attrId: number) => {
+    setTplDeletingAttr(attrId);
+    try {
+      const res = await fetch('/api/categories/delete_attribute.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ attribute_id: attrId })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setTplAttributes(prev => prev.filter(a => a.AttributeID !== attrId));
+        setTplMsg({ type: 'success', text: 'Attribute deleted!' });
+      }
+    } catch { setTplMsg({ type: 'error', text: 'Network error.' }); }
+    setTplDeletingAttr(null);
+    setTimeout(() => setTplMsg(null), 4000);
+  };
+
+  const getSelectedCatName = () => {
+    const mainCat = tplCategories.find((c: any) => c.CategoryID == tplMainCatId);
+    if (!mainCat) return '';
+    let name = mainCat.CategoryName;
+    if (tplSubCatId) {
+      const sub = mainCat.children?.find((c: any) => c.CategoryID == tplSubCatId);
+      if (sub) {
+        name += ' > ' + sub.CategoryName;
+        if (tplL3CatId) {
+          const l3 = sub.children?.find((c: any) => c.CategoryID == tplL3CatId);
+          if (l3) name += ' > ' + l3.CategoryName;
+        }
+      }
+    }
+    return name;
+  };
+
+
   // Read user role from localStorage to filter tabs
   const userRole = (() => {
     try {
@@ -76,6 +287,7 @@ const AdminDashboard: React.FC = () => {
     { id: 'listings', label: 'Listings', icon: 'inventory_2' },
     { id: 'users', label: 'Users', icon: 'people' },
     { id: 'menu', label: 'Menu Layout', icon: 'menu_open' },
+    { id: 'templates', label: 'Ad Templates', icon: 'tune' },
     { id: 'lookups', label: 'Sub Masters', icon: 'category' },
     { id: 'listing-seo', label: 'Listing SEO', icon: 'travel_explore' },
     { id: 'email', label: 'Email Setup', icon: 'email' },
@@ -303,31 +515,35 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
-  const handleDeleteCategory = async (id: number) => {
-    if (!window.confirm('WARNING: Deleting this category will delete all its subcategories and listings. This action CANNOT be undone! Are you sure you want to proceed?')) {
-      return;
-    }
-    setIsDeletingCat(id);
-    setCatMsg(null);
-    try {
-      const response = await fetch('/api/categories/delete.php', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ CategoryID: id })
-      });
-      const data = await response.json();
-      if (data.success) {
-        setCatMsg({ type: 'success', text: data.message || 'Category deleted successfully.' });
-        fetchMenuCategories();
-      } else {
-        setCatMsg({ type: 'error', text: data.message || 'Failed to delete category.' });
+  const handleDeleteCategory = (id: number) => {
+    showConfirm({
+      title: 'Delete Category',
+      message: 'WARNING: Deleting this category will delete all its subcategories and listings. This action CANNOT be undone! Are you sure you want to proceed?',
+      isDestructive: true,
+      onConfirm: async () => {
+        setIsDeletingCat(id);
+        setCatMsg(null);
+        try {
+          const response = await fetch('/api/categories/delete.php', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ CategoryID: id })
+          });
+          const data = await response.json();
+          if (data.success) {
+            setCatMsg({ type: 'success', text: data.message || 'Category deleted successfully.' });
+            fetchMenuCategories();
+          } else {
+            setCatMsg({ type: 'error', text: data.message || 'Failed to delete category.' });
+          }
+        } catch (err) {
+          setCatMsg({ type: 'error', text: 'Network error deleting category.' });
+        } finally {
+          setIsDeletingCat(null);
+          setTimeout(() => setCatMsg(null), 5000);
+        }
       }
-    } catch (err) {
-      setCatMsg({ type: 'error', text: 'Network error deleting category.' });
-    } finally {
-      setIsDeletingCat(null);
-      setTimeout(() => setCatMsg(null), 5000);
-    }
+    });
   };
 
   const fetchListingSeo = (pageNum = 1) => {
@@ -396,24 +612,30 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
-  const handleResetListingSeo = async (listingId: number) => {
-    if (!confirm('Reset this listing\'s SEO to auto-generation? Manual overrides will be removed.')) return;
-    try {
-      const res = await fetch('/api/listings/seo_update.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ listing_id: listingId, reset: true }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setListingSeoMsg({ type: 'success', text: 'Reset to auto-generation.' });
-        setSeoForm({ meta_title: '', meta_desc: '', keywords: '', focus_keyword: '', image_alt_text: '' });
-        fetchListingSeo(seoPage);
+  const handleResetListingSeo = (listingId: number) => {
+    showConfirm({
+      title: 'Reset SEO',
+      message: "Reset this listing's SEO to auto-generation? Manual overrides will be removed.",
+      isDestructive: true,
+      onConfirm: async () => {
+        try {
+          const res = await fetch('/api/listings/seo_update.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ listing_id: listingId, reset: true }),
+          });
+          const data = await res.json();
+          if (data.success) {
+            setListingSeoMsg({ type: 'success', text: 'Reset to auto-generation.' });
+            setSeoForm({ meta_title: '', meta_desc: '', keywords: '', focus_keyword: '', image_alt_text: '' });
+            fetchListingSeo(seoPage);
+          }
+        } catch {
+          setListingSeoMsg({ type: 'error', text: 'Failed to reset.' });
+        }
+        setTimeout(() => setListingSeoMsg(null), 5000);
       }
-    } catch {
-      setListingSeoMsg({ type: 'error', text: 'Failed to reset.' });
-    }
-    setTimeout(() => setListingSeoMsg(null), 5000);
+    });
   };
 
   const openSeoEditor = (listing: any) => {
@@ -439,27 +661,34 @@ const AdminDashboard: React.FC = () => {
       .catch(console.error);
   };
 
-  const handleDeleteUser = async (id: number) => {
-    if (!window.confirm('Are you sure you want to delete this user?')) return;
-    setIsDeletingUser(id);
-    try {
-      const response = await fetch('/api/users/delete.php', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id }),
-      });
-      const data = await response.json();
-      if (data.success) {
-        setUsers(users.filter((u: any) => u.id !== id));
-      } else {
-        alert(data.message || 'Failed to delete user');
+  const handleDeleteUser = (id: number) => {
+    showConfirm({
+      title: 'Delete User',
+      message: 'Are you sure you want to delete this user? This cannot be undone.',
+      isDestructive: true,
+      onConfirm: async () => {
+        setIsDeletingUser(id);
+        try {
+          const response = await fetch('/api/users/delete.php', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id }),
+          });
+          const data = await response.json();
+          if (data.success) {
+            setUsers(users.filter((u: any) => u.id !== id));
+            showAlert('User deleted successfully.', 'success');
+          } else {
+            showAlert(data.message || 'Failed to delete user', 'error');
+          }
+        } catch (err) {
+          console.error(err);
+          showAlert('Error deleting user', 'error');
+        } finally {
+          setIsDeletingUser(null);
+        }
       }
-    } catch (err) {
-      console.error(err);
-      alert('Error deleting user');
-    } finally {
-      setIsDeletingUser(null);
-    }
+    });
   };
 
   const handleUpdateUser = async (e: React.FormEvent) => {
@@ -475,13 +704,13 @@ const AdminDashboard: React.FC = () => {
       if (data.success) {
         setUsers(users.map((u: any) => u.id === editingUser.id ? data.user : u));
         setEditingUser(null);
-        alert('User updated successfully');
+        showAlert('User updated successfully', 'success');
       } else {
-        alert(data.message || 'Failed to update user');
+        showAlert(data.message || 'Failed to update user', 'error');
       }
     } catch (err) {
       console.error(err);
-      alert('Error updating user');
+      showAlert('Error updating user', 'error');
     }
   };
 
@@ -507,51 +736,68 @@ const AdminDashboard: React.FC = () => {
       .catch(console.error);
   };
 
-  const handleDeleteListing = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this listing?')) return;
-    setIsDeleting(id);
-    try {
-      const response = await fetch('/api/listings/delete.php', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id }),
-      });
-      const data = await response.json();
-      if (data.success) {
-        setListings(listings.filter((l: any) => l.id !== id));
-        setSelectedIds(prev => { const next = new Set(prev); next.delete(id); return next; });
-      } else {
-        alert(data.error || 'Failed to delete listing');
+  const handleDeleteListing = (id: string) => {
+    showConfirm({
+      title: 'Delete Listing',
+      message: 'Are you sure you want to delete this listing?',
+      isDestructive: true,
+      onConfirm: async () => {
+        setIsDeleting(id);
+        try {
+          const response = await fetch('/api/listings/delete.php', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id }),
+          });
+          const data = await response.json();
+          if (data.success) {
+            setListings(listings.filter((l: any) => l.id !== id));
+            setSelectedIds(prev => { const next = new Set(prev); next.delete(id); return next; });
+            showAlert('Listing deleted successfully.', 'success');
+          } else {
+            showAlert(data.error || 'Failed to delete listing', 'error');
+          }
+        } catch (err) {
+          console.error(err);
+          showAlert('Error deleting listing', 'error');
+        } finally {
+          setIsDeleting(null);
+        }
       }
-    } catch (err) {
-      console.error(err);
-      alert('Error deleting listing');
-    } finally {
-      setIsDeleting(null);
-    }
+    });
   };
 
-  const handleBulkDelete = async () => {
+  const handleBulkDelete = () => {
     if (selectedIds.size === 0) return;
-    if (!window.confirm(`Delete ${selectedIds.size} selected listing${selectedIds.size > 1 ? 's' : ''}? This cannot be undone.`)) return;
-    setIsBulkDeleting(true);
-    const ids = Array.from(selectedIds);
-    let deletedCount = 0;
-    for (const id of ids) {
-      try {
-        const res = await fetch('/api/listings/delete.php', {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id }),
-        });
-        const data = await res.json();
-        if (data.success) deletedCount++;
-      } catch {}
-    }
-    setListings(prev => prev.filter((l: any) => !selectedIds.has(String(l.id))));
-    setSelectedIds(new Set());
-    setIsBulkDeleting(false);
-    if (deletedCount < ids.length) alert(`${ids.length - deletedCount} listing(s) could not be deleted.`);
+    showConfirm({
+      title: 'Bulk Delete Listings',
+      message: `Delete ${selectedIds.size} selected listing${selectedIds.size > 1 ? 's' : ''}? This cannot be undone.`,
+      isDestructive: true,
+      onConfirm: async () => {
+        setIsBulkDeleting(true);
+        const ids = Array.from(selectedIds);
+        let deletedCount = 0;
+        for (const id of ids) {
+          try {
+            const res = await fetch('/api/listings/delete.php', {
+              method: 'DELETE',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ id }),
+            });
+            const data = await res.json();
+            if (data.success) deletedCount++;
+          } catch {}
+        }
+        setListings(prev => prev.filter((l: any) => !selectedIds.has(String(l.id))));
+        setSelectedIds(new Set());
+        setIsBulkDeleting(false);
+        if (deletedCount < ids.length) {
+          showAlert(`${ids.length - deletedCount} listing(s) could not be deleted.`, 'error');
+        } else {
+          showAlert(`Successfully deleted ${deletedCount} listing(s).`, 'success');
+        }
+      }
+    });
   };
 
   const handleCreateOption = async (e: React.FormEvent) => {
@@ -576,8 +822,9 @@ const AdminDashboard: React.FC = () => {
         }
         setIsAddingOption(false);
         fetchOptions();
+        showAlert('Option created successfully.', 'success');
       } else {
-        alert(data.error || 'Failed to create option');
+        showAlert(data.error || 'Failed to create option', 'error');
       }
     } catch (err) {
       console.error(err);
@@ -596,35 +843,44 @@ const AdminDashboard: React.FC = () => {
       const data = await response.json();
       if (data.success) {
         fetchOptions();
+        showAlert('Mapping updated successfully.', 'success');
       } else {
-        alert(data.error || 'Failed to update mapping');
+        showAlert(data.error || 'Failed to update mapping', 'error');
       }
     } catch (err) {
       console.error(err);
-      alert('Error updating mapping');
+      showAlert('Error updating mapping', 'error');
     }
   };
 
-  const handleDeleteOption = async (id: number, optionType: string) => {
-    if (!window.confirm('Are you sure you want to delete this option?')) return;
-    setIsDeletingOption(id);
-    try {
-      const response = await fetch('/api/options/delete.php', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, option_type: optionType }),
-      });
-      const data = await response.json();
-      if (data.success) {
-        setOptions(options.filter((o: any) => o.id !== id));
-      } else {
-        alert(data.error || 'Failed to delete option');
+  const handleDeleteOption = (id: number, optionType: string) => {
+    showConfirm({
+      title: 'Delete Option',
+      message: 'Are you sure you want to delete this option?',
+      isDestructive: true,
+      onConfirm: async () => {
+        setIsDeletingOption(id);
+        try {
+          const response = await fetch('/api/options/delete.php', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id, option_type: optionType }),
+          });
+          const data = await response.json();
+          if (data.success) {
+            setOptions(options.filter((o: any) => o.id !== id));
+            showAlert('Option deleted successfully.', 'success');
+          } else {
+            showAlert(data.error || 'Failed to delete option', 'error');
+          }
+        } catch (err) {
+          console.error(err);
+          showAlert('Error deleting option', 'error');
+        } finally {
+          setIsDeletingOption(null);
+        }
       }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsDeletingOption(null);
-    }
+    });
   };
 
   const fetchEmailConfig = () => {
@@ -2558,6 +2814,413 @@ const AdminDashboard: React.FC = () => {
               </button>
             </div>
           </form>
+        </div>
+      )}
+
+      {/* ── Ad Templates Tab ── */}
+      {activeTab === 'templates' && (
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+
+            {/* LEFT: Category Selector + Config */}
+            <div className="xl:col-span-2 space-y-6">
+              {/* Category Selection */}
+              <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm p-8">
+                <h2 className="text-lg font-black text-slate-800 mb-6 flex items-center gap-2">
+                  <span className="material-icons text-primary">folder_open</span>
+                  Select Category
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Main Category */}
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Main Category</label>
+                    <select
+                      id="tpl-main-category"
+                      value={tplMainCatId || ''}
+                      onChange={e => { setTplMainCatId(e.target.value ? Number(e.target.value) : null); setTplSubCatId(null); setTplL3CatId(null); }}
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-primary focus:border-primary"
+                    >
+                      <option value="">— Choose —</option>
+                      {tplCategories.map((c: any) => (
+                        <option key={c.CategoryID} value={c.CategoryID}>{c.CategoryName}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Sub-Category */}
+                  {tplMainCatId && (() => {
+                    const mainCat = tplCategories.find((c: any) => c.CategoryID == tplMainCatId);
+                    const subs = mainCat?.children || [];
+                    if (subs.length === 0) return null;
+                    return (
+                      <div>
+                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Sub-Category</label>
+                        <select
+                          id="tpl-sub-category"
+                          value={tplSubCatId || ''}
+                          onChange={e => { setTplSubCatId(e.target.value ? Number(e.target.value) : null); setTplL3CatId(null); }}
+                          className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-primary focus:border-primary"
+                        >
+                          <option value="">— All sub-categories (Main) —</option>
+                          {subs.map((c: any) => (
+                            <option key={c.CategoryID} value={c.CategoryID}>{c.CategoryName}</option>
+                          ))}
+                        </select>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Level 3 */}
+                  {tplSubCatId && (() => {
+                    const mainCat = tplCategories.find((c: any) => c.CategoryID == tplMainCatId);
+                    const subCat = mainCat?.children?.find((c: any) => c.CategoryID == tplSubCatId);
+                    const l3s = subCat?.children || [];
+                    if (l3s.length === 0) return null;
+                    return (
+                      <div>
+                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Level 3</label>
+                        <select
+                          id="tpl-l3-category"
+                          value={tplL3CatId || ''}
+                          onChange={e => setTplL3CatId(e.target.value ? Number(e.target.value) : null)}
+                          className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-primary focus:border-primary"
+                        >
+                          <option value="">— All (Sub-Category) —</option>
+                          {l3s.map((c: any) => (
+                            <option key={c.CategoryID} value={c.CategoryID}>{c.CategoryName}</option>
+                          ))}
+                        </select>
+                      </div>
+                    );
+                  })()}
+                </div>
+
+                {/* Inheritance Badge */}
+                {(tplMainCatId || tplSubCatId || tplL3CatId) && (
+                  <div className="mt-5 flex items-center gap-3 flex-wrap">
+                    <span className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full bg-slate-100 text-slate-600">
+                      <span className="material-icons text-sm">tune</span>
+                      {getSelectedCatName()}
+                    </span>
+                    {tplInheritedFrom && (
+                      <span className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                        <span className="material-icons text-sm">link</span>
+                        Inheriting from "{tplInheritedFrom}"
+                      </span>
+                    )}
+                    {tplIsOwn && (tplSubCatId || tplL3CatId) && (
+                      <span className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full bg-green-50 text-green-700 border border-green-200">
+                        <span className="material-icons text-sm">check_circle</span>
+                        Own Template
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Standard Fields Settings */}
+              {(tplMainCatId || tplSubCatId || tplL3CatId) && (
+                <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm p-8">
+                  <h2 className="text-lg font-black text-slate-800 mb-6 flex items-center gap-2">
+                    <span className="material-icons text-primary">toggle_on</span>
+                    Standard Fields
+                  </h2>
+
+                  {tplMsg && (
+                    <div className={`mb-6 px-4 py-3 rounded-xl text-sm font-bold flex items-center gap-2 ${
+                      tplMsg.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'
+                    }`}>
+                      <span className="material-icons text-sm">{tplMsg.type === 'success' ? 'check_circle' : 'error'}</span>
+                      {tplMsg.text}
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5">
+                    {/* Title & Description & Location */}
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-bold text-slate-700">Show Title</span>
+                        <button onClick={() => setTplConfig({...tplConfig, hideTitle: !tplConfig.hideTitle})} className={`w-11 h-6 rounded-full transition-colors relative ${tplConfig.hideTitle ? 'bg-slate-300' : 'bg-primary'}`}>
+                          <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${tplConfig.hideTitle ? 'left-0.5' : 'left-[22px]'}`} />
+                        </button>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-bold text-slate-700">Show Description</span>
+                        <button onClick={() => setTplConfig({...tplConfig, hideDescription: !tplConfig.hideDescription})} className={`w-11 h-6 rounded-full transition-colors relative ${tplConfig.hideDescription ? 'bg-slate-300' : 'bg-primary'}`}>
+                          <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${tplConfig.hideDescription ? 'left-0.5' : 'left-[22px]'}`} />
+                        </button>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-bold text-slate-700">Show Location</span>
+                        <button onClick={() => setTplConfig({...tplConfig, hideLocation: !tplConfig.hideLocation})} className={`w-11 h-6 rounded-full transition-colors relative ${tplConfig.hideLocation ? 'bg-slate-300' : 'bg-primary'}`}>
+                          <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${tplConfig.hideLocation ? 'left-0.5' : 'left-[22px]'}`} />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Price */}
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-bold text-slate-700">Show Price</span>
+                        <button onClick={() => setTplConfig({...tplConfig, hidePrice: !tplConfig.hidePrice})} className={`w-11 h-6 rounded-full transition-colors relative ${tplConfig.hidePrice ? 'bg-slate-300' : 'bg-primary'}`}>
+                          <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${tplConfig.hidePrice ? 'left-0.5' : 'left-[22px]'}`} />
+                        </button>
+                      </div>
+                      {!tplConfig.hidePrice && (
+                        <>
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-medium text-slate-500">Price Required</span>
+                            <button onClick={() => setTplConfig({...tplConfig, priceRequired: tplConfig.priceRequired === false ? true : false})} className={`w-11 h-6 rounded-full transition-colors relative ${tplConfig.priceRequired === false ? 'bg-slate-300' : 'bg-primary'}`}>
+                              <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${tplConfig.priceRequired === false ? 'left-0.5' : 'left-[22px]'}`} />
+                            </button>
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Price Label</label>
+                            <input type="text" value={tplConfig.priceLabel || ''} onChange={e => setTplConfig({...tplConfig, priceLabel: e.target.value})} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm" placeholder="Price" />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Price Placeholder</label>
+                            <input type="text" value={tplConfig.pricePlaceholder || ''} onChange={e => setTplConfig({...tplConfig, pricePlaceholder: e.target.value})} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm" placeholder="0.00" />
+                          </div>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Condition */}
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-bold text-slate-700">Show Condition</span>
+                        <button onClick={() => setTplConfig({...tplConfig, hideCondition: !tplConfig.hideCondition})} className={`w-11 h-6 rounded-full transition-colors relative ${tplConfig.hideCondition ? 'bg-slate-300' : 'bg-primary'}`}>
+                          <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${tplConfig.hideCondition ? 'left-0.5' : 'left-[22px]'}`} />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Photos */}
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-bold text-slate-700">Show Photos</span>
+                        <button onClick={() => setTplConfig({...tplConfig, hidePhotos: !tplConfig.hidePhotos})} className={`w-11 h-6 rounded-full transition-colors relative ${tplConfig.hidePhotos ? 'bg-slate-300' : 'bg-primary'}`}>
+                          <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${tplConfig.hidePhotos ? 'left-0.5' : 'left-[22px]'}`} />
+                        </button>
+                      </div>
+                      {!tplConfig.hidePhotos && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-medium text-slate-500">Photos Required</span>
+                          <button onClick={() => setTplConfig({...tplConfig, photosRequired: tplConfig.photosRequired === false ? true : false})} className={`w-11 h-6 rounded-full transition-colors relative ${tplConfig.photosRequired === false ? 'bg-slate-300' : 'bg-primary'}`}>
+                            <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${tplConfig.photosRequired === false ? 'left-0.5' : 'left-[22px]'}`} />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Phone */}
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-bold text-slate-700">Show Phone</span>
+                        <button onClick={() => setTplConfig({...tplConfig, hidePhone: !tplConfig.hidePhone})} className={`w-11 h-6 rounded-full transition-colors relative ${tplConfig.hidePhone ? 'bg-slate-300' : 'bg-primary'}`}>
+                          <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${tplConfig.hidePhone ? 'left-0.5' : 'left-[22px]'}`} />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Social Links */}
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-bold text-slate-700">Show Social Links</span>
+                        <button onClick={() => setTplConfig({...tplConfig, hideSocialLinks: !tplConfig.hideSocialLinks})} className={`w-11 h-6 rounded-full transition-colors relative ${tplConfig.hideSocialLinks ? 'bg-slate-300' : 'bg-primary'}`}>
+                          <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${tplConfig.hideSocialLinks ? 'left-0.5' : 'left-[22px]'}`} />
+                        </button>
+                      </div>
+                    </div>
+                    {/* Car Features */}
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-bold text-slate-700">Show Car Features</span>
+                        <button onClick={() => setTplConfig({...tplConfig, hideCarFeatures: !tplConfig.hideCarFeatures})} className={`w-11 h-6 rounded-full transition-colors relative ${tplConfig.hideCarFeatures ? 'bg-slate-300' : 'bg-primary'}`}>
+                          <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${tplConfig.hideCarFeatures ? 'left-0.5' : 'left-[22px]'}`} />
+                        </button>
+                      </div>
+                      {!tplConfig.hideCarFeatures && (
+                        <div className="mt-4 p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                          <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Select Available Features</label>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {["Alloy Wheels", "Bluetooth", "Cruise Control", "Navigation System", "Sunroof/Moonroof", "Backup Camera", "Leather Seats", "Remote Start", "Blind Spot Monitor", "Heated Seats"].map(f => {
+                              const isEnabled = tplConfig.carFeaturesList ? tplConfig.carFeaturesList.includes(f) : true;
+                              return (
+                                <label key={f} className="flex items-center gap-3 cursor-pointer group">
+                                  <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isEnabled ? 'bg-primary border-primary' : 'bg-white border-slate-300 group-hover:border-primary'}`}>
+                                    {isEnabled && <span className="material-icons text-white text-[14px]">check</span>}
+                                  </div>
+                                  <span className="text-sm font-medium text-slate-700">{f}</span>
+                                  <input 
+                                    type="checkbox" 
+                                    className="hidden"
+                                    checked={isEnabled}
+                                    onChange={(e) => {
+                                      let current = tplConfig.carFeaturesList || ["Alloy Wheels", "Bluetooth", "Cruise Control", "Navigation System", "Sunroof/Moonroof", "Backup Camera", "Leather Seats", "Remote Start", "Blind Spot Monitor", "Heated Seats"];
+                                      if (e.target.checked) current = [...current, f];
+                                      else current = current.filter(x => x !== f);
+                                      setTplConfig({...tplConfig, carFeaturesList: current});
+                                    }}
+                                  />
+                                </label>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Brand & Model */}
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-bold text-slate-700">Show Brand & Model</span>
+                        <button onClick={() => setTplConfig({...tplConfig, hideBrandModel: !tplConfig.hideBrandModel})} className={`w-11 h-6 rounded-full transition-colors relative ${tplConfig.hideBrandModel ? 'bg-slate-300' : 'bg-primary'}`}>
+                          <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${tplConfig.hideBrandModel ? 'left-0.5' : 'left-[22px]'}`} />
+                        </button>
+                      </div>
+                    </div>
+
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-3 mt-8 pt-6 border-t border-slate-100">
+                    <button
+                      id="tpl-save-btn"
+                      onClick={handleTplSave}
+                      disabled={tplSaving}
+                      className="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-xl text-sm font-black hover:bg-primary/90 transition-colors disabled:opacity-50"
+                    >
+                      {tplSaving ? <><span className="material-icons text-sm animate-spin">refresh</span> Saving...</> : <><span className="material-icons text-sm">save</span> Save Template</>}
+                    </button>
+                    {(tplSubCatId || tplL3CatId) && tplIsOwn && (
+                      <button
+                        id="tpl-reset-btn"
+                        onClick={() => showConfirm({ title: 'Reset Template', message: 'Reset template for this category? It will inherit from its parent instead.', onConfirm: doTplReset })}
+                        disabled={tplSaving}
+                        className="flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 text-slate-600 rounded-xl text-sm font-bold hover:bg-slate-50 transition-colors disabled:opacity-50"
+                      >
+                        <span className="material-icons text-sm">restart_alt</span> Reset to Parent
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* RIGHT: Custom Attributes */}
+            <div className="space-y-6">
+              {(tplMainCatId || tplSubCatId || tplL3CatId) && (
+                <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm p-8">
+                  <h2 className="text-lg font-black text-slate-800 mb-6 flex items-center gap-2">
+                    <span className="material-icons text-primary">list_alt</span>
+                    Custom Attributes
+                  </h2>
+
+                  {/* Existing Attributes */}
+                  {tplAttributes.length > 0 ? (
+                    <div className="space-y-3 mb-6">
+                      {tplAttributes.map((attr: any) => (
+                        <div key={attr.AttributeID} className="flex items-center justify-between px-4 py-3 bg-slate-50 rounded-xl group">
+                          <div>
+                            <p className="text-sm font-bold text-slate-700">{attr.AttributeName}</p>
+                            <p className="text-xs text-slate-400">
+                              {attr.AttributeType}
+                              {attr.IsRequired ? ' · Required' : ''}
+                              {attr.options?.length > 0 ? ` · ${attr.options.join(', ')}` : ''}
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => showConfirm({ title: 'Delete Attribute', message: 'Delete this custom attribute?', onConfirm: () => doTplDeleteAttr(attr.AttributeID) })}
+                            disabled={tplDeletingAttr === attr.AttributeID}
+                            className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                          >
+                            <span className="material-icons text-sm">{tplDeletingAttr === attr.AttributeID ? 'hourglass_empty' : 'delete'}</span>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-slate-400 mb-6">No custom attributes yet.</p>
+                  )}
+
+                  {/* Add Attribute Form */}
+                  <div className="border-t border-slate-100 pt-6 space-y-4">
+                    <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest">Add Attribute</h3>
+                    <input
+                      type="text"
+                      value={tplNewAttrName}
+                      onChange={e => setTplNewAttrName(e.target.value)}
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm"
+                      placeholder="Attribute name..."
+                    />
+                    <select
+                      value={tplNewAttrType}
+                      onChange={e => setTplNewAttrType(e.target.value)}
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium"
+                    >
+                      <option value="Text">Text</option>
+                      <option value="Number">Number</option>
+                      <option value="Dropdown">Dropdown</option>
+                      <option value="CheckboxGroup">Checkbox Group</option>
+                    </select>
+                    {(tplNewAttrType === 'Dropdown' || tplNewAttrType === 'CheckboxGroup') && (
+                      <input
+                        type="text"
+                        value={tplNewAttrOptions}
+                        onChange={e => setTplNewAttrOptions(e.target.value)}
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm"
+                        placeholder="Options (comma-separated)..."
+                      />
+                    )}
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" checked={tplNewAttrRequired} onChange={e => setTplNewAttrRequired(e.target.checked)} className="w-4 h-4 text-primary rounded border-slate-300" />
+                      <span className="text-sm font-medium text-slate-600">Required</span>
+                    </label>
+                    <button
+                      id="tpl-add-attr-btn"
+                      onClick={handleTplAddAttr}
+                      disabled={tplAddingAttr || !tplNewAttrName.trim()}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-slate-800 text-white rounded-xl text-sm font-bold hover:bg-slate-700 transition-colors disabled:opacity-50"
+                    >
+                      {tplAddingAttr ? <><span className="material-icons text-sm animate-spin">refresh</span> Adding...</> : <><span className="material-icons text-sm">add</span> Add Attribute</>}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Help Card */}
+              <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-[2rem] border border-primary/10 p-8">
+                <h3 className="text-sm font-black text-primary mb-3 flex items-center gap-2">
+                  <span className="material-icons text-sm">help_outline</span>
+                  How Templates Work
+                </h3>
+                <ul className="text-xs text-slate-600 space-y-2 leading-relaxed">
+                  <li className="flex items-start gap-2">
+                    <span className="material-icons text-primary text-sm mt-0.5">arrow_right</span>
+                    Set a template on a <strong>Main Category</strong> — all its sub-categories will inherit it.
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="material-icons text-primary text-sm mt-0.5">arrow_right</span>
+                    Create an <strong>override</strong> on any sub-category to customize it differently.
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="material-icons text-primary text-sm mt-0.5">arrow_right</span>
+                    Use <strong>"Reset to Parent"</strong> to remove a sub-category override and fall back to the parent.
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="material-icons text-primary text-sm mt-0.5">arrow_right</span>
+                    <strong>Custom Attributes</strong> are specific to the selected category level.
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -290,5 +290,51 @@ try {
 } catch(PDOException $e) {
     echo "listings parent_id column error: " . $e->getMessage() . "<br/>";
 }
+
+// ── Add template_config column to Category table ──
+try {
+    $checkQuery = "SHOW COLUMNS FROM Category LIKE 'template_config'";
+    $stmt = $conn->prepare($checkQuery);
+    $stmt->execute();
+    if ($stmt->rowCount() == 0) {
+        $conn->exec("ALTER TABLE Category ADD COLUMN template_config TEXT NULL");
+        echo "Added template_config column to Category table.<br/>";
+
+        // Seed default template configs for main categories matching current hardcoded rules
+        $templates = [
+            'Jobs' => json_encode([
+                'hideCondition' => true,
+                'priceLabel' => 'Salary / Year',
+                'pricePlaceholder' => 'Annual salary or 0 for negotiable'
+            ]),
+            'Real Estate' => json_encode([
+                'hideCondition' => true
+            ]),
+            'Community' => json_encode([
+                'hideCondition' => true,
+                'photosRequired' => false
+            ]),
+            'Local Services' => json_encode([
+                'hideCondition' => true
+            ]),
+            'Events & Entertainment' => json_encode([
+                'hideCondition' => true
+            ]),
+            'Pets' => json_encode([
+                'hideCondition' => true
+            ])
+        ];
+
+        $updateStmt = $conn->prepare("UPDATE Category SET template_config = :config WHERE CategoryName = :name AND ParentCategoryID IS NULL");
+        foreach ($templates as $catName => $config) {
+            $updateStmt->execute([':config' => $config, ':name' => $catName]);
+        }
+        echo "Seeded default template configs for main categories.<br/>";
+    } else {
+        echo "template_config column already exists on Category.<br/>";
+    }
+} catch(PDOException $e) {
+    echo "Category template_config error: " . $e->getMessage() . "<br/>";
+}
 ?>
 

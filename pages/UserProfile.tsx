@@ -2,9 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import MonerisPayModal from '../components/MonerisPayModal';
 import { formatPrice } from '../constants';
+import { useUI } from '../components/UIProvider';
 
 const UserProfile: React.FC = () => {
   const navigate = useNavigate();
+  const { showAlert } = useUI();
   const [user, setUser] = useState<any>(null);
   const [userListings, setUserListings] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -68,11 +70,11 @@ const UserProfile: React.FC = () => {
     // Validate client-side
     const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
     if (!allowedTypes.includes(file.type)) {
-      alert('Please select a JPG, PNG, GIF, or WebP image.');
+      showAlert('Please select a JPG, PNG, GIF, or WebP image.', 'error');
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      alert('Image must be under 5MB.');
+      showAlert('Image must be under 5MB.', 'error');
       return;
     }
 
@@ -94,11 +96,11 @@ const UserProfile: React.FC = () => {
         setUser(updatedUser);
         window.dispatchEvent(new Event('auth_updated'));
       } else {
-        alert(data.message || 'Failed to upload avatar');
+        showAlert(data.message || 'Failed to upload avatar', 'error');
       }
     } catch (err) {
       console.error(err);
-      alert('Error uploading avatar');
+      showAlert('Error uploading avatar', 'error');
     } finally {
       setIsUploadingAvatar(false);
       // Reset input so the same file can be selected again
@@ -129,11 +131,11 @@ const UserProfile: React.FC = () => {
         // Sync app state if needed
         window.dispatchEvent(new Event('auth_updated'));
       } else {
-        alert(data.message || 'Failed to update profile');
+        showAlert(data.message || 'Failed to update profile', 'error');
       }
     } catch (err) {
       console.error(err);
-      alert('Error updating profile');
+      showAlert('Error updating profile', 'error');
     }
   };
 
@@ -159,7 +161,7 @@ const UserProfile: React.FC = () => {
     if (promotionData.is_home_gallery) total += 14.99;
 
     if (total === 0) {
-      alert("Please select at least one promotion option.");
+      showAlert("Please select at least one promotion option.", "error");
       return;
     }
 
@@ -182,17 +184,17 @@ const UserProfile: React.FC = () => {
         setIsPromoteModalOpen(false);
         setIsPayModalOpen(true);
       } else {
-        alert(data.message || 'Failed to initialize payment process.');
+        showAlert(data.message || 'Failed to initialize payment process.', 'error');
       }
     } catch (err) {
       console.error(err);
-      alert('Error connecting to the payment server. Please try again.');
+      showAlert('Error connecting to the payment server. Please try again.', 'error');
     }
   };
 
   const handlePaymentSuccess = (receiptId: string) => {
     setIsPayModalOpen(false);
-    alert('Payment approved and promotions applied successfully! Receipt ID: ' + receiptId);
+    showAlert('Payment approved and promotions applied successfully! Receipt ID: ' + receiptId, 'success');
     
     // Update local listings state
     setUserListings(userListings.map(l => 

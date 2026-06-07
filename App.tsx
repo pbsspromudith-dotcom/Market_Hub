@@ -5,6 +5,7 @@ import Layout from './components/Layout';
 import LocationPrompt from './components/LocationPrompt';
 import ChatBot from './components/ChatBot';
 import AdminRoute from './components/AdminRoute';
+import { UIProvider } from './components/UIProvider';
 
 // ── Lazy-loaded page components for code splitting ──
 const Home = React.lazy(() => import('./pages/Home'));
@@ -88,41 +89,43 @@ const App: React.FC = () => {
   };
 
   return (
-    <Router>
-      <LocationPrompt />
-      <ChatBot />
-      <Layout isLoggedIn={isLoggedIn} isAdmin={isAdmin} onLogout={handleLogout}>
-        <Suspense fallback={<PageLoader />}>
-          <Routes>
-            <Route path="/" element={<Home isLoggedIn={isLoggedIn} />} />
-            <Route path="/login" element={<Login onLogin={handleLogin} />} />
-            <Route path="/admin-login" element={<AdminLogin onLogin={handleLogin} />} />
-            <Route path="/search" element={<SearchResults />} />
-            <Route path="/item/:id" element={<ItemDetails />} />
-            <Route path="/post-ad" element={isLoggedIn ? <PostAd /> : <Navigate to="/login" replace state={{ from: '/post-ad' }} />} />
-            <Route path="/profile" element={<UserProfile />} />
-            <Route path="/dashboard" element={<AdminRoute isAdmin={isAdmin}><AdminDashboard /></AdminRoute>} />
-            <Route path="/admin" element={<AdminRoute isAdmin={isAdmin}><AdminDashboard /></AdminRoute>} />
-            <Route path="/help" element={<Help />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/buying-guides" element={<BuyingGuides />} />
-            <Route path="/safety-tips" element={<SafetyTips />} />
-            <Route path="/selling-advice" element={<SellingAdvice />} />
-            <Route path="/market-trends" element={<MarketTrends />} />
-            <Route path="/terms" element={<Terms />} />
-            <Route path="/payment-portal" element={isLoggedIn ? <PaymentPortal /> : <Navigate to="/login" replace state={{ from: '/payment-portal' }} />} />
+    <UIProvider>
+      <Router>
+        <LocationPrompt />
+        <ChatBot />
+        <Layout isLoggedIn={isLoggedIn} isAdmin={isAdmin} onLogout={handleLogout}>
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
+              <Route path="/" element={<Home isLoggedIn={isLoggedIn} />} />
+              <Route path="/login" element={<Login onLogin={handleLogin} />} />
+              <Route path="/admin-login" element={<AdminLogin onLogin={handleLogin} />} />
+              <Route path="/search" element={<SearchResults />} />
+              <Route path="/item/:id" element={<ItemDetails />} />
+              <Route path="/post-ad" element={isLoggedIn ? <PostAd /> : <Navigate to="/login" replace state={{ from: '/post-ad' }} />} />
+              <Route path="/profile" element={<UserProfile />} />
+              <Route path="/dashboard" element={<AdminRoute isAdmin={isAdmin}><AdminDashboard /></AdminRoute>} />
+              <Route path="/admin" element={<AdminRoute isAdmin={isAdmin}><AdminDashboard /></AdminRoute>} />
+              <Route path="/help" element={<Help />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/buying-guides" element={<BuyingGuides />} />
+              <Route path="/safety-tips" element={<SafetyTips />} />
+              <Route path="/selling-advice" element={<SellingAdvice />} />
+              <Route path="/market-trends" element={<MarketTrends />} />
+              <Route path="/terms" element={<Terms />} />
+              <Route path="/payment-portal" element={isLoggedIn ? <PaymentPortal /> : <Navigate to="/login" replace state={{ from: '/payment-portal' }} />} />
 
-            {/* SEO Landing Pages */}
-            <Route path="/toronto-classifieds" element={<TorontoClassifieds />} />
-            <Route path="/buy-and-sell-toronto" element={<BuyAndSellToronto />} />
-            <Route path="/local-services-toronto" element={<LocalServicesToronto />} />
-            <Route path="/jobs-toronto" element={<JobsToronto />} />
-            <Route path="/real-estate-toronto" element={<RealEstateToronto />} />
-            <Route path="/sri-lankan-marketplace-canada" element={<SriLankanMarketplace />} />
-          </Routes>
-        </Suspense>
-      </Layout>
-    </Router>
+              {/* SEO Landing Pages */}
+              <Route path="/toronto-classifieds" element={<TorontoClassifieds />} />
+              <Route path="/buy-and-sell-toronto" element={<BuyAndSellToronto />} />
+              <Route path="/local-services-toronto" element={<LocalServicesToronto />} />
+              <Route path="/jobs-toronto" element={<JobsToronto />} />
+              <Route path="/real-estate-toronto" element={<RealEstateToronto />} />
+              <Route path="/sri-lankan-marketplace-canada" element={<SriLankanMarketplace />} />
+            </Routes>
+          </Suspense>
+        </Layout>
+      </Router>
+    </UIProvider>
   );
 };
 

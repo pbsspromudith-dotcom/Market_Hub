@@ -12,7 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 
 try {
     // Query all active categories sorted by SortOrder
-    $stmt = $conn->query("SELECT CategoryID, ParentCategoryID, CategoryName, Slug, Icon, SortOrder FROM Category WHERE IsActive = 1 ORDER BY SortOrder ASC");
+    $stmt = $conn->query("SELECT CategoryID, ParentCategoryID, CategoryName, Slug, Icon, SortOrder, template_config FROM Category WHERE IsActive = 1 ORDER BY SortOrder ASC");
     $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     // Recursive function to build tree structure

@@ -169,6 +169,7 @@ const getTitlePlaceholder = (category: string) => {
 const PostAd: React.FC = () => {
   const [step, setStep] = useState(1);
   const navigate = useNavigate();
+  const { showAlert, showConfirm } = useUI();
 
   const [isEditMode, setIsEditMode] = useState(false);
   const [loadingEditData, setLoadingEditData] = useState(false);
@@ -272,43 +273,48 @@ const PostAd: React.FC = () => {
   }, []);
 
   const handleReset = () => {
-    if (window.confirm("Are you sure you want to clear the entire form?")) {
-      setStep(1);
-      setCategory("");
-      setTitle("");
-      setDescription("");
-      setPrice("");
-      setPriceType("amount");
-      setLocation("");
-      setPostalCode("");
-      setContactEmail("");
-      setContactPhone("");
-      setIncludeEmail(false);
-      setIncludePhone(false);
-      setCarMake("");
-      setCarModel("");
-      setCarYear("");
-      setCarTransmission("");
-      setCarFuelType("");
-      setCarMileage("");
-      setCarVIN("");
-      setCarTrim("");
-      setCarBodyType("");
-      setCarDrivetrain("");
-      setCarColor("");
-      setCarDoors("");
-      setCarSeatingCapacity("");
-      setCarFeatures([]);
-      setYoutubeLink("");
-      setFacebookLink("");
-      setElectronBrand("");
-      setElectronModel("");
-      setImageFiles(Array(10).fill(null));
-      setImagePreviews(Array(10).fill(null));
-      setPostInMultipleCities(false);
-      setSelectedCities([]);
-      setCitySearchQuery("");
-    }
+    showConfirm({
+      title: "Clear Form",
+      message: "Are you sure you want to clear the entire form? All your progress will be lost.",
+      isDestructive: true,
+      onConfirm: () => {
+        setStep(1);
+        setCategory("");
+        setTitle("");
+        setDescription("");
+        setPrice("");
+        setPriceType("amount");
+        setLocation("");
+        setPostalCode("");
+        setContactEmail("");
+        setContactPhone("");
+        setIncludeEmail(false);
+        setIncludePhone(false);
+        setCarMake("");
+        setCarModel("");
+        setCarYear("");
+        setCarTransmission("");
+        setCarFuelType("");
+        setCarMileage("");
+        setCarVIN("");
+        setCarTrim("");
+        setCarBodyType("");
+        setCarDrivetrain("");
+        setCarColor("");
+        setCarDoors("");
+        setCarSeatingCapacity("");
+        setCarFeatures([]);
+        setYoutubeLink("");
+        setFacebookLink("");
+        setElectronBrand("");
+        setElectronModel("");
+        setImageFiles(Array(10).fill(null));
+        setImagePreviews(Array(10).fill(null));
+        setPostInMultipleCities(false);
+        setSelectedCities([]);
+        setCitySearchQuery("");
+      }
+    });
   };
 
   const [locationSuggestions, setLocationSuggestions] = useState<any[]>([]);
@@ -389,10 +395,25 @@ const PostAd: React.FC = () => {
 
   const [categoriesTree, setCategoriesTree] = useState<any[]>([]);
   const [categoryPath, setCategoryPath] = useState<any[]>([]);
+  const [templateConfig, setTemplateConfig] = useState<any>({});
   const [dynamicAttributesList, setDynamicAttributesList] = useState<any[]>([]);
   const [dynamicAttributesValues, setDynamicAttributesValues] = useState<
     Record<string, string>
   >({});
+
+  // Resolve template config by walking up the category path
+  const resolveTemplate = (path: any[]) => {
+    for (let i = path.length - 1; i >= 0; i--) {
+      if (path[i].template_config) {
+        try {
+          return typeof path[i].template_config === 'string'
+            ? JSON.parse(path[i].template_config)
+            : path[i].template_config;
+        } catch { return {}; }
+      }
+    }
+    return {}; // default: all fields visible
+  };
 
   useEffect(() => {
     fetch("/api/categories/read.php")
@@ -415,7 +436,7 @@ const PostAd: React.FC = () => {
         .then((res) => res.json())
         .then((l) => {
           if (l.error) {
-            alert("Listing not found or error loading listing.");
+            showAlert("Listing not found or error loading listing.", "error");
             navigate("/profile");
             return;
           }
@@ -424,7 +445,7 @@ const PostAd: React.FC = () => {
           const userStr = localStorage.getItem("user");
           const currentUser = userStr ? JSON.parse(userStr) : null;
           if (!currentUser || (currentUser.id !== l.user_id && !currentUser.isAdmin && currentUser.role !== "admin")) {
-            alert("You are not authorized to edit this ad.");
+            showAlert("You are not authorized to edit this ad.", "error");
             navigate("/profile");
             return;
           }
@@ -468,6 +489,7 @@ const PostAd: React.FC = () => {
               }
             }
             setCategoryPath(parsedPath);
+            setTemplateConfig(resolveTemplate(parsedPath));
           }
 
           // Parse description and extract attributes
@@ -516,7 +538,7 @@ const PostAd: React.FC = () => {
         })
         .catch((err) => {
           console.error("Error fetching listing details:", err);
-          alert("Error loading listing details.");
+          showAlert("Error loading listing details.", "error");
           navigate("/profile");
         })
         .finally(() => setLoadingEditData(false));
@@ -554,6 +576,7 @@ const PostAd: React.FC = () => {
   const handleCategoryClick = (cat: any) => {
     const newPath = [...categoryPath, cat];
     setCategoryPath(newPath);
+    setTemplateConfig(resolveTemplate(newPath));
     if (!cat.children || cat.children.length === 0) {
       setCategory(newPath.map((c) => c.CategoryName).join(" > "));
     }
@@ -563,11 +586,13 @@ const PostAd: React.FC = () => {
     const newPath = categoryPath.slice(0, -1);
     setCategoryPath(newPath);
     setCategory("");
+    setTemplateConfig(resolveTemplate(newPath));
   };
 
   const handleCategoryReset = () => {
     setCategoryPath([]);
     setCategory("");
+    setTemplateConfig({});
   };
 
   const currentLevelCategories =
@@ -578,10 +603,29 @@ const PostAd: React.FC = () => {
   const handlePublish = async () => {
     setIsPublishing(true);
     try {
-      // Get user from local storage
       const userStr = localStorage.getItem("user");
       const user = userStr ? JSON.parse(userStr) : null;
       const userId = user ? user.id : 1;
+
+      const attrDetails = [];
+      for (const [key, val] of Object.entries(dynamicAttributesValues)) {
+        if (val) attrDetails.push(`${key}: ${val}`);
+      }
+      if (carFeatures.length > 0 && !templateConfig.hideCarFeatures && category.startsWith("Vehicles")) {
+        attrDetails.push(`Features: ${carFeatures.join(", ")}`);
+      }
+      if (!templateConfig.hideBrandModel) {
+        if (electronBrand) attrDetails.push(`Brand: ${electronBrand}`);
+        if (electronModel) attrDetails.push(`Model: ${electronModel}`);
+      }
+      if (!templateConfig.hideCondition) {
+        attrDetails.push(`Condition: ${condition}`);
+      }
+
+      const finalTitle = templateConfig.hideTitle ? `${category.split(" > ").pop()} Listing` : title;
+      const finalDescription = templateConfig.hideDescription 
+        ? (attrDetails.length > 0 ? attrDetails.join("\n") : "No description provided.") 
+        : (attrDetails.length > 0 ? attrDetails.join("\n") + "\n\n" + description : description);
 
       // 1. Gather any new files to upload
       const newFilesIndices: number[] = [];
@@ -609,7 +653,7 @@ const PostAd: React.FC = () => {
         }
       }
 
-      // 2. Reassemble the final images list (new uploaded + unchanged existing)
+      // 2. Reassemble the final images list
       let nextUploadIdx = 0;
       const imageUrls: string[] = [];
       for (let i = 0; i < 10; i++) {
@@ -627,36 +671,10 @@ const PostAd: React.FC = () => {
         }
       }
 
-      let finalDescription = description;
-      const attrDetails = [];
-      for (const [key, val] of Object.entries(dynamicAttributesValues)) {
-        if (val) {
-          attrDetails.push(`${key}: ${val}`);
-        }
-      }
-      if (carFeatures.length > 0 && category.startsWith("Vehicles")) {
-        attrDetails.push(`Features: ${carFeatures.join(", ")}`);
-      }
-      // Electronics Brand & Model
-      if (electronBrand) attrDetails.push(`Brand: ${electronBrand}`);
-      if (electronModel) attrDetails.push(`Model: ${electronModel}`);
-      if (
-        !category.startsWith("Jobs") &&
-        !category.startsWith("Real Estate") &&
-        !category.startsWith("Community") &&
-        !category.startsWith("Local Services") &&
-        !category.startsWith("Events")
-      ) {
-        attrDetails.push(`Condition: ${condition}`);
-      }
-      if (attrDetails.length > 0) {
-        finalDescription = attrDetails.join("\n") + "\n\n" + description;
-      }
-
       const urlEndpoint = isEditMode ? "/api/listings/update.php" : "/api/listings/create.php";
       
       const payload: any = {
-        title,
+        title: finalTitle,
         price: priceType === "amount" ? (parseFloat(price) || 0) : 0,
         price_type: priceType,
         category: category || "Other",
@@ -692,7 +710,7 @@ const PostAd: React.FC = () => {
       const data = await response.json();
       if (data.success) {
         if (isEditMode) {
-          alert("Ad updated successfully!");
+          showAlert("Ad updated successfully!", "success");
           navigate("/item/" + editId);
           return;
         }
@@ -729,9 +747,10 @@ const PostAd: React.FC = () => {
             setPayEnvironment(preloadData.environment || "qa");
             setIsPayModalOpen(true);
           } else {
-            alert(
+            showAlert(
               "Ad was published successfully, but we could not initialize the promotion payment: " +
                 (preloadData.message || "Unknown error"),
+              "error"
             );
             navigate("/item/" + data.id);
           }
@@ -739,11 +758,11 @@ const PostAd: React.FC = () => {
           navigate("/item/" + data.id);
         }
       } else {
-        alert("Failed to publish");
+        showAlert("Failed to publish", "error");
       }
     } catch (err) {
       console.error(err);
-      alert("Error publishing");
+      showAlert("Error publishing", "error");
     } finally {
       setIsPublishing(false);
     }
@@ -751,16 +770,18 @@ const PostAd: React.FC = () => {
 
   const handlePaymentSuccess = (receiptId: string) => {
     setIsPayModalOpen(false);
-    alert(
+    showAlert(
       "Payment approved! Your ad has been published and successfully promoted.",
+      "success"
     );
     navigate("/item/" + createdListingId);
   };
 
   const handlePaymentCancel = () => {
     setIsPayModalOpen(false);
-    alert(
+    showAlert(
       "Payment was not completed. Your ad is published, but promotions were not applied. You can promote it anytime from your profile.",
+      "info"
     );
     navigate("/item/" + createdListingId);
   };
@@ -932,30 +953,34 @@ const PostAd: React.FC = () => {
             <div className="bg-white p-10 rounded-[2rem] border border-slate-200 shadow-sm space-y-8">
               <h2 className="text-2xl font-black">{isEditMode ? "Edit Ad Information" : "Ad Information"}</h2>
               <div className="space-y-6">
-                <div>
-                  <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">
-                    Ad Title
-                  </label>
-                  <input
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    className="w-full px-5 py-4 bg-slate-50 border-slate-100 rounded-xl focus:ring-primary focus:border-primary text-sm"
-                    placeholder={getTitlePlaceholder(category)}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">
-                    Description <span className="text-red-500">*</span>
-                  </label>
-                  <textarea
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    rows={6}
-                    className="w-full px-5 py-4 bg-slate-50 border-slate-100 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium resize-y"
-                    placeholder="Provide a detailed description of your item, service, or job..."
-                    required
-                  />
-                </div>
+                {!templateConfig.hideTitle && (
+                  <div>
+                    <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">
+                      Ad Title
+                    </label>
+                    <input
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      className="w-full px-5 py-4 bg-slate-50 border-slate-100 rounded-xl focus:ring-primary focus:border-primary text-sm"
+                      placeholder={getTitlePlaceholder(category)}
+                    />
+                  </div>
+                )}
+                {!templateConfig.hideDescription && (
+                  <div>
+                    <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">
+                      Description <span className="text-red-500">*</span>
+                    </label>
+                    <textarea
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      rows={6}
+                      className="w-full px-5 py-4 bg-slate-50 border-slate-100 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium resize-y"
+                      placeholder="Provide a detailed description of your item, service, or job..."
+                      required
+                    />
+                  </div>
+                )}
                 {dynamicAttributesList.length > 0 && (
                   <div className="bg-primary/5 p-6 rounded-xl border border-primary/20 space-y-4">
                     <h3 className="font-bold text-slate-800 flex items-center gap-2 mb-2">
@@ -1019,6 +1044,37 @@ const PostAd: React.FC = () => {
                               />
                             </div>
                           );
+                        } else if (attr.AttributeType === "CheckboxGroup") {
+                          const currentVals = dynamicAttributesValues[name] ? dynamicAttributesValues[name].split(",").map((v: string) => v.trim()) : [];
+                          return (
+                            <div key={attr.AttributeID} className="col-span-1 md:col-span-2 pt-4 mt-2 border-t border-primary/10">
+                              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">
+                                {name} {isRequired && <span className="text-red-500">*</span>}
+                              </label>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                {attr.options.map((opt: string) => {
+                                  const isChecked = currentVals.includes(opt);
+                                  return (
+                                    <label key={opt} className="flex items-center gap-3 cursor-pointer group">
+                                      <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isChecked ? "bg-primary border-primary" : "bg-white border-slate-300 group-hover:border-primary"}`}>
+                                        {isChecked && <span className="material-icons text-white text-[14px]">check</span>}
+                                      </div>
+                                      <span className="text-sm font-medium text-slate-700">{opt}</span>
+                                      <input
+                                        type="checkbox"
+                                        className="hidden"
+                                        checked={isChecked}
+                                        onChange={() => {
+                                          const newVals = isChecked ? currentVals.filter((v: string) => v !== opt) : [...currentVals, opt];
+                                          setDynamicAttributesValues((prev) => ({ ...prev, [name]: newVals.join(", ") }));
+                                        }}
+                                      />
+                                    </label>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
                         } else {
                           return (
                             <div key={attr.AttributeID}>
@@ -1046,14 +1102,13 @@ const PostAd: React.FC = () => {
                         }
                       })}
                     </div>
-
-                    {category.startsWith("Vehicles") && (
+                    {!templateConfig.hideCarFeatures && category.startsWith("Vehicles") && (Array.isArray(templateConfig.carFeaturesList) ? templateConfig.carFeaturesList.length > 0 : CAR_FEATURES_LIST.length > 0) && (
                       <div className="pt-4 mt-2 border-t border-primary/10">
                         <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">
                           Features
                         </label>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          {CAR_FEATURES_LIST.map((feature) => (
+                          {(Array.isArray(templateConfig.carFeaturesList) ? templateConfig.carFeaturesList : CAR_FEATURES_LIST).map((feature: string) => (
                             <label
                               key={feature}
                               className="flex items-center gap-3 cursor-pointer group"
@@ -1089,7 +1144,7 @@ const PostAd: React.FC = () => {
                     )}
 
                     {/* Brand & Model — for Mobile Phones & Computers under Electronics */}
-                    {(category.includes("Mobile Phones") ||
+                    {!templateConfig.hideBrandModel && (category.includes("Mobile Phones") ||
                       category.includes("Laptops") ||
                       category.includes("Desktop Computers") ||
                       category.includes("Gaming PCs") ||
@@ -1133,7 +1188,7 @@ const PostAd: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">
-                      Price {category.startsWith("Jobs") ? "/ Year" : ""}
+                      {templateConfig.priceLabel || "Price"}
                     </label>
                     <div className="space-y-4">
                       <div className="flex items-center gap-3">
@@ -1154,11 +1209,7 @@ const PostAd: React.FC = () => {
                           disabled={priceType !== "amount"}
                           onChange={(e) => setPrice(e.target.value)}
                           className="flex-1 px-5 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-bold disabled:opacity-50 disabled:bg-slate-100"
-                          placeholder={
-                            category.startsWith("Jobs")
-                              ? "Annual salary or 0 for negotiable"
-                              : "0.00"
-                          }
+                          placeholder={templateConfig.pricePlaceholder || "0.00"}
                           required={priceType === "amount"}
                         />
                       </div>
@@ -1181,12 +1232,7 @@ const PostAd: React.FC = () => {
                     </div>
                   </div>
                   {/* Condition — only for relevant categories */}
-                  {!category.startsWith("Jobs") &&
-                    !category.startsWith("Real Estate") &&
-                    !category.startsWith("Community") &&
-                    !category.startsWith("Local Services") &&
-                    !category.startsWith("Events") &&
-                    !category.startsWith("Pets") && (
+                  {!templateConfig.hideCondition && (
                       <div>
                         <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">
                           Condition
@@ -1225,7 +1271,7 @@ const PostAd: React.FC = () => {
                   Back
                 </button>
                 <button
-                  disabled={!title || !description || (priceType === "amount" && !price)}
+                  disabled={(!templateConfig.hideTitle && !title) || (!templateConfig.hideDescription && !description) || (priceType === "amount" && !price && !templateConfig.hidePrice)}
                   onClick={() => setStep(3)}
                   className="bg-primary hover:bg-primary-hover text-white px-10 py-4 rounded-xl font-bold transition-all shadow-lg shadow-primary/20 flex items-center gap-2 disabled:opacity-50"
                 >
@@ -1244,8 +1290,8 @@ const PostAd: React.FC = () => {
                 {/* Header + progress */}
                 <div className="flex items-center justify-between mb-3">
                   <label className="text-xs font-black text-slate-400 uppercase tracking-widest">
-                    Add Photos (Cover Photo Required){" "}
-                    <span className="text-red-500">*</span>
+                    Add Photos {templateConfig.photosRequired !== false ? '(Cover Photo Required)' : '(Optional)'}{" "}
+                    {templateConfig.photosRequired !== false && <span className="text-red-500">*</span>}
                   </label>
                   <span
                     className={`text-xs font-black px-3 py-1 rounded-full ${
@@ -1363,6 +1409,7 @@ const PostAd: React.FC = () => {
                 </div>
               </section>
 
+              {!templateConfig.hideLocation && (
               <section>
                 <div className="flex flex-col gap-1 mb-4">
                   <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">
@@ -1641,6 +1688,7 @@ const PostAd: React.FC = () => {
                   </div>
                 )}
               </section>
+              )}
 
               <section>
                 <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-4">
@@ -1648,6 +1696,7 @@ const PostAd: React.FC = () => {
                 </label>
                 <div className="space-y-6">
                   {/* Phone Toggle Option */}
+                  {!templateConfig.hidePhone && (
                   <div className="space-y-3">
                     <label className="flex items-center gap-3 cursor-pointer group w-fit">
                       <div
@@ -1693,9 +1742,11 @@ const PostAd: React.FC = () => {
                       </div>
                     )}
                   </div>
+                  )}
                 </div>
               </section>
 
+              {!templateConfig.hideSocialLinks && (
               <section className="pt-6 border-t border-slate-100">
                 <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-4">
                   Social Media Links (Optional)
@@ -1735,6 +1786,7 @@ const PostAd: React.FC = () => {
                   </div>
                 </div>
               </section>
+              )}
 
               <section className="pt-6 border-t border-slate-100">
                 <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-4">
@@ -1870,16 +1922,16 @@ const PostAd: React.FC = () => {
                   Back
                 </button>
                 <div className="flex flex-col items-end gap-2">
-                  {imageFiles[0] === null && imagePreviews[0] === null && (
+                  {templateConfig.photosRequired !== false && imageFiles[0] === null && imagePreviews[0] === null && (
                     <p className="text-xs text-red-500 font-bold">
                       Cover photo is required
                     </p>
                   )}
                   <button
                     disabled={
-                      (postInMultipleCities ? selectedCities.length === 0 : (!location && !postalCode)) ||
+                      (templateConfig.hideLocation ? false : (postInMultipleCities ? selectedCities.length === 0 : (!location && !postalCode))) ||
                       isPublishing ||
-                      (imageFiles[0] === null && imagePreviews[0] === null)
+                      (templateConfig.photosRequired !== false && imageFiles[0] === null && imagePreviews[0] === null)
                     }
                     onClick={handlePublish}
                     className="bg-primary hover:bg-primary-hover text-white px-10 py-4 rounded-xl font-bold transition-all shadow-lg shadow-primary/20 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
