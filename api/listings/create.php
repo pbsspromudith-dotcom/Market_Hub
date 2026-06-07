@@ -25,7 +25,7 @@ if (isset($data->image) && is_array($data->image) && count($data->image) > 0) {
 
 // Determine if multi-city or single-city posting
 $locations = [];
-if (isset($data->locations) && is_array($data->locations) && count($data->locations) > 1) {
+if (isset($data->locations) && is_array($data->locations) && count($data->locations) >= 1) {
     // Multi-city mode
     foreach ($data->locations as $loc) {
         $locations[] = [

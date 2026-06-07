@@ -33,6 +33,12 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin }) => {
       const data = await response.json();
       
       if (data.success) {
+        const userRole = data.user.role ? String(data.user.role).trim().toLowerCase() : '';
+        if (userRole !== 'admin' && userRole !== 'seo') {
+          setError('Access denied. Only Admin and SEO users can log in here.');
+          setIsLoading(false);
+          return;
+        }
         localStorage.setItem('user', JSON.stringify({ ...data.user, isAdmin: true }));
         if (onLogin) onLogin();
         navigate('/dashboard');

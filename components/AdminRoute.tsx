@@ -15,7 +15,8 @@ const AdminRoute: React.FC<AdminRouteProps> = ({ isAdmin, children }) => {
       const userStr = localStorage.getItem('user');
       if (!userStr) return false;
       const user = JSON.parse(userStr);
-      return !!user.isAdmin;
+      const userRole = user.role ? String(user.role).trim().toLowerCase() : '';
+      return !!user.isAdmin || userRole === 'admin' || userRole === 'seo';
     } catch {
       return false;
     }

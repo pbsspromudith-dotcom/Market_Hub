@@ -83,7 +83,18 @@ try {
     $stmt->bindParam(':id', $data->id);
 
     if ($stmt->execute()) {
-        // Sync edits to child listings (multi-city copies)
+        // Sync edits to child/sibling listings (multi-city copies)
+        // Find the actual parent id first:
+        $pId = null;
+        $parentCheck = $conn->prepare("SELECT parent_id FROM listings WHERE id = ?");
+        $parentCheck->execute([$data->id]);
+        $row = $parentCheck->fetch(PDO::FETCH_ASSOC);
+        if ($row && !empty($row['parent_id'])) {
+            $pId = intval($row['parent_id']);
+        } else {
+            $pId = intval($data->id); // Current one is the parent
+        }
+
         // Only sync shared fields — location and postal_code stay unique per city
         $syncQuery = "UPDATE listings SET 
                         title = :title, 
@@ -96,7 +107,7 @@ try {
                         youtube_link = :youtube_link, 
                         facebook_link = :facebook_link, 
                         price_type = :price_type
-                      WHERE parent_id = :parent_id";
+                      WHERE (id = :parent_id OR parent_id = :parent_id) AND id != :current_id";
         $syncStmt = $conn->prepare($syncQuery);
         $syncStmt->bindParam(':title', $data->title);
         $syncStmt->bindParam(':price', $data->price);
@@ -108,7 +119,8 @@ try {
         $syncStmt->bindValue(':youtube_link', $data->youtube_link ?? null);
         $syncStmt->bindValue(':facebook_link', $data->facebook_link ?? null);
         $syncStmt->bindValue(':price_type', $data->price_type ?? 'amount');
-        $syncStmt->bindParam(':parent_id', $data->id);
+        $syncStmt->bindParam(':parent_id', $pId);
+        $syncStmt->bindParam(':current_id', $data->id);
         $syncStmt->execute();
 
         http_response_code(200);

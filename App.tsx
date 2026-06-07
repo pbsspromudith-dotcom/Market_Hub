@@ -52,7 +52,7 @@ const App: React.FC = () => {
     if (userStr) {
       const user = JSON.parse(userStr);
       const userRole = user.role ? String(user.role).trim().toLowerCase() : '';
-      return !!user.isAdmin || userRole === 'admin';
+      return !!user.isAdmin || userRole === 'admin' || userRole === 'seo';
     }
     return false;
   };

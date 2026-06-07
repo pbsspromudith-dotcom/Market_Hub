@@ -212,20 +212,6 @@ const ItemDetails: React.FC = () => {
             </div>
           </div>
 
-          {/* Location Map Section */}
-          <div className="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm">
-            <h2 className="text-xl font-black mb-6 flex items-center gap-2">
-              <span className="material-icons text-primary text-2xl">map</span>
-              Location Map
-            </h2>
-            <div className="aspect-video md:aspect-[21/9] w-full rounded-2xl overflow-hidden shadow-sm border border-slate-200 bg-slate-50">
-              <iframe
-                src={`/map.html?q=${encodeURIComponent(listing.postal_code || listing.location)}`}
-                className="w-full h-full border-0"
-                title="Location Map"
-              ></iframe>
-            </div>
-          </div>
 
           {/* YouTube Video Section */}
           {listing.youtube_link && (
@@ -351,12 +337,23 @@ const ItemDetails: React.FC = () => {
                       )}
                       
                       {listing.location && (
-                        <div className={`flex items-start gap-3 ${listing.contact_phone && listing.contact_phone.trim() !== "" ? 'border-t border-slate-200/60 pt-4' : ''}`}>
-                          <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 flex-shrink-0 mt-0.5">
-                            <span className="material-icons text-sm">location_on</span>
+                        <div className={`pt-4 ${listing.contact_phone && listing.contact_phone.trim() !== "" ? 'border-t border-slate-200/60' : ''}`}>
+                          <div className="flex items-start gap-3 mb-3">
+                            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 flex-shrink-0 mt-0.5">
+                              <span className="material-icons text-sm">location_on</span>
+                            </div>
+                            <div className="text-sm font-bold text-slate-700 leading-snug">
+                              {listing.location} {listing.postal_code ? `(${listing.postal_code})` : ''}
+                            </div>
                           </div>
-                          <div className="text-sm font-bold text-slate-700 leading-snug">
-                            {listing.location} {listing.postal_code ? `(${listing.postal_code})` : ''}
+                          
+                          {/* Mini Map embedded in the sidebar */}
+                          <div className="w-full h-36 rounded-xl overflow-hidden border border-slate-200 bg-slate-100 shadow-inner">
+                            <iframe
+                              src={`/map.html?q=${encodeURIComponent(listing.postal_code || listing.location)}`}
+                              className="w-full h-full border-0"
+                              title="Location Map"
+                            ></iframe>
                           </div>
                         </div>
                       )}

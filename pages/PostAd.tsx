@@ -237,6 +237,9 @@ const PostAd: React.FC = () => {
   const [reSize, setReSize] = useState("");
   // Shared
   const [condition, setCondition] = useState("New");
+  // Electronics-specific fields (Mobile Phones & Computers)
+  const [electronBrand, setElectronBrand] = useState("");
+  const [electronModel, setElectronModel] = useState("");
   const [imageFiles, setImageFiles] = useState<(File | null)[]>(
     Array(10).fill(null),
   );
@@ -298,6 +301,8 @@ const PostAd: React.FC = () => {
       setCarFeatures([]);
       setYoutubeLink("");
       setFacebookLink("");
+      setElectronBrand("");
+      setElectronModel("");
       setImageFiles(Array(10).fill(null));
       setImagePreviews(Array(10).fill(null));
       setPostInMultipleCities(false);
@@ -350,9 +355,20 @@ const PostAd: React.FC = () => {
   const handleSelectCity = (place: any) => {
     const cleanAddr = getCleanAddressString(place);
     const pc = place.address?.postcode || "";
-    // Avoid duplicates
-    if (!selectedCities.some(c => c.location === cleanAddr)) {
+    // Avoid duplicates (case-insensitive)
+    if (!selectedCities.some(c => c.location.toLowerCase() === cleanAddr.toLowerCase())) {
       setSelectedCities(prev => [...prev, { location: cleanAddr, postalCode: pc }]);
+    }
+    setCitySearchQuery("");
+    setShowCitySuggestions(false);
+  };
+
+  const handleAddCustomCity = (cityName: string) => {
+    const cleanCity = cityName.trim();
+    if (!cleanCity) return;
+    // Avoid duplicates (case-insensitive)
+    if (!selectedCities.some(c => c.location.toLowerCase() === cleanCity.toLowerCase())) {
+      setSelectedCities(prev => [...prev, { location: cleanCity, postalCode: "" }]);
     }
     setCitySearchQuery("");
     setShowCitySuggestions(false);
@@ -621,6 +637,9 @@ const PostAd: React.FC = () => {
       if (carFeatures.length > 0 && category.startsWith("Vehicles")) {
         attrDetails.push(`Features: ${carFeatures.join(", ")}`);
       }
+      // Electronics Brand & Model
+      if (electronBrand) attrDetails.push(`Brand: ${electronBrand}`);
+      if (electronModel) attrDetails.push(`Model: ${electronModel}`);
       if (
         !category.startsWith("Jobs") &&
         !category.startsWith("Real Estate") &&
@@ -1068,6 +1087,46 @@ const PostAd: React.FC = () => {
                         </div>
                       </div>
                     )}
+
+                    {/* Brand & Model — for Mobile Phones & Computers under Electronics */}
+                    {(category.includes("Mobile Phones") ||
+                      category.includes("Laptops") ||
+                      category.includes("Desktop Computers") ||
+                      category.includes("Gaming PCs") ||
+                      category.includes("Tablets") ||
+                      category.includes("Computer Parts")) && (
+                      <div className="pt-4 mt-2 border-t border-primary/10">
+                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">
+                          Brand & Model
+                        </label>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">
+                              Brand
+                            </label>
+                            <input
+                              type="text"
+                              value={electronBrand}
+                              onChange={(e) => setElectronBrand(e.target.value)}
+                              className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm"
+                              placeholder="e.g. Apple, Samsung, Dell, HP..."
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">
+                              Model
+                            </label>
+                            <input
+                              type="text"
+                              value={electronModel}
+                              onChange={(e) => setElectronModel(e.target.value)}
+                              className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm"
+                              placeholder="e.g. iPhone 16 Pro, Galaxy S25, XPS 15..."
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -1126,7 +1185,8 @@ const PostAd: React.FC = () => {
                     !category.startsWith("Real Estate") &&
                     !category.startsWith("Community") &&
                     !category.startsWith("Local Services") &&
-                    !category.startsWith("Events") && (
+                    !category.startsWith("Events") &&
+                    !category.startsWith("Pets") && (
                       <div>
                         <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">
                           Condition
@@ -1362,76 +1422,91 @@ const PostAd: React.FC = () => {
                 {!isEditMode && postInMultipleCities ? (
                   <div className="space-y-4 mb-6">
                     {/* City Search Input */}
-                    <div className="relative">
-                      <span className="material-icons absolute left-4 top-3.5 text-primary">
-                        add_location_alt
-                      </span>
-                      <input
-                        value={citySearchQuery}
-                        onChange={(e) => {
-                          setCitySearchQuery(e.target.value);
-                          setShowCitySuggestions(true);
-                        }}
-                        onFocus={() => setShowCitySuggestions(true)}
-                        onBlur={() =>
-                          setTimeout(() => setShowCitySuggestions(false), 200)
-                        }
-                        className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm"
-                        placeholder="Search and add cities (e.g. Toronto, Vancouver, Montreal...)"
-                        autoComplete="off"
-                      />
+                    <div className="flex gap-2">
+                      <div className="relative flex-1">
+                        <span className="material-icons absolute left-4 top-3.5 text-primary">
+                          add_location_alt
+                        </span>
+                        <input
+                          value={citySearchQuery}
+                          onChange={(e) => {
+                            setCitySearchQuery(e.target.value);
+                            setShowCitySuggestions(true);
+                          }}
+                          onFocus={() => setShowCitySuggestions(true)}
+                          onBlur={() =>
+                            setTimeout(() => setShowCitySuggestions(false), 200)
+                          }
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              handleAddCustomCity(citySearchQuery);
+                            }
+                          }}
+                          className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm"
+                          placeholder="Search and add cities (e.g. Toronto, Vancouver, Montreal...)"
+                          autoComplete="off"
+                        />
 
-                      {/* City Suggestions Dropdown */}
-                      {showCitySuggestions && citySearchQuery.length > 2 && (
-                        <div className="absolute top-14 left-0 w-full bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden">
-                          {isSearchingCity ? (
-                            <div className="p-4 text-xs font-bold text-slate-400 text-center flex items-center justify-center gap-2">
-                              <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-                              Searching cities...
-                            </div>
-                          ) : citySearchSuggestions.length > 0 ? (
-                            <ul>
-                              {citySearchSuggestions.map((place, idx) => {
-                                const { mainText, secondaryText } = getGoogleStyleAddress(place);
-                                const cleanAddr = getCleanAddressString(place);
-                                const isAlreadyAdded = selectedCities.some(c => c.location === cleanAddr);
-                                return (
-                                  <li
-                                    key={idx}
-                                    onClick={() => !isAlreadyAdded && handleSelectCity(place)}
-                                    className={`px-4 py-3 border-b border-slate-50 last:border-0 flex items-start gap-3 transition-colors ${
-                                      isAlreadyAdded
-                                        ? "bg-green-50 cursor-default"
-                                        : "hover:bg-slate-50 cursor-pointer"
-                                    }`}
-                                  >
-                                    <span className={`material-icons text-lg mt-0.5 ${isAlreadyAdded ? "text-green-500" : "text-slate-300"}`}>
-                                      {isAlreadyAdded ? "check_circle" : "place"}
-                                    </span>
-                                    <div className="flex-1">
-                                      <p className="text-sm font-bold text-slate-700 leading-tight mb-0.5">
-                                        {mainText}
-                                      </p>
-                                      <p className="text-xs text-slate-400 leading-tight">
-                                        {secondaryText}
-                                      </p>
-                                    </div>
-                                    {isAlreadyAdded && (
-                                      <span className="text-[9px] font-black text-green-600 uppercase tracking-widest bg-green-100 px-2 py-1 rounded self-center">
-                                        Added
+                        {/* City Suggestions Dropdown */}
+                        {showCitySuggestions && citySearchQuery.length > 2 && (
+                          <div className="absolute top-14 left-0 w-full bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden">
+                            {isSearchingCity ? (
+                              <div className="p-4 text-xs font-bold text-slate-400 text-center flex items-center justify-center gap-2">
+                                <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                                Searching cities...
+                              </div>
+                            ) : citySearchSuggestions.length > 0 ? (
+                              <ul>
+                                {citySearchSuggestions.map((place, idx) => {
+                                  const { mainText, secondaryText } = getGoogleStyleAddress(place);
+                                  const cleanAddr = getCleanAddressString(place);
+                                  const isAlreadyAdded = selectedCities.some(c => c.location.toLowerCase() === cleanAddr.toLowerCase());
+                                  return (
+                                    <li
+                                      key={idx}
+                                      onClick={() => !isAlreadyAdded && handleSelectCity(place)}
+                                      className={`px-4 py-3 border-b border-slate-50 last:border-0 flex items-start gap-3 transition-colors ${
+                                        isAlreadyAdded
+                                          ? "bg-green-50 cursor-default"
+                                          : "hover:bg-slate-50 cursor-pointer"
+                                      }`}
+                                    >
+                                      <span className={`material-icons text-lg mt-0.5 ${isAlreadyAdded ? "text-green-500" : "text-slate-300"}`}>
+                                        {isAlreadyAdded ? "check_circle" : "place"}
                                       </span>
-                                    )}
-                                  </li>
-                                );
-                              })}
-                            </ul>
-                          ) : (
-                            <div className="p-4 text-xs font-bold text-slate-400 text-center">
-                              No cities found. Try a different search term.
-                            </div>
-                          )}
-                        </div>
-                      )}
+                                      <div className="flex-1">
+                                        <p className="text-sm font-bold text-slate-700 leading-tight mb-0.5">
+                                          {mainText}
+                                        </p>
+                                        <p className="text-xs text-slate-400 leading-tight">
+                                          {secondaryText}
+                                        </p>
+                                      </div>
+                                      {isAlreadyAdded && (
+                                        <span className="text-[9px] font-black text-green-600 uppercase tracking-widest bg-green-100 px-2 py-1 rounded self-center">
+                                          Added
+                                        </span>
+                                      )}
+                                    </li>
+                                  );
+                                })}
+                              </ul>
+                            ) : (
+                              <div className="p-4 text-xs font-bold text-slate-400 text-center">
+                                No cities found. Try a different search term.
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleAddCustomCity(citySearchQuery)}
+                        className="px-6 bg-primary hover:bg-primary-hover text-white rounded-xl font-bold text-sm transition-all"
+                      >
+                        Add
+                      </button>
                     </div>
 
                     {/* Selected Cities Chips */}
@@ -1802,7 +1877,9 @@ const PostAd: React.FC = () => {
                   )}
                   <button
                     disabled={
-                      (!location && !postalCode) || isPublishing || (imageFiles[0] === null && imagePreviews[0] === null)
+                      (postInMultipleCities ? selectedCities.length === 0 : (!location && !postalCode)) ||
+                      isPublishing ||
+                      (imageFiles[0] === null && imagePreviews[0] === null)
                     }
                     onClick={handlePublish}
                     className="bg-primary hover:bg-primary-hover text-white px-10 py-4 rounded-xl font-bold transition-all shadow-lg shadow-primary/20 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"

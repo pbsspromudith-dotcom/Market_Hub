@@ -59,7 +59,19 @@ const AdminDashboard: React.FC = () => {
   // Tab Navigation State
   const [activeTab, setActiveTab] = useState('overview');
 
-  const tabs = [
+  // Read user role from localStorage to filter tabs
+  const userRole = (() => {
+    try {
+      const userStr = localStorage.getItem('user');
+      if (!userStr) return 'admin';
+      const user = JSON.parse(userStr);
+      return user.role ? String(user.role).trim().toLowerCase() : 'admin';
+    } catch {
+      return 'admin';
+    }
+  })();
+
+  const allTabs = [
     { id: 'overview', label: 'Overview', icon: 'dashboard' },
     { id: 'listings', label: 'Listings', icon: 'inventory_2' },
     { id: 'users', label: 'Users', icon: 'people' },
@@ -70,6 +82,12 @@ const AdminDashboard: React.FC = () => {
     { id: 'seo', label: 'SEO Settings', icon: 'manage_search' },
     { id: 'social', label: 'Homepage & Footer', icon: 'home' }
   ];
+
+  // SEO users only see these tabs
+  const SEO_ALLOWED_TABS = ['listing-seo', 'seo', 'social'];
+  const tabs = userRole === 'seo'
+    ? allTabs.filter(t => SEO_ALLOWED_TABS.includes(t.id))
+    : allTabs;
 
   // Category menu layout states
   const [menuCategories, setMenuCategories] = useState<any[]>([]);
@@ -141,21 +159,31 @@ const AdminDashboard: React.FC = () => {
   const [listingSeoMsg, setListingSeoMsg] = useState<{type: 'success' | 'error', text: string} | null>(null);
 
   useEffect(() => {
-    fetch('/api/admin/stats.php')
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          setAdminStats(data.stats);
-        }
-      })
-      .catch(console.error);
+    // Set the initial active tab based on role
+    if (userRole === 'seo') {
+      setActiveTab('listing-seo');
+    }
 
-    fetchListings();
-    fetchOptions();
-    fetchEmailConfig();
-    fetchUsers();
+    // Only fetch admin-only data for admin users
+    if (userRole !== 'seo') {
+      fetch('/api/admin/stats.php')
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            setAdminStats(data.stats);
+          }
+        })
+        .catch(console.error);
+
+      fetchListings();
+      fetchOptions();
+      fetchEmailConfig();
+      fetchUsers();
+      fetchMenuCategories();
+    }
+
+    // SEO settings are needed by both roles
     fetchSeoSettings();
-    fetchMenuCategories();
   }, []);
 
   const fetchSeoSettings = () => {
@@ -672,8 +700,8 @@ const AdminDashboard: React.FC = () => {
     <div className="max-w-[1600px] mx-auto px-6 py-10">
       <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black">Dashboard Overview</h1>
-          <p className="text-slate-500 font-medium">Welcome back, Alex. Here's what's happening today.</p>
+          <h1 className="text-3xl font-black">{userRole === 'seo' ? 'SEO Dashboard' : 'Dashboard Overview'}</h1>
+          <p className="text-slate-500 font-medium">{userRole === 'seo' ? 'Manage SEO settings, listing metadata, and homepage content.' : "Welcome back, Alex. Here's what's happening today."}</p>
         </div>
         <div className="flex gap-4">
           <div className="relative">
@@ -979,7 +1007,7 @@ const AdminDashboard: React.FC = () => {
                     </td>
                     <td className="px-6 py-4">
                       <span className={`px-3 py-1 rounded-full text-[10px] uppercase font-black tracking-widest ${
-                        u.role === 'admin' ? 'bg-purple-100 text-purple-600' : 'bg-slate-100 text-slate-600'
+                        u.role === 'admin' ? 'bg-purple-100 text-purple-600' : u.role === 'seo' ? 'bg-teal-100 text-teal-600' : 'bg-slate-100 text-slate-600'
                       }`}>
                         {u.role}
                       </span>
@@ -1070,6 +1098,7 @@ const AdminDashboard: React.FC = () => {
                 >
                   <option value="user">User</option>
                   <option value="admin">Admin</option>
+                  <option value="seo">SEO</option>
                 </select>
               </div>
               <div className="pt-4 flex gap-3">
