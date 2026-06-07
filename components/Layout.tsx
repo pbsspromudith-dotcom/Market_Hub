@@ -116,7 +116,10 @@ const Layout: React.FC<LayoutProps> = ({
                 <img
                   src={logoImg}
                   alt="HitAds Logo"
-                  className="h-14 md:h-20 object-contain transition-transform hover:scale-105 mix-blend-multiply"
+                  width="160"
+                  height="80"
+                  fetchpriority="high"
+                  className="h-14 md:h-20 w-auto object-contain transition-transform hover:scale-105 mix-blend-multiply"
                 />
               </Link>
             </div>
