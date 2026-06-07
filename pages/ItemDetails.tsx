@@ -271,7 +271,7 @@ const ItemDetails: React.FC = () => {
         </div>
 
         {/* Sidebar Sticky */}
-        <aside className="lg:col-span-4 order-first lg:order-last">
+        <aside className="lg:col-span-4">
           <div className="sticky top-28 space-y-8">
             <div className="bg-white rounded-[2rem] border border-slate-200 p-8 shadow-xl shadow-slate-100">
               <div className="mb-8">

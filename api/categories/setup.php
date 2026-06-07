@@ -49,6 +49,7 @@ try {
         Description TEXT NULL,
         SortOrder INT DEFAULT 0,
         IsActive TINYINT(1) DEFAULT 1,
+        template_config JSON NULL,
         CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
         CONSTRAINT fk_category_parent_self FOREIGN KEY (ParentCategoryID) REFERENCES Category(CategoryID) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");

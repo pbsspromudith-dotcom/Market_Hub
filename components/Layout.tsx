@@ -41,6 +41,7 @@ const Layout: React.FC<LayoutProps> = ({
     instagram: ""
   });
   const [footerText, setFooterText] = useState("© 2026 HitAds.ca — Post free ads, sell fast, buy local, and connect with buyers and sellers across Canada.");
+  const [expandedFooter, setExpandedFooter] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/categories/read.php")
@@ -536,9 +537,9 @@ const Layout: React.FC<LayoutProps> = ({
       <main className="flex-grow">{children}</main>
 
       {!isLoginPage && (
-        <footer className="relative mt-16 md:mt-24 pt-24 pb-12 bg-white border-t border-slate-100 overflow-hidden">
+        <footer className="relative mt-10 md:mt-24 pt-12 md:pt-24 pb-8 md:pb-12 bg-white border-t border-slate-100 overflow-hidden">
           <div className="relative z-10 w-full px-4 sm:px-6 lg:px-10">
-            <div className="flex gap-4 mb-12">
+            <div className="flex gap-4 mb-8 md:mb-12">
               <a
                 href={socialLinks.facebook || "#"}
                 target="_blank"
@@ -565,13 +566,19 @@ const Layout: React.FC<LayoutProps> = ({
               </a>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-8 mb-16">
+            <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-8 mb-10 sm:mb-16">
               {/* Column 1: Tips & Help */}
-              <div className="space-y-6">
-                <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em]">
-                  Tips & Help
-                </h4>
-                <ul className="space-y-3">
+              <div className="border-b border-slate-100 sm:border-none pb-4 sm:pb-0">
+                <button 
+                  onClick={() => setExpandedFooter(expandedFooter === 'tips' ? null : 'tips')}
+                  className="w-full flex justify-between items-center sm:cursor-default sm:mb-6"
+                >
+                  <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em]">
+                    Tips & Help
+                  </h4>
+                  <span className="material-icons sm:hidden text-slate-400">{expandedFooter === 'tips' ? 'remove' : 'add'}</span>
+                </button>
+                <ul className={`space-y-3 overflow-hidden transition-all duration-300 ${expandedFooter === 'tips' ? 'max-h-[500px] opacity-100 pt-4' : 'max-h-0 opacity-0 sm:max-h-[500px] sm:opacity-100 sm:pt-0'}`}>
                   {/* <li>
                     <Link
                       to="/help"
@@ -643,11 +650,17 @@ const Layout: React.FC<LayoutProps> = ({
               </div>
 
               {/* Column 2: Legal */}
-              <div className="space-y-6">
-                <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em]">
-                  Legal
-                </h4>
-                <ul className="space-y-3">
+              <div className="border-b border-slate-100 sm:border-none pb-4 sm:pb-0">
+                <button 
+                  onClick={() => setExpandedFooter(expandedFooter === 'legal' ? null : 'legal')}
+                  className="w-full flex justify-between items-center sm:cursor-default sm:mb-6"
+                >
+                  <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em]">
+                    Legal
+                  </h4>
+                  <span className="material-icons sm:hidden text-slate-400">{expandedFooter === 'legal' ? 'remove' : 'add'}</span>
+                </button>
+                <ul className={`space-y-3 overflow-hidden transition-all duration-300 ${expandedFooter === 'legal' ? 'max-h-[500px] opacity-100 pt-4' : 'max-h-0 opacity-0 sm:max-h-[500px] sm:opacity-100 sm:pt-0'}`}>
                   <li>
                     <Link
                       to="/terms"
@@ -689,11 +702,17 @@ const Layout: React.FC<LayoutProps> = ({
               </div>
 
               {/* Column 3: For Business */}
-              <div className="space-y-6">
-                <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em]">
-                  For Business
-                </h4>
-                <ul className="space-y-3">
+              <div className="border-b border-slate-100 sm:border-none pb-4 sm:pb-0">
+                <button 
+                  onClick={() => setExpandedFooter(expandedFooter === 'business' ? null : 'business')}
+                  className="w-full flex justify-between items-center sm:cursor-default sm:mb-6"
+                >
+                  <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em]">
+                    For Business
+                  </h4>
+                  <span className="material-icons sm:hidden text-slate-400">{expandedFooter === 'business' ? 'remove' : 'add'}</span>
+                </button>
+                <ul className={`space-y-3 overflow-hidden transition-all duration-300 ${expandedFooter === 'business' ? 'max-h-[500px] opacity-100 pt-4' : 'max-h-0 opacity-0 sm:max-h-[500px] sm:opacity-100 sm:pt-0'}`}>
                   <li>
                     <Link
                       to="/contact"
@@ -725,11 +744,17 @@ const Layout: React.FC<LayoutProps> = ({
               </div>
 
               {/* Column 4: Explore */}
-              <div className="space-y-6">
-                <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em]">
-                  Explore
-                </h4>
-                <ul className="space-y-3">
+              <div className="border-b border-slate-100 sm:border-none pb-4 sm:pb-0">
+                <button 
+                  onClick={() => setExpandedFooter(expandedFooter === 'explore' ? null : 'explore')}
+                  className="w-full flex justify-between items-center sm:cursor-default sm:mb-6"
+                >
+                  <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em]">
+                    Explore
+                  </h4>
+                  <span className="material-icons sm:hidden text-slate-400">{expandedFooter === 'explore' ? 'remove' : 'add'}</span>
+                </button>
+                <ul className={`space-y-3 overflow-hidden transition-all duration-300 ${expandedFooter === 'explore' ? 'max-h-[500px] opacity-100 pt-4' : 'max-h-0 opacity-0 sm:max-h-[500px] sm:opacity-100 sm:pt-0'}`}>
                   <li>
                     <Link
                       to="/search"
@@ -770,11 +795,17 @@ const Layout: React.FC<LayoutProps> = ({
               </div>
 
               {/* Column 5: HitAds Vehicles */}
-              <div className="space-y-6">
-                <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em]">
-                  HitAds Vehicles
-                </h4>
-                <ul className="space-y-3">
+              <div className="border-b border-slate-100 sm:border-none pb-4 sm:pb-0">
+                <button 
+                  onClick={() => setExpandedFooter(expandedFooter === 'vehicles' ? null : 'vehicles')}
+                  className="w-full flex justify-between items-center sm:cursor-default sm:mb-6"
+                >
+                  <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em]">
+                    HitAds Vehicles
+                  </h4>
+                  <span className="material-icons sm:hidden text-slate-400">{expandedFooter === 'vehicles' ? 'remove' : 'add'}</span>
+                </button>
+                <ul className={`space-y-3 overflow-hidden transition-all duration-300 ${expandedFooter === 'vehicles' ? 'max-h-[500px] opacity-100 pt-4' : 'max-h-0 opacity-0 sm:max-h-[500px] sm:opacity-100 sm:pt-0'}`}>
                   <li>
                     <Link
                       to="/search?q=Cars"
@@ -824,11 +855,17 @@ const Layout: React.FC<LayoutProps> = ({
               </div>
 
               {/* Column 6: Top Categories */}
-              <div className="space-y-6">
-                <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em]">
-                  Top Categories
-                </h4>
-                <ul className="space-y-3">
+              <div className="border-b border-slate-100 sm:border-none pb-4 sm:pb-0">
+                <button 
+                  onClick={() => setExpandedFooter(expandedFooter === 'categories' ? null : 'categories')}
+                  className="w-full flex justify-between items-center sm:cursor-default sm:mb-6"
+                >
+                  <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em]">
+                    Top Categories
+                  </h4>
+                  <span className="material-icons sm:hidden text-slate-400">{expandedFooter === 'categories' ? 'remove' : 'add'}</span>
+                </button>
+                <ul className={`space-y-3 overflow-hidden transition-all duration-300 ${expandedFooter === 'categories' ? 'max-h-[500px] opacity-100 pt-4' : 'max-h-0 opacity-0 sm:max-h-[500px] sm:opacity-100 sm:pt-0'}`}>
                   <li>
                     <Link
                       to="/search?q=Real%20Estate"

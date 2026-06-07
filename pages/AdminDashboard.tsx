@@ -973,12 +973,12 @@ const AdminDashboard: React.FC = () => {
       </div>
 
       {/* Tabs Navigation */}
-      <div className="flex flex-wrap gap-2 mb-8 bg-slate-100 p-1.5 rounded-2xl max-w-max border border-slate-200/60 animate-in fade-in duration-300">
+      <div className="flex overflow-x-auto custom-scrollbar gap-2 mb-8 bg-slate-100 p-1.5 rounded-2xl w-full xl:w-max border border-slate-200/60 animate-in fade-in duration-300">
         {tabs.map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-2 px-5 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-200 ${
+            className={`flex-shrink-0 flex items-center gap-2 px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-200 ${
               activeTab === tab.id
                 ? 'bg-white text-primary shadow-sm'
                 : 'text-slate-500 hover:text-slate-800'
@@ -1122,8 +1122,8 @@ const AdminDashboard: React.FC = () => {
             </div>
           )}
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
+          <div className="overflow-x-auto w-full">
+            <table className="w-full text-left min-w-[800px]">
               <thead className="bg-slate-50 border-y border-slate-100 uppercase text-[10px] font-black text-slate-400 tracking-widest">
                 <tr>
                   <th className="px-6 py-4 rounded-l-xl w-10">
@@ -1233,8 +1233,8 @@ const AdminDashboard: React.FC = () => {
             <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">View, edit, or remove user accounts</p>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
+          <div className="overflow-x-auto w-full">
+            <table className="w-full text-left min-w-[800px]">
               <thead className="bg-slate-50 border-y border-slate-100 uppercase text-[10px] font-black text-slate-400 tracking-widest">
                 <tr>
                   <th className="px-6 py-4 rounded-l-xl">User</th>
@@ -1770,8 +1770,8 @@ const AdminDashboard: React.FC = () => {
             )}
 
             {/* Data Grid Table */}
-            <div className="overflow-x-auto rounded-xl border border-slate-200">
-              <table className="w-full text-left border-collapse">
+            <div className="overflow-x-auto rounded-xl border border-slate-200 w-full">
+              <table className="w-full text-left border-collapse min-w-[600px]">
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-200">
                     <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-16">ID</th>
@@ -2132,8 +2132,8 @@ const AdminDashboard: React.FC = () => {
                 <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">
                   Showing {seoListings.length} of {seoTotal} listings
                 </div>
-                <div className="overflow-x-auto rounded-2xl border border-slate-100">
-                  <table className="w-full text-sm">
+                <div className="overflow-x-auto rounded-2xl border border-slate-100 w-full">
+                  <table className="w-full text-sm min-w-[800px]">
                     <thead>
                       <tr className="bg-slate-50 border-b border-slate-100">
                         <th className="text-left px-4 py-3 font-black text-[10px] text-slate-500 uppercase tracking-widest">ID</th>
