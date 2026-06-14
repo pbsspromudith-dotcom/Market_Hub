@@ -123,6 +123,7 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn }) => {
     tag3: "Buy Local.",
     tag4: "Canada-Wide."
   });
+  const [homepageAdCount, setHomepageAdCount] = useState(12);
 
   const [serverMessage, setServerMessage] = useState<string>(
     "Checking backend connection...",
@@ -183,13 +184,16 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn }) => {
 
     fetch("/api/listings/read.php")
       .then((res) => res.json())
-      .then((data) => setListings(data.slice(0, 6))) // get top 6 recent
+      .then((data) => setListings(data))
       .catch((err) => console.error("DB fetch error", err));
 
     fetch("/api/admin/seo_read.php?t=" + new Date().getTime())
       .then((res) => res.json())
       .then((data) => {
         if (data.success && data.settings) {
+          if (data.settings.homepage_ad_count) {
+            setHomepageAdCount(parseInt(data.settings.homepage_ad_count, 10) || 12);
+          }
           setHeroText({
             title1: data.settings.homepage_hero_title_1 || "Find what you need,",
             title2: data.settings.homepage_hero_title_2 || "right in your community.",
@@ -401,7 +405,7 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn }) => {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
-              {listings.map((item) => (
+              {listings.slice(0, homepageAdCount).map((item) => (
                 <Link
                   to={`/item/${item.id}`}
                   key={item.id}

@@ -22,6 +22,9 @@ const ItemDetails: React.FC = () => {
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [sentStatus, setSentStatus] = useState<string | null>(null);
+  
+  const [mapWidth, setMapWidth] = useState('100%');
+  const [mapHeight, setMapHeight] = useState('200px');
 
   useEffect(() => {
     setLoading(true);
@@ -35,10 +38,20 @@ const ItemDetails: React.FC = () => {
       })
       .catch(console.error)
       .finally(() => setLoading(false));
+
+    fetch('/api/admin/seo_read.php?t=' + new Date().getTime())
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.settings) {
+          if (data.settings.listing_map_width) setMapWidth(data.settings.listing_map_width);
+          if (data.settings.listing_map_height) setMapHeight(data.settings.listing_map_height);
+        }
+      })
+      .catch(console.error);
   }, [id]);
 
   const handleSendMessage = async () => {
-    if (!message.trim()) return;
+    const finalMessage = message.trim() || "Is this still available?";
     
     setSending(true);
     setSentStatus(null);
@@ -50,7 +63,7 @@ const ItemDetails: React.FC = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           listing_id: id,
-          message: message,
+          message: finalMessage,
           sender_id: user ? user.id : 0,
           sender_name: user ? user.name : 'A Guest'
         })
@@ -313,7 +326,7 @@ const ItemDetails: React.FC = () => {
 
                   <button 
                     onClick={handleSendMessage}
-                    disabled={sending || !message.trim()}
+                    disabled={sending}
                     className="w-full bg-primary text-white font-black py-4 rounded-xl hover:bg-primary-hover transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20 disabled:opacity-50"
                   >
                     <span className="material-icons">{sending ? 'sync' : 'send'}</span> 
@@ -348,7 +361,10 @@ const ItemDetails: React.FC = () => {
                           </div>
                           
                           {/* Mini Map embedded in the sidebar */}
-                          <div className="w-full h-36 rounded-xl overflow-hidden border border-slate-200 bg-slate-100 shadow-inner">
+                          <div 
+                            style={{ width: mapWidth, height: mapHeight, maxWidth: '100%' }}
+                            className="rounded-xl mx-auto overflow-hidden border border-slate-200 bg-slate-100 shadow-inner"
+                          >
                             <iframe
                               src={`/map.html?q=${encodeURIComponent(listing.postal_code || listing.location)}`}
                               className="w-full h-full border-0"

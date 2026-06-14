@@ -283,6 +283,17 @@ const AdminDashboard: React.FC = () => {
     }
   })();
 
+  const userName = (() => {
+    try {
+      const userStr = localStorage.getItem('user');
+      if (!userStr) return 'Admin';
+      const user = JSON.parse(userStr);
+      return user.name || 'Admin';
+    } catch {
+      return 'Admin';
+    }
+  })();
+
   const allTabs = [
     { id: 'overview', label: 'Overview', icon: 'dashboard' },
     { id: 'listings', label: 'Listings', icon: 'inventory_2' },
@@ -452,7 +463,10 @@ const AdminDashboard: React.FC = () => {
           homepage_hero_tag_1: seoSettings.homepage_hero_tag_1,
           homepage_hero_tag_2: seoSettings.homepage_hero_tag_2,
           homepage_hero_tag_3: seoSettings.homepage_hero_tag_3,
-          homepage_hero_tag_4: seoSettings.homepage_hero_tag_4
+          homepage_hero_tag_4: seoSettings.homepage_hero_tag_4,
+          homepage_ad_count: seoSettings.homepage_ad_count,
+          listing_map_width: seoSettings.listing_map_width,
+          listing_map_height: seoSettings.listing_map_height
         }),
       });
       const data = await response.json();
@@ -958,7 +972,7 @@ const AdminDashboard: React.FC = () => {
       <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h1 className="text-3xl font-black">{userRole === 'seo' ? 'SEO Dashboard' : 'Dashboard Overview'}</h1>
-          <p className="text-slate-500 font-medium">{userRole === 'seo' ? 'Manage SEO settings, listing metadata, and homepage content.' : "Welcome back, Alex. Here's what's happening today."}</p>
+          <p className="text-slate-500 font-medium">{userRole === 'seo' ? 'Manage SEO settings, listing metadata, and homepage content.' : `Welcome back, ${userName}. Here's what's happening today.`}</p>
         </div>
         <div className="flex gap-4">
           <div className="relative">
@@ -2742,6 +2756,44 @@ const AdminDashboard: React.FC = () => {
                     onChange={e => setSeoSettings({...seoSettings, homepage_hero_tag_4: e.target.value})}
                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium"
                     placeholder="Canada-Wide."
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <div>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Number of Ads to Show</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="100"
+                    value={seoSettings.homepage_ad_count || 12}
+                    onChange={e => setSeoSettings({...seoSettings, homepage_ad_count: e.target.value})}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium"
+                    placeholder="12"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <div>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Listing Map Width (e.g. 100%, 250px)</label>
+                  <input
+                    type="text"
+                    value={seoSettings.listing_map_width || '100%'}
+                    onChange={e => setSeoSettings({...seoSettings, listing_map_width: e.target.value})}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium"
+                    placeholder="100%"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Listing Map Height (e.g. 200px, 300px)</label>
+                  <input
+                    type="text"
+                    value={seoSettings.listing_map_height || '200px'}
+                    onChange={e => setSeoSettings({...seoSettings, listing_map_height: e.target.value})}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium"
+                    placeholder="200px"
                   />
                 </div>
               </div>

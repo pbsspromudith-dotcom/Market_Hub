@@ -31,6 +31,8 @@ const UserProfile: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'listings' | 'messages'>('listings');
   const [messages, setMessages] = useState<any[]>([]);
   const [isMessagesLoading, setIsMessagesLoading] = useState(false);
+  const [listingToDelete, setListingToDelete] = useState<string | null>(null);
+  const [listingToEdit, setListingToEdit] = useState<string | null>(null);
 
   useEffect(() => {
     const userStr = localStorage.getItem('user');
@@ -207,6 +209,32 @@ const UserProfile: React.FC = () => {
   const handlePaymentCancel = () => {
     setIsPayModalOpen(false);
     setIsPromoteModalOpen(true);
+  };
+
+  const handleDeleteListing = (listingId: string) => {
+    setListingToDelete(listingId);
+  };
+
+  const confirmDeleteListing = async () => {
+    if (!listingToDelete) return;
+    
+    try {
+      const response = await fetch(`/api/listings/delete.php?id=${listingToDelete}`, {
+        method: 'DELETE'
+      });
+      const data = await response.json();
+      if (data.success) {
+        setUserListings(userListings.filter(l => l.id !== listingToDelete));
+        showAlert("Ad deleted successfully.", "success");
+      } else {
+        showAlert(data.message || "Failed to delete ad.", "error");
+      }
+    } catch (err) {
+      console.error(err);
+      showAlert("Error deleting ad.", "error");
+    } finally {
+      setListingToDelete(null);
+    }
   };
 
   if (!user) return null;
@@ -390,10 +418,14 @@ const UserProfile: React.FC = () => {
                     <span className="material-icons text-base">campaign</span>
                     Promote Ad
                   </button>
-                  <Link to={`/post-ad?edit=${listing.id}`} className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-black uppercase tracking-widest py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all mt-3 text-center border border-slate-200/60 shadow-sm">
+                  <button onClick={() => setListingToEdit(listing.id)} className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-black uppercase tracking-widest py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all mt-3 text-center border border-slate-200/60 shadow-sm">
                     <span className="material-icons text-base">edit</span>
                     Edit Ad
-                  </Link>
+                  </button>
+                  <button onClick={() => handleDeleteListing(listing.id)} className="w-full bg-red-50 hover:bg-red-100 text-red-600 text-[11px] font-black uppercase tracking-widest py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all mt-3 text-center border border-red-200/60 shadow-sm">
+                    <span className="material-icons text-base">delete</span>
+                    Delete Ad
+                  </button>
                 </div>
 
               </div>
@@ -642,6 +674,64 @@ const UserProfile: React.FC = () => {
           onSuccess={handlePaymentSuccess}
           onCancel={handlePaymentCancel}
         />
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {listingToDelete && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-8 w-full max-w-sm shadow-2xl animate-in zoom-in-95 duration-200 text-center">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-red-500">
+              <span className="material-icons text-3xl">warning</span>
+            </div>
+            <h3 className="text-xl font-black mb-2">Delete Ad?</h3>
+            <p className="text-sm text-slate-500 font-medium mb-6">
+              Are you sure you want to permanently delete this ad? This action cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setListingToDelete(null)}
+                className="flex-1 px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-sm transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDeleteListing}
+                className="flex-1 px-4 py-3 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl text-sm transition-colors shadow-lg shadow-red-500/20"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Confirmation Modal */}
+      {listingToEdit && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-8 w-full max-w-sm shadow-2xl animate-in zoom-in-95 duration-200 text-center">
+            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-500">
+              <span className="material-icons text-3xl">edit</span>
+            </div>
+            <h3 className="text-xl font-black mb-2">Edit Ad?</h3>
+            <p className="text-sm text-slate-500 font-medium mb-6">
+              Do you want to edit the details of this ad?
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setListingToEdit(null)}
+                className="flex-1 px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-sm transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => navigate(`/post-ad?edit=${listingToEdit}`)}
+                className="flex-1 px-4 py-3 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-xl text-sm transition-colors shadow-lg shadow-blue-500/20"
+              >
+                Yes, Edit
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
