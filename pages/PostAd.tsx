@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { trackListingSubmission } from "../analytics";
 import MonerisPayModal from "../components/MonerisPayModal";
 import { useUI } from "../components/UIProvider";
@@ -170,7 +170,35 @@ const getTitlePlaceholder = (category: string) => {
 const PostAd: React.FC = () => {
   const [step, setStep] = useState(1);
   const navigate = useNavigate();
+  const locationObj = useLocation();
   const { showAlert, showConfirm } = useUI();
+
+  useEffect(() => {
+    const params = new URLSearchParams(locationObj.search);
+    if (!params.get("edit")) {
+      setStep(1);
+      setCategory("");
+      setTitle("");
+      setDescription("");
+      setPrice("");
+      setPriceType("amount");
+      setLocation("");
+      setPostalCode("");
+      setCarMake("");
+      setCarModel("");
+      setCarFeatures([]);
+      setYoutubeLink("");
+      setFacebookLink("");
+      setElectronBrand("");
+      setElectronModel("");
+      setImageFiles(Array(10).fill(null));
+      setImagePreviews(Array(10).fill(null));
+      setPostInMultipleCities(false);
+      setSelectedCities([]);
+      setCategoryPath([]);
+      setTemplateConfig({});
+    }
+  }, [locationObj.key]);
 
   const [isEditMode, setIsEditMode] = useState(false);
   const [loadingEditData, setLoadingEditData] = useState(false);

@@ -17,13 +17,18 @@ if (!$user_id) {
 }
 
 try {
-    // Get messages where the user is the receiver
+    // Get messages where the user is the receiver OR sender
     $stmt = $conn->prepare("
-        SELECT m.*, l.title as listing_title, l.image as listing_image
+        SELECT m.*, 
+               l.title as listing_title, l.image as listing_image,
+               u1.name as sender_name_db, u1.email as sender_email,
+               u2.name as receiver_name_db, u2.email as receiver_email
         FROM messages m
         JOIN listings l ON m.listing_id = l.id
-        WHERE m.receiver_id = :user_id
-        ORDER BY m.created_at DESC
+        LEFT JOIN users u1 ON m.sender_id = u1.id
+        LEFT JOIN users u2 ON m.receiver_id = u2.id
+        WHERE m.receiver_id = :user_id OR m.sender_id = :user_id
+        ORDER BY m.created_at ASC
     ");
     $stmt->bindParam(':user_id', $user_id);
     $stmt->execute();

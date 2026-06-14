@@ -33,6 +33,44 @@ const UserProfile: React.FC = () => {
   const [isMessagesLoading, setIsMessagesLoading] = useState(false);
   const [listingToDelete, setListingToDelete] = useState<string | null>(null);
   const [listingToEdit, setListingToEdit] = useState<string | null>(null);
+  
+  const [replyText, setReplyText] = useState("");
+  const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
+  const [isSendingReply, setIsSendingReply] = useState(false);
+
+  const threads = React.useMemo(() => {
+    if (!user) return [];
+    const map = new Map<string, any>();
+    messages.forEach(msg => {
+      const isSender = msg.sender_id === user.id;
+      const otherUserId = isSender ? msg.receiver_id : msg.sender_id;
+      const otherUserName = isSender ? (msg.receiver_name_db || "User") : (msg.sender_name_db || msg.sender_name || "User");
+      const otherUserEmail = isSender ? msg.receiver_email : msg.sender_email;
+      
+      const threadId = `${msg.listing_id}_${otherUserId}`;
+      if (!map.has(threadId)) {
+        map.set(threadId, {
+          threadId,
+          listing_id: msg.listing_id,
+          listing_title: msg.listing_title,
+          listing_image: msg.listing_image,
+          otherUserId,
+          otherUserName,
+          otherUserEmail,
+          messages: []
+        });
+      }
+      map.get(threadId).messages.push(msg);
+    });
+    
+    return Array.from(map.values()).sort((a, b) => {
+      const aLast = new Date(a.messages[a.messages.length - 1].created_at).getTime();
+      const bLast = new Date(b.messages[b.messages.length - 1].created_at).getTime();
+      return bLast - aLast;
+    });
+  }, [messages, user]);
+
+  const activeThread = activeThreadId ? threads.find(t => t.threadId === activeThreadId) : null;
 
   useEffect(() => {
     const userStr = localStorage.getItem('user');
@@ -237,6 +275,42 @@ const UserProfile: React.FC = () => {
     }
   };
 
+  const handleSendReply = async () => {
+    if (!replyText.trim() || !activeThread) return;
+    setIsSendingReply(true);
+    try {
+      const response = await fetch('/api/messages/create.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          listing_id: activeThread.listing_id,
+          message: replyText,
+          sender_id: user.id,
+          sender_name: user.name,
+          receiver_id: activeThread.otherUserId
+        })
+      });
+      const data = await response.json();
+      if (data.success) {
+        showAlert("Reply sent successfully!", "success");
+        setReplyText("");
+        // Optimistically reload messages
+        fetch(`/api/messages/read_user.php?user_id=${user.id}`)
+          .then(res => res.json())
+          .then(resData => {
+            if (Array.isArray(resData)) setMessages(resData);
+          });
+      } else {
+        showAlert(data.message || "Failed to send reply.", "error");
+      }
+    } catch (err) {
+      console.error(err);
+      showAlert("Error sending reply.", "error");
+    } finally {
+      setIsSendingReply(false);
+    }
+  };
+
   if (!user) return null;
 
   const avatarInitials = user.name?.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2) || 'U';
@@ -437,52 +511,124 @@ const UserProfile: React.FC = () => {
 
       {/* Messages Content */}
       {activeTab === 'messages' && (
-      <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-8">
-        <h2 className="text-xl font-black text-slate-900 mb-6">Inquiries Received</h2>
-        
-        {isMessagesLoading ? (
-          <div className="flex justify-center py-12">
-            <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-0 overflow-hidden flex flex-col md:flex-row min-h-[600px]">
+        {/* Left Side: Thread List */}
+        <div className="w-full md:w-1/3 border-b md:border-b-0 md:border-r border-slate-100 flex flex-col bg-slate-50/50">
+          <div className="p-6 border-b border-slate-100 bg-white">
+            <h2 className="text-xl font-black text-slate-900">Chats</h2>
           </div>
-        ) : messages.length === 0 ? (
-          <div className="text-center py-16">
-            <div className="w-20 h-20 bg-slate-50 rounded-3xl flex items-center justify-center mx-auto mb-4">
-              <span className="material-icons text-slate-300 text-4xl">forum</span>
-            </div>
-            <h3 className="text-lg font-black text-slate-700 mb-2">No Inquiries</h3>
-            <p className="text-sm text-slate-400 font-medium">When users message you about your ads, they will appear here.</p>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-4">
-            {messages.map((msg: any) => (
-              <div key={msg.id} className="p-6 bg-slate-50 rounded-2xl border border-slate-100 hover:border-primary/30 transition-all">
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                      <span className="material-icons text-xl">person</span>
-                    </div>
-                    <div>
-                      <p className="text-sm font-black text-slate-800">{msg.sender_name}</p>
-                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
-                        {new Date(msg.created_at).toLocaleString()}
+          
+          <div className="flex-1 overflow-y-auto p-4 space-y-2 max-h-[500px]">
+            {isMessagesLoading ? (
+              <div className="flex justify-center py-8">
+                <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            ) : threads.length === 0 ? (
+              <div className="text-center py-8">
+                <div className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                  <span className="material-icons text-slate-300">forum</span>
+                </div>
+                <p className="text-sm text-slate-500 font-medium">No messages yet.</p>
+              </div>
+            ) : (
+              threads.map(thread => {
+                const latestMsg = thread.messages[thread.messages.length - 1];
+                const isActive = activeThreadId === thread.threadId;
+                return (
+                  <button 
+                    key={thread.threadId}
+                    onClick={() => { setActiveThreadId(thread.threadId); setReplyText(""); }}
+                    className={`w-full text-left p-4 rounded-2xl transition-all ${isActive ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'bg-white hover:bg-slate-50 border border-slate-100'}`}
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <p className={`text-sm font-black truncate pr-2 ${isActive ? 'text-white' : 'text-slate-800'}`}>
+                        {thread.otherUserName}
                       </p>
+                      <span className={`text-[10px] font-bold uppercase tracking-wider shrink-0 ${isActive ? 'text-primary-100' : 'text-slate-400'}`}>
+                        {new Date(latestMsg.created_at).toLocaleDateString(undefined, {month: 'short', day: 'numeric'})}
+                      </span>
                     </div>
+                    <p className={`text-xs font-medium truncate mb-1 ${isActive ? 'text-primary-100' : 'text-primary'}`}>
+                      Ad: {thread.listing_title}
+                    </p>
+                    <p className={`text-xs truncate ${isActive ? 'text-primary-50' : 'text-slate-500'}`}>
+                      {latestMsg.sender_id === user.id ? 'You: ' : ''}{latestMsg.message}
+                    </p>
+                  </button>
+                );
+              })
+            )}
+          </div>
+        </div>
+
+        {/* Right Side: Chat History */}
+        <div className="w-full md:w-2/3 flex flex-col bg-slate-50">
+          {activeThread ? (
+            <>
+              {/* Chat Header */}
+              <div className="p-6 bg-white border-b border-slate-100 flex justify-between items-center">
+                <div>
+                  <h3 className="text-lg font-black text-slate-900">{activeThread.otherUserName}</h3>
+                  <p className="text-xs text-slate-500 font-medium">{activeThread.otherUserEmail}</p>
+                </div>
+                <Link to={`/item/${activeThread.listing_id}`} className="flex items-center gap-2 bg-slate-50 hover:bg-slate-100 px-3 py-2 rounded-xl transition-colors border border-slate-100">
+                  {activeThread.listing_image && (
+                     <img src={activeThread.listing_image.startsWith('/uploads') ? `/api${activeThread.listing_image}` : activeThread.listing_image} alt="" className="w-8 h-8 rounded-lg object-cover" />
+                  )}
+                  <div className="text-right hidden sm:block max-w-[120px]">
+                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Regarding Ad</p>
+                    <p className="text-xs font-black text-slate-700 truncate">{activeThread.listing_title}</p>
                   </div>
-                  <Link to={`/item/${msg.listing_id}`} className="text-[10px] font-black text-primary bg-white px-3 py-1.5 rounded-lg border border-slate-200 hover:border-primary transition-all uppercase tracking-widest">
-                    View Ad
-                  </Link>
-                </div>
-                <div className="mb-3">
-                   <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Regarding Listing:</p>
-                   <p className="text-sm font-black text-slate-700">{msg.listing_title}</p>
-                </div>
-                <div className="bg-white p-4 rounded-xl border border-slate-100">
-                  <p className="text-sm text-slate-600 italic">"{msg.message}"</p>
+                </Link>
+              </div>
+              
+              {/* Messages Area */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-4 max-h-[400px]">
+                {activeThread.messages.map((msg: any) => {
+                  const isMe = msg.sender_id === user.id;
+                  return (
+                    <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`max-w-[75%] rounded-2xl p-4 ${isMe ? 'bg-primary text-white rounded-br-sm' : 'bg-white border border-slate-100 text-slate-800 rounded-bl-sm shadow-sm'}`}>
+                        <p className="text-sm">{msg.message}</p>
+                        <p className={`text-[9px] font-bold uppercase tracking-widest mt-2 ${isMe ? 'text-right text-primary-200' : 'text-left text-slate-400'}`}>
+                          {new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              
+              {/* Reply Area */}
+              <div className="p-4 bg-white border-t border-slate-100">
+                <div className="flex gap-2 items-end">
+                  <textarea 
+                    value={replyText}
+                    onChange={(e) => setReplyText(e.target.value)}
+                    className="flex-1 text-sm rounded-2xl border-slate-200 focus:ring-primary focus:border-primary resize-none p-3" 
+                    placeholder="Type your message..." 
+                    rows={2}
+                  ></textarea>
+                  <button 
+                    onClick={handleSendReply}
+                    disabled={isSendingReply || !replyText.trim()}
+                    className="w-12 h-12 rounded-2xl bg-primary text-white flex items-center justify-center hover:bg-primary-hover shadow-lg shadow-primary/20 transition-all disabled:opacity-50 shrink-0"
+                  >
+                    <span className="material-icons">{isSendingReply ? 'sync' : 'send'}</span>
+                  </button>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
+            </>
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center text-center p-8 text-slate-400">
+              <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center mb-4 shadow-sm border border-slate-100">
+                <span className="material-icons text-5xl text-slate-200">chat</span>
+              </div>
+              <p className="text-lg font-bold text-slate-600 mb-1">Select a conversation</p>
+              <p className="text-sm">Choose a thread from the left to view the chat history.</p>
+            </div>
+          )}
+        </div>
       </div>
       )}
 

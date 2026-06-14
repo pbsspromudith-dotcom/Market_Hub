@@ -21,30 +21,56 @@ $listing_id = $data->listing_id;
 $message = $data->message;
 $sender_id = $data->sender_id ?? 0;
 $sender_name = $data->sender_name ?? 'A Guest';
+$explicit_receiver_id = $data->receiver_id ?? null;
 
 try {
-    // 1. Get listing and receiver details
-    $stmt = $conn->prepare("
-        SELECT l.title, l.contact_email, l.user_id as receiver_id, u.email as receiver_email, u.name as receiver_name 
-        FROM listings l
-        JOIN users u ON l.user_id = u.id
-        WHERE l.id = :listing_id
-    ");
-    $stmt->bindParam(':listing_id', $listing_id);
-    $stmt->execute();
-    
-    $listing = $stmt->fetch(PDO::FETCH_ASSOC);
-    
-    if (!$listing) {
-        http_response_code(404);
-        echo json_encode(["success" => false, "message" => "Listing or owner not found"]);
-        exit();
+    if ($explicit_receiver_id) {
+        // Reply mode: we know who the receiver is
+        $stmt = $conn->prepare("SELECT email, name FROM users WHERE id = :rid");
+        $stmt->bindParam(':rid', $explicit_receiver_id);
+        $stmt->execute();
+        $receiverUser = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$receiverUser) {
+            http_response_code(404);
+            echo json_encode(["success" => false, "message" => "Receiver not found"]);
+            exit();
+        }
+        
+        $receiver_id = $explicit_receiver_id;
+        $receiver_email = $receiverUser['email'];
+        $receiver_name = $receiverUser['name'];
+        
+        // Just get the listing title for context
+        $lStmt = $conn->prepare("SELECT title FROM listings WHERE id = :lid");
+        $lStmt->bindParam(':lid', $listing_id);
+        $lStmt->execute();
+        $lRow = $lStmt->fetch(PDO::FETCH_ASSOC);
+        $listing_title = $lRow ? "Re: " . $lRow['title'] : "Reply to your inquiry";
+    } else {
+        // Original mode: fetch from listing
+        $stmt = $conn->prepare("
+            SELECT l.title, l.contact_email, l.user_id as receiver_id, u.email as receiver_email, u.name as receiver_name 
+            FROM listings l
+            JOIN users u ON l.user_id = u.id
+            WHERE l.id = :listing_id
+        ");
+        $stmt->bindParam(':listing_id', $listing_id);
+        $stmt->execute();
+        
+        $listing = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$listing) {
+            http_response_code(404);
+            echo json_encode(["success" => false, "message" => "Listing or owner not found"]);
+            exit();
+        }
+        
+        $receiver_id = $listing['receiver_id'];
+        $receiver_email = !empty($listing['contact_email']) ? $listing['contact_email'] : $listing['receiver_email'];
+        $receiver_name = $listing['receiver_name'];
+        $listing_title = $listing['title'];
     }
-    
-    $receiver_id = $listing['receiver_id'];
-    $receiver_email = !empty($listing['contact_email']) ? $listing['contact_email'] : $listing['receiver_email'];
-    $receiver_name = $listing['receiver_name'];
-    $listing_title = $listing['title'];
 
     // 2. Save to database
     $insertStmt = $conn->prepare("
