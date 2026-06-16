@@ -21,6 +21,7 @@
 
   # ── Route everything else to index.php (SPA fallback) ──
   RewriteCond %{REQUEST_URI} !^/api/
+  RewriteCond %{REQUEST_URI} !^/sitemap.*\.xml$
   RewriteRule . /index.php [L]
 </IfModule>
 

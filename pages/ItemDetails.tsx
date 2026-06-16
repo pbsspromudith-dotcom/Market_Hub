@@ -113,7 +113,7 @@ const ItemDetails: React.FC = () => {
             </div>
             <div className="flex flex-wrap gap-6 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">
               <span className="flex items-center gap-1.5"><span className="material-icons text-sm text-primary">location_on</span> {listing.location}</span>
-              <span className="flex items-center gap-1.5"><span className="material-icons text-sm text-primary">schedule</span> Posted {listing.time}</span>
+              <span className="flex items-center gap-1.5"><span className="material-icons text-sm text-primary">schedule</span> Posted {listing.created_at ? new Date(listing.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : listing.time}</span>
               <span className="flex items-center gap-1.5"><span className="material-icons text-sm text-primary">visibility</span> {listing.views || 0} Views</span>
             </div>
           </div>

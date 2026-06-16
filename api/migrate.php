@@ -75,6 +75,21 @@ try {
 }
 
 try {
+    $checkQuery = "SHOW COLUMNS FROM listings LIKE 'views'";
+    $stmt = $conn->prepare($checkQuery);
+    $stmt->execute();
+    if ($stmt->rowCount() == 0) {
+        $alterQuery = "ALTER TABLE listings ADD COLUMN views INT DEFAULT 0";
+        $conn->exec($alterQuery);
+        echo "Added views column to listings table.<br/>";
+    } else {
+        echo "views column already exists on listings.<br/>";
+    }
+} catch(PDOException $e) {
+    echo "listings views column error: " . $e->getMessage() . "<br/>";
+}
+
+try {
     // Create seo_settings table
     $conn->exec("CREATE TABLE IF NOT EXISTS seo_settings (
         setting_key VARCHAR(100) NOT NULL UNIQUE PRIMARY KEY,

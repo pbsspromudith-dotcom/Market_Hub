@@ -589,7 +589,7 @@ const SearchResults: React.FC = () => {
                   <div className="flex items-center justify-between mt-auto pt-4 border-t border-slate-50">
                     <div className="flex flex-col gap-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                       <span className="flex items-center gap-1 truncate"><span className="material-icons text-[12px]">location_on</span> {item.location}</span>
-                      <span className="flex items-center gap-1"><span className="material-icons text-[12px]">schedule</span> {item.time || 'Recently'}</span>
+                      <span className="flex items-center gap-1"><span className="material-icons text-[12px]">schedule</span> {item.created_at ? new Date(item.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : (item.time || 'Recently')}</span>
                     </div>
                     <button className="material-icons text-slate-300 hover:text-red-500 transition-colors bg-slate-50 p-1.5 rounded-full hover:bg-red-50">favorite_border</button>
                   </div>

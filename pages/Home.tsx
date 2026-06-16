@@ -464,15 +464,19 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn }) => {
                     <h3 className="font-bold text-slate-800 line-clamp-2 min-h-[3rem] text-lg group-hover:text-primary-light transition-colors mb-4">
                       {item.title}
                     </h3>
-                    <div className="flex items-center text-slate-400 text-[10px] font-black uppercase tracking-widest pt-5 border-t border-slate-50">
-                      <span className="flex items-center gap-1.5">
-                        <span className="material-icons text-sm text-primary-soft">
+                    <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase tracking-widest pt-4 mt-auto border-t border-slate-50">
+                      <span className="flex items-center gap-1">
+                        <span className="material-icons text-[12px] text-primary">
+                          schedule
+                        </span>{" "}
+                        {item.created_at ? new Date(item.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : (item.time || "Recently")}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <span className="material-icons text-[12px] text-primary">
                           location_on
                         </span>{" "}
                         {item.location}
                       </span>
-                      <span className="mx-3 text-slate-200">|</span>
-                      <span>{item.time || "Recently"}</span>
                     </div>
                   </div>
                 </Link>

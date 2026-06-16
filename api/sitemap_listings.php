@@ -9,7 +9,8 @@ echo '<?xml version="1.0" encoding="UTF-8"?>';
 echo '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
 
 try {
-    $stmt = $conn->query("SELECT id, created_at FROM listings ORDER BY created_at DESC LIMIT 10000");
+    // Only fetch listings from the last 60 days to prevent expired listings from showing up
+    $stmt = $conn->query("SELECT id, created_at FROM listings WHERE created_at >= DATE_SUB(NOW(), INTERVAL 60 DAY) ORDER BY created_at DESC LIMIT 10000");
     while ($row = $stmt->fetch()) {
         $lastmod = date('c', strtotime($row['created_at']));
         echo '<url>';

@@ -29,6 +29,12 @@ try {
     if ($stmt->rowCount() > 0) {
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
+        // Increment views
+        $updateStmt = $conn->prepare("UPDATE listings SET views = views + 1 WHERE id = :id");
+        $updateStmt->bindParam(':id', $id);
+        $updateStmt->execute();
+        $row['views'] = (int)$row['views'] + 1;
+
         // Fix image paths: only add /api prefix if not already present
         function fixImagePath($path) {
             if (!$path) return $path;

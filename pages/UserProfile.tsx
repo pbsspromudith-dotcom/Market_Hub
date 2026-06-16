@@ -49,11 +49,23 @@ const UserProfile: React.FC = () => {
       
       const threadId = `${msg.listing_id}_${otherUserId}`;
       if (!map.has(threadId)) {
+        let parsedImage = msg.listing_image;
+        if (parsedImage) {
+          try {
+            const arr = JSON.parse(parsedImage);
+            if (Array.isArray(arr) && arr.length > 0) {
+              parsedImage = arr[0];
+            }
+          } catch (e) {
+            // Not JSON, keep original
+          }
+        }
+
         map.set(threadId, {
           threadId,
           listing_id: msg.listing_id,
           listing_title: msg.listing_title,
-          listing_image: msg.listing_image,
+          listing_image: parsedImage,
           otherUserId,
           otherUserName,
           otherUserEmail,
