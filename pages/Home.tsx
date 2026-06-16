@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { formatPrice } from "../constants";
+import { calculateDistance } from "../utils";
 
 interface HomeProps {
   isLoggedIn: boolean;
@@ -159,6 +160,12 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn }) => {
   const handleSelectLocation = (place: any) => {
     const cleanAddr = getCleanAddressString(place);
     setLocationSearch(cleanAddr);
+    localStorage.setItem("user_location", cleanAddr);
+    if (place.lat && place.lon) {
+      localStorage.setItem("user_lat", place.lat);
+      localStorage.setItem("user_lon", place.lon);
+    }
+    window.dispatchEvent(new Event("location_updated"));
     setShowSuggestions(false);
   };
 
@@ -405,7 +412,24 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn }) => {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
-              {listings.slice(0, homepageAdCount).map((item) => (
+              {listings
+                .filter((item: any) => {
+                  const userLat = parseFloat(localStorage.getItem("user_lat") || "");
+                  const userLon = parseFloat(localStorage.getItem("user_lon") || "");
+                  
+                  if (!isNaN(userLat) && !isNaN(userLon) && item.latitude && item.longitude) {
+                    const dist = calculateDistance(userLat, userLon, parseFloat(item.latitude), parseFloat(item.longitude));
+                    return dist <= 50; // Show within 50 miles radius
+                  }
+                  
+                  // Fallback to text search if no coordinates
+                  if (locationSearch) {
+                    return item.location?.toLowerCase().includes(locationSearch.toLowerCase());
+                  }
+                  return true;
+                })
+                .slice(0, homepageAdCount)
+                .map((item: any) => (
                 <Link
                   to={`/item/${item.id}`}
                   key={item.id}

@@ -227,11 +227,13 @@ const PostAd: React.FC = () => {
   const [priceOptions, setPriceOptions] = useState<any[]>([]);
   const [location, setLocation] = useState("");
   const [postalCode, setPostalCode] = useState("");
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
   const [contactEmail, setContactEmail] = useState("");
 
   // Multi-city posting state
   const [postInMultipleCities, setPostInMultipleCities] = useState(false);
-  const [selectedCities, setSelectedCities] = useState<{location: string; postalCode: string}[]>([]);
+  const [selectedCities, setSelectedCities] = useState<{location: string; postalCode: string; latitude?: number | null; longitude?: number | null}[]>([]);
   const [citySearchQuery, setCitySearchQuery] = useState("");
   const [citySearchSuggestions, setCitySearchSuggestions] = useState<any[]>([]);
   const [isSearchingCity, setIsSearchingCity] = useState(false);
@@ -390,9 +392,11 @@ const PostAd: React.FC = () => {
   const handleSelectCity = (place: any) => {
     const cleanAddr = getCleanAddressString(place);
     const pc = place.address?.postcode || "";
+    const lat = place.lat ? parseFloat(place.lat) : null;
+    const lon = place.lon ? parseFloat(place.lon) : null;
     // Avoid duplicates (case-insensitive)
     if (!selectedCities.some(c => c.location.toLowerCase() === cleanAddr.toLowerCase())) {
-      setSelectedCities(prev => [...prev, { location: cleanAddr, postalCode: pc }]);
+      setSelectedCities(prev => [...prev, { location: cleanAddr, postalCode: pc, latitude: lat, longitude: lon }]);
     }
     setCitySearchQuery("");
     setShowCitySuggestions(false);
@@ -418,6 +422,10 @@ const PostAd: React.FC = () => {
     setLocation(cleanAddr);
     if (place.address && place.address.postcode) {
       setPostalCode(place.address.postcode);
+    }
+    if (place.lat && place.lon) {
+      setLatitude(parseFloat(place.lat));
+      setLongitude(parseFloat(place.lon));
     }
     setShowSuggestions(false);
   };
@@ -721,10 +729,14 @@ const PostAd: React.FC = () => {
         payload.locations = selectedCities.map(c => ({
           location: c.location,
           postal_code: c.postalCode,
+          latitude: c.latitude,
+          longitude: c.longitude,
         }));
       } else {
         payload.location = location || "Unknown";
         payload.postal_code = postalCode;
+        payload.latitude = latitude;
+        payload.longitude = longitude;
       }
 
       if (isEditMode) {

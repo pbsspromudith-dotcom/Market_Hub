@@ -257,8 +257,10 @@ const UserProfile: React.FC = () => {
     if (!listingToDelete) return;
     
     try {
-      const response = await fetch(`/api/listings/delete.php?id=${listingToDelete}`, {
-        method: 'DELETE'
+      const response = await fetch(`/api/listings/delete.php`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: listingToDelete })
       });
       const data = await response.json();
       if (data.success) {

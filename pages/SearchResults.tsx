@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { formatPrice } from '../constants';
+import { calculateDistance } from '../utils';
 
 const CATEGORY_SYNONYMS: Record<string, string[]> = {
   'Vehicles': ['vehicle', 'vehicles', 'car', 'cars', 'truck', 'trucks', 'suv', 'suvs', 'motorcycle', 'motorcycles', 'auto', 'automotive', 'boat', 'boats', 'rv', 'rvs', 'van', 'vans', 'atv', 'atvs', 'classic car', 'classic cars', 'heavy equipment', 'trailers', 'trailer', 'auto parts', 'motor', 'motors', 'wheel', 'wheels', 'drive'],
@@ -48,7 +49,7 @@ const SearchResults: React.FC = () => {
   const [selectedSubSubCategory, setSelectedSubSubCategory] = useState<string | null>(initialSubSub);
   const [locationSearch, setLocationSearch] = useState(initialLoc);
   const [locationFilterActive, setLocationFilterActive] = useState(!!initialLoc);
-  const [distance, setDistance] = useState('Within 50 km');
+  const [distance, setDistance] = useState('Within 50 miles');
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
   const [sortOption, setSortOption] = useState('Most Recent');
@@ -59,6 +60,11 @@ const SearchResults: React.FC = () => {
   const [models, setModels] = useState<any[]>([]);
   const [selectedMakeId, setSelectedMakeId] = useState('');
   const [selectedModelId, setSelectedModelId] = useState('');
+
+  // Location suggestions
+  const [locationSuggestions, setLocationSuggestions] = useState<any[]>([]);
+  const [isSearchingLocation, setIsSearchingLocation] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   // Update states if URL changes
   useEffect(() => {
@@ -106,6 +112,39 @@ const SearchResults: React.FC = () => {
     'Home & Garden': ['Home & Garden'],
     'Real Estate': ['Real Estate'],
     'Jobs': ['Jobs'],
+  };
+
+  useEffect(() => {
+    if (locationSearch.trim().length > 2 && showSuggestions) {
+      const delayFn = setTimeout(() => {
+        setIsSearchingLocation(true);
+        fetch(
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(locationSearch)}&countrycodes=ca&format=json&addressdetails=1&limit=5`,
+        )
+          .then((res) => res.json())
+          .then((data) => setLocationSuggestions(data))
+          .catch(console.error)
+          .finally(() => setIsSearchingLocation(false));
+      }, 500);
+      return () => clearTimeout(delayFn);
+    } else {
+      setLocationSuggestions([]);
+    }
+  }, [locationSearch, showSuggestions]);
+
+  const handleSelectLocation = (place: any) => {
+    const city = place.address?.city || place.address?.town || place.address?.village || '';
+    const state = place.address?.state || '';
+    const cleanAddr = city ? `${city}, ${state}` : state || place.display_name.split(',')[0];
+    
+    setLocationSearch(cleanAddr);
+    localStorage.setItem("user_location", cleanAddr);
+    if (place.lat && place.lon) {
+      localStorage.setItem("user_lat", place.lat);
+      localStorage.setItem("user_lon", place.lon);
+    }
+    window.dispatchEvent(new Event("location_updated"));
+    setShowSuggestions(false);
   };
 
   const getSearchRelevanceScore = (item: any, query: string): number => {
@@ -178,8 +217,21 @@ const SearchResults: React.FC = () => {
     
     // location filter — only active if user explicitly set a location in filter
     if (locationFilterActive && distance !== 'Nationwide' && locationSearch && item.location) {
-      const searchCity = locationSearch.split(',')[0].trim().toLowerCase();
-      if (!item.location.toLowerCase().includes(searchCity)) return false;
+      const userLat = parseFloat(localStorage.getItem("user_lat") || "");
+      const userLon = parseFloat(localStorage.getItem("user_lon") || "");
+      
+      if (!isNaN(userLat) && !isNaN(userLon) && item.latitude && item.longitude) {
+        const dist = calculateDistance(userLat, userLon, parseFloat(item.latitude), parseFloat(item.longitude));
+        // Parse distance string to number
+        const maxDistMatch = distance.match(/\d+/);
+        const maxDist = maxDistMatch ? parseInt(maxDistMatch[0], 10) : 50;
+        
+        if (dist > maxDist) return false;
+      } else {
+        // Fallback to basic text search if no coordinates
+        const searchCity = locationSearch.split(',')[0].trim().toLowerCase();
+        if (!item.location.toLowerCase().includes(searchCity)) return false;
+      }
     }
     
     // minPrice
@@ -283,8 +335,29 @@ const SearchResults: React.FC = () => {
                     <input 
                       type="text" 
                       placeholder="Canada" 
+                      value={locationSearch}
+                      onChange={(e) => {
+                        setLocationSearch(e.target.value);
+                        setShowSuggestions(true);
+                      }}
                       className="w-full border-slate-200 rounded-lg text-sm bg-slate-50 py-2.5 pl-10 pr-4 focus:ring-primary focus:border-primary font-bold text-slate-700" 
                     />
+                    {showSuggestions && locationSuggestions.length > 0 && (
+                      <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-xl z-[60] overflow-hidden">
+                        {locationSuggestions.map((place, idx) => (
+                          <div 
+                            key={idx} 
+                            className="px-4 py-3 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-0"
+                            onClick={() => handleSelectLocation(place)}
+                          >
+                            <div className="font-bold text-sm text-slate-800">
+                              {place.address?.city || place.address?.town || place.address?.village || place.display_name.split(",")[0]}
+                            </div>
+                            <div className="text-xs text-slate-500">{place.display_name}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div>
@@ -364,10 +437,29 @@ const SearchResults: React.FC = () => {
                 <input 
                   type="text" 
                   value={locationSearch}
-                  onChange={(e) => setLocationSearch(e.target.value)}
+                  onChange={(e) => {
+                    setLocationSearch(e.target.value);
+                    setShowSuggestions(true);
+                  }}
                   placeholder="City or Postcode"
                   className="w-full bg-slate-50 border-none rounded-2xl py-4 pl-12 pr-4 text-sm font-bold focus:ring-2 focus:ring-primary/20"
                 />
+                {showSuggestions && locationSuggestions.length > 0 && (
+                  <div className="mt-2 bg-white border border-slate-200 rounded-2xl shadow-lg z-[60] overflow-hidden">
+                    {locationSuggestions.map((place, idx) => (
+                      <div 
+                        key={idx} 
+                        className="px-4 py-3 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-0"
+                        onClick={() => handleSelectLocation(place)}
+                      >
+                        <div className="font-bold text-sm text-slate-800">
+                          {place.address?.city || place.address?.town || place.address?.village || place.display_name.split(",")[0]}
+                        </div>
+                        <div className="text-xs text-slate-500 truncate">{place.display_name}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 

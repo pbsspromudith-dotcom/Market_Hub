@@ -235,6 +235,23 @@ try {
 }
 
 try {
+    $checkQuery = "SHOW COLUMNS FROM listings LIKE 'latitude'";
+    $stmt = $conn->prepare($checkQuery);
+    $stmt->execute();
+    if ($stmt->rowCount() == 0) {
+        $alterQuery = "ALTER TABLE listings 
+            ADD COLUMN latitude DECIMAL(10, 8) NULL,
+            ADD COLUMN longitude DECIMAL(11, 8) NULL";
+        $conn->exec($alterQuery);
+        echo "Added latitude and longitude columns to listings table.<br/>";
+    } else {
+        echo "latitude and longitude columns already exist on listings.<br/>";
+    }
+} catch(PDOException $e) {
+    echo "listings location columns error: " . $e->getMessage() . "<br/>";
+}
+
+try {
     $checkQuery = "SHOW COLUMNS FROM listings LIKE 'price_type'";
     $stmt = $conn->prepare($checkQuery);
     $stmt->execute();

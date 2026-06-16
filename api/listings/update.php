@@ -62,7 +62,9 @@ try {
                 postal_code = :postal_code,
                 youtube_link = :youtube_link,
                 facebook_link = :facebook_link,
-                price_type = :price_type
+                price_type = :price_type,
+                latitude = :latitude,
+                longitude = :longitude
               WHERE id = :id";
     
     $stmt = $conn->prepare($query);
@@ -80,6 +82,8 @@ try {
     $stmt->bindValue(':youtube_link', $data->youtube_link ?? null);
     $stmt->bindValue(':facebook_link', $data->facebook_link ?? null);
     $stmt->bindValue(':price_type', $data->price_type ?? 'amount');
+    $stmt->bindValue(':latitude', $data->latitude ?? null);
+    $stmt->bindValue(':longitude', $data->longitude ?? null);
     $stmt->bindParam(':id', $data->id);
 
     if ($stmt->execute()) {

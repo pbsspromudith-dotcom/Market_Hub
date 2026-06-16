@@ -30,6 +30,8 @@ const LocationPrompt: React.FC = () => {
                 const state = data.address.state || 'CA';
                 const locString = city ? `${city}, ${state}` : state;
                 localStorage.setItem('user_location', locString);
+                localStorage.setItem('user_lat', lat.toString());
+                localStorage.setItem('user_lon', lon.toString());
                 window.dispatchEvent(new Event('location_updated'));
               }
             })

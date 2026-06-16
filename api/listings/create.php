@@ -38,6 +38,8 @@ if (isset($data->locations) && is_array($data->locations) && count($data->locati
     $locations[] = [
         'location' => $data->location ?? 'Unknown',
         'postal_code' => $data->postal_code ?? null,
+        'latitude' => $data->latitude ?? null,
+        'longitude' => $data->longitude ?? null,
     ];
 }
 
@@ -48,8 +50,8 @@ try {
     $allIds = [];
 
     foreach ($locations as $index => $loc) {
-        $query = "INSERT INTO listings (title, price, category, location, description, image, user_id, time, contact_email, contact_phone, postal_code, youtube_link, facebook_link, price_type, parent_id) 
-                  VALUES (:title, :price, :category, :location, :description, :image, :user_id, :time, :contact_email, :contact_phone, :postal_code, :youtube_link, :facebook_link, :price_type, :parent_id)";
+        $query = "INSERT INTO listings (title, price, category, location, description, image, user_id, time, contact_email, contact_phone, postal_code, youtube_link, facebook_link, price_type, parent_id, latitude, longitude) 
+                  VALUES (:title, :price, :category, :location, :description, :image, :user_id, :time, :contact_email, :contact_phone, :postal_code, :youtube_link, :facebook_link, :price_type, :parent_id, :latitude, :longitude)";
         
         $stmt = $conn->prepare($query);
         
@@ -68,6 +70,8 @@ try {
         $stmt->bindValue(':facebook_link', $data->facebook_link ?? null);
         $stmt->bindValue(':price_type', $data->price_type ?? 'amount');
         $stmt->bindValue(':parent_id', $parentId); // null for first (parent), set for children
+        $stmt->bindValue(':latitude', $loc['latitude'] ?? null);
+        $stmt->bindValue(':longitude', $loc['longitude'] ?? null);
 
         $stmt->execute();
         $insertId = $conn->lastInsertId();
