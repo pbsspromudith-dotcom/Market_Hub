@@ -135,6 +135,7 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn }) => {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [locationSearch, setLocationSearch] = useState(() => {
+    if (typeof window === "undefined") return "Toronto, ON";
     return localStorage.getItem("user_location") || "Toronto, ON";
   });
   const [locationSuggestions, setLocationSuggestions] = useState<any[]>([]);
