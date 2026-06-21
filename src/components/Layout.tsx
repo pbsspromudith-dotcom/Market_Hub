@@ -49,7 +49,7 @@ const Layout: React.FC<LayoutProps> = ({
   const [expandedFooter, setExpandedFooter] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/categories/read.php")
+    fetch("/api/categories/read")
       .then((res) => res.json())
       .then((res) => {
         if (res.success && Array.isArray(res.data)) {
@@ -58,7 +58,7 @@ const Layout: React.FC<LayoutProps> = ({
       })
       .catch((err) => console.error("Error loading categories:", err));
 
-    fetch("/api/admin/seo_read.php?t=" + new Date().getTime())
+    fetch("/api/admin/seo_read?t=" + new Date().getTime())
       .then((res) => res.json())
       .then((data) => {
         if (data.success && data.settings) {
@@ -186,8 +186,7 @@ const Layout: React.FC<LayoutProps> = ({
 
               {!isLoggedIn && !isLoginPage ? (
                 <>
-                  <Link href="/login"
-                    state={{ mode: "register" }}
+                  <Link href="/login?mode=register"
                     className="flex flex-col items-center justify-center text-slate-600 hover:text-primary transition-colors group"
                   >
                     <span className="material-icons text-[26px] group-hover:scale-110 transition-transform">
@@ -328,8 +327,7 @@ const Layout: React.FC<LayoutProps> = ({
                     >
                       Sign In
                     </Link>
-                    <Link href="/login"
-                      state={{ mode: "register" }}
+                    <Link href="/login?mode=register"
                       onClick={() => setIsMobileMenuOpen(false)}
                       className="block w-full text-center py-4 bg-primary text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl"
                     >

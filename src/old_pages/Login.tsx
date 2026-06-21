@@ -23,7 +23,8 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [successMsg, setSuccessMsg] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [authMode, setAuthMode] = useState<'login' | 'register' | 'forgot' | 'verify-pending' | 'reset'>( location.state?.mode || 'login');
+  const initialMode = (searchParams?.get('mode') as any) || location.state?.mode || 'login';
+  const [authMode, setAuthMode] = useState<'login' | 'register' | 'forgot' | 'verify-pending' | 'reset'>(initialMode);
   const [pendingEmail, setPendingEmail] = useState('');
   const [resetToken, setResetToken] = useState('');
   const [resending, setResending] = useState(false);
@@ -68,7 +69,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     setResending(true);
     setError('');
     try {
-      const response = await fetch('/api/auth/resend-verify.php', {
+      const response = await fetch('/api/auth/resend-verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: pendingEmail }),
@@ -103,7 +104,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
     try {
       if (authMode === 'login') {
-        const response = await fetch('/api/auth/login.php', {
+        const response = await fetch('/api/auth/login', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -135,7 +136,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           setError(data.message || 'Invalid email or password.');
         }
       } else if (authMode === 'register') {
-        const response = await fetch('/api/auth/register.php', {
+        const response = await fetch('/api/auth/register', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -163,7 +164,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           setError(data.message || 'Failed to register.');
         }
       } else if (authMode === 'forgot') {
-        const response = await fetch('/api/auth/forgot.php', {
+        const response = await fetch('/api/auth/forgot', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -188,7 +189,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           setError(data.message || 'Failed to send reset link.');
         }
       } else if (authMode === 'reset') {
-        const response = await fetch('/api/auth/reset.php', {
+        const response = await fetch('/api/auth/reset', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

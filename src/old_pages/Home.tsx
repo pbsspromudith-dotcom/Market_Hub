@@ -173,7 +173,7 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn }) => {
   };
 
   useEffect(() => {
-    fetch("/api/categories/read.php")
+    fetch("/api/categories/read")
       .then((res) => res.json())
       .then((res) => {
         if (res.success && Array.isArray(res.data)) {
@@ -185,19 +185,19 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn }) => {
       })
       .catch((err) => console.error("Error loading categories:", err));
 
-    fetch("/api/status.php")
+    fetch("/api/status")
       .then((res) => res.json())
       .then((data) => setServerMessage(data.message))
       .catch((err) =>
         setServerMessage("Backend is not running: " + err.message),
       );
 
-    fetch("/api/listings/read.php")
+    fetch("/api/listings/read")
       .then((res) => res.json())
       .then((data) => setListings(data))
       .catch((err) => console.error("DB fetch error", err));
 
-    fetch("/api/admin/seo_read.php?t=" + new Date().getTime())
+    fetch("/api/admin/seo_read?t=" + new Date().getTime())
       .then((res) => res.json())
       .then((data) => {
         if (data.success && data.settings) {
