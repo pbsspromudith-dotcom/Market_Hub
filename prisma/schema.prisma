@@ -1,0 +1,213 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model car_makes {
+  id         Int      @id @default(autoincrement())
+  name       String   @db.VarChar(255)
+  created_at DateTime @default(now()) @db.Timestamp(0)
+}
+
+model car_models {
+  id         Int      @id @default(autoincrement())
+  name       String   @db.VarChar(255)
+  make_id    Int?
+  created_at DateTime @default(now()) @db.Timestamp(0)
+
+  @@index([make_id], map: "make_id")
+}
+
+model car_types {
+  id         Int      @id @default(autoincrement())
+  name       String   @db.VarChar(255)
+  created_at DateTime @default(now()) @db.Timestamp(0)
+}
+
+model categories {
+  id         Int      @id @default(autoincrement())
+  name       String   @db.VarChar(255)
+  created_at DateTime @default(now()) @db.Timestamp(0)
+}
+
+model category {
+  CategoryID       Int       @id @default(autoincrement())
+  ParentCategoryID Int?
+  CategoryName     String    @db.VarChar(200)
+  Slug             String?   @db.VarChar(250)
+  Icon             String?   @db.VarChar(100)
+  Description      String?   @db.Text
+  SortOrder        Int?      @default(0)
+  IsActive         Boolean?  @default(true)
+  CreatedAt        DateTime? @default(now()) @db.DateTime(0)
+  template_config  String?   @db.Text
+
+  @@index([IsActive], map: "IX_Category_IsActive")
+  @@index([ParentCategoryID], map: "IX_Category_ParentCategoryID")
+}
+
+model categoryattribute {
+  AttributeID   Int      @id @default(autoincrement())
+  CategoryID    Int
+  AttributeName String   @db.VarChar(100)
+  AttributeType String   @db.VarChar(50)
+  IsRequired    Boolean? @default(false)
+
+  @@index([CategoryID], map: "fk_category_attribute_category_rel")
+}
+
+model categoryattributeoption {
+  OptionID    Int    @id @default(autoincrement())
+  AttributeID Int
+  OptionValue String @db.VarChar(100)
+
+  @@index([AttributeID], map: "fk_category_option_attribute_rel")
+}
+
+model drivetrains {
+  id         Int      @id @default(autoincrement())
+  name       String   @db.VarChar(255)
+  created_at DateTime @default(now()) @db.Timestamp(0)
+}
+
+model email_settings {
+  id            Int      @id @default(autoincrement())
+  setting_key   String   @unique(map: "setting_key") @db.VarChar(100)
+  setting_value String   @db.Text
+  updated_at    DateTime @default(now()) @db.Timestamp(0)
+}
+
+model fuel_types {
+  id         Int      @id @default(autoincrement())
+  name       String   @db.VarChar(255)
+  created_at DateTime @default(now()) @db.Timestamp(0)
+}
+
+model listing_seo {
+  id             Int      @id @default(autoincrement())
+  listing_id     Int      @unique(map: "listing_id")
+  meta_title     String?  @db.VarChar(255)
+  meta_desc      String?  @db.Text
+  keywords       String?  @db.Text
+  image_alt_text String?  @db.Text
+  focus_keyword  String?  @db.VarChar(255)
+  seo_score      Int?     @db.TinyInt
+  updated_at     DateTime @default(now()) @db.Timestamp(0)
+}
+
+model listings {
+  id              Int       @id @default(autoincrement())
+  title           String    @db.VarChar(255)
+  price           Decimal   @db.Decimal(10, 2)
+  category        String    @db.VarChar(100)
+  location        String    @db.VarChar(255)
+  time            String?   @db.VarChar(100)
+  image           String?   @db.Text
+  is_featured     Boolean?  @default(false)
+  description     String?   @db.Text
+  views           Int?      @default(0)
+  saves           Int?      @default(0)
+  inquiries       Int?      @default(0)
+  user_id         Int?
+  created_at      DateTime? @default(now()) @db.Timestamp(0)
+  contact_email   String?   @db.VarChar(255)
+  contact_phone   String?   @db.VarChar(50)
+  postal_code     String?   @db.VarChar(20)
+  is_top_ad       Boolean?  @default(false)
+  is_highlighted  Boolean?  @default(false)
+  is_urgent       Boolean?  @default(false)
+  is_home_gallery Boolean?  @default(false)
+  youtube_link    String?   @db.VarChar(500)
+  facebook_link   String?   @db.VarChar(500)
+  price_type      String?   @default("amount") @db.VarChar(50)
+  parent_id       Int?
+  latitude        Decimal?  @db.Decimal(10, 8)
+  longitude       Decimal?  @db.Decimal(11, 8)
+
+  @@index([parent_id], map: "fk_listings_parent")
+  @@index([user_id], map: "user_id")
+}
+
+model main_menu_master {
+  id         Int      @id @default(autoincrement())
+  name       String   @db.VarChar(255)
+  icon       String?  @db.VarChar(100)
+  sort_order Int?     @default(0)
+  is_active  Boolean? @default(true)
+  created_at DateTime @default(now()) @db.Timestamp(0)
+}
+
+model messages {
+  id          Int       @id @default(autoincrement())
+  listing_id  Int
+  sender_id   Int
+  receiver_id Int
+  message     String    @db.Text
+  sender_name String?   @db.VarChar(255)
+  created_at  DateTime? @default(now()) @db.DateTime(0)
+  is_read     Boolean?  @default(false)
+}
+
+model options {
+  id           Int      @id @default(autoincrement())
+  option_type  String   @db.VarChar(100)
+  option_value String   @db.VarChar(255)
+  created_at   DateTime @default(now()) @db.Timestamp(0)
+}
+
+model price_options {
+  id         Int      @id @default(autoincrement())
+  name       String   @db.VarChar(255)
+  option_key String   @unique(map: "option_key") @db.VarChar(255)
+  sort_order Int?     @default(0)
+  is_active  Boolean? @default(true)
+  created_at DateTime @default(now()) @db.Timestamp(0)
+}
+
+model seo_settings {
+  setting_key   String   @id @db.VarChar(100)
+  setting_value String   @db.Text
+  updated_at    DateTime @default(now()) @db.Timestamp(0)
+}
+
+model transactions {
+  id            Int      @id @default(autoincrement())
+  user_id       Int
+  listing_id    Int
+  ticket        String   @db.VarChar(255)
+  receipt_id    String?  @db.VarChar(255)
+  amount        Decimal  @db.Decimal(10, 2)
+  response_code String?  @db.VarChar(50)
+  payment_type  String?  @db.VarChar(50)
+  promotions    String   @db.VarChar(255)
+  status        String?  @default("pending") @db.VarChar(50)
+  created_at    DateTime @default(now()) @db.Timestamp(0)
+
+  @@index([listing_id], map: "listing_id")
+  @@index([user_id], map: "user_id")
+}
+
+model users {
+  id                 Int       @id @default(autoincrement())
+  name               String    @db.VarChar(255)
+  email              String    @unique(map: "email") @db.VarChar(255)
+  password           String    @db.VarChar(255)
+  role               String?   @default("user") @db.VarChar(50)
+  avatar             String?   @db.VarChar(255)
+  join_date          DateTime? @default(now()) @db.Timestamp(0)
+  phone              String?   @default("+1 (555) 123-4567") @db.VarChar(50)
+  is_verified        Boolean?  @default(false)
+  verification_token String?   @db.VarChar(255)
+  reset_token        String?   @db.VarChar(255)
+  reset_token_expiry DateTime? @db.DateTime(0)
+}
+
+model vehicle_types {
+  id         Int      @id @default(autoincrement())
+  name       String   @db.VarChar(255)
+  created_at DateTime @default(now()) @db.Timestamp(0)
+}
