@@ -6,37 +6,65 @@
    ═══════════════════════════════════════════════ */
 
 @theme inline {
-  /* ── Primary Colors ── */
+  /* ── Custom Theme Colors (Original Mappings) ── */
   --color-primary: #D72638;
   --color-primary-hover: #A81224;
   --color-primary-light: #D72638;
   --color-primary-soft: #E8525F;
   --color-primary-neutral: #5B616A;
-
-  /* ── Secondary Colors ── */
   --color-secondary: #A81224;
   --color-secondary-hover: #8A0E1D;
-
-  /* ── Accent Colors ── */
   --color-accent: #D72638;
   --color-accent-gold: #F2C94C;
   --color-accent-beige: #F6F1EB;
-
-  /* ── Marketplace Colors ── */
   --color-marketplace: #2F80ED;
   --color-success: #27AE60;
   --color-alert: #F2994A;
-
-  /* ── Neutral Colors ── */
   --color-warm-gray: #D8D8D8;
   --color-slate-gray: #5B616A;
   --color-charcoal: #111111;
-
-  /* ── Background / Surface ── */
   --color-background: #ffffff;
   --color-background-light: #F7F7F7;
   --color-background-dark: #111111;
   --color-foreground: #111111;
+
+  /* ── Override Tailwind Default Palette Globally ── */
+  
+  /* Slate Scale -> Neutral Tones (Soft White to Charcoal) */
+  --color-slate-50: #F7F7F7; /* Soft White */
+  --color-slate-100: #F7F7F7;
+  --color-slate-200: #D8D8D8; /* Warm Gray */
+  --color-slate-300: #D8D8D8;
+  --color-slate-400: #5B616A; /* Slate Gray */
+  --color-slate-500: #5B616A;
+  --color-slate-600: #5B616A;
+  --color-slate-700: #111111; /* Charcoal Black */
+  --color-slate-800: #111111;
+  --color-slate-900: #111111;
+
+  /* Red Scale -> Brand Red */
+  --color-red-400: #E8525F;
+  --color-red-500: #D72638; /* HitAds Red */
+  --color-red-600: #D72638;
+  --color-red-700: #A81224; /* Deep Crimson */
+
+  /* Blue Scale -> Marketplace Blue */
+  --color-blue-500: #2F80ED;
+  --color-blue-600: #2F80ED;
+
+  /* Green Scale -> Success Green */
+  --color-green-500: #27AE60;
+  --color-green-600: #27AE60;
+
+  /* Amber/Yellow Scale -> Gold Highlight */
+  --color-amber-400: #F2C94C;
+  --color-amber-500: #F2C94C;
+  --color-yellow-400: #F2C94C;
+  --color-yellow-500: #F2C94C;
+
+  /* Orange Scale -> Alert Orange */
+  --color-orange-500: #F2994A;
+  --color-orange-600: #F2994A;
 }
 
 /* ── Base Styles ── */

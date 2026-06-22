@@ -16,26 +16,8 @@ async function main() {
     });
 
     console.log(`Found ${messages.length} messages`);
+    console.log(messages.map(m => ({ id: m.id, is_read: m.is_read, receiver_id: m.receiver_id })));
 
-    const listingIds = [...new Set(messages.map(m => m.listing_id))];
-    const userIds = [...new Set([
-      ...messages.map(m => m.sender_id).filter(id => id > 0),
-      ...messages.map(m => m.receiver_id).filter(id => id > 0)
-    ])];
-
-    const [listings, users] = await Promise.all([
-      prisma.listings.findMany({
-        where: { id: { in: listingIds } },
-        select: { id: true, title: true, image: true }
-      }),
-      prisma.users.findMany({
-        where: { id: { in: userIds } },
-        select: { id: true, name: true, email: true }
-      })
-    ]);
-
-    console.log(`Found ${listings.length} listings`);
-    console.log(`Found ${users.length} users`);
   } catch (error) {
     console.error('Error:', error);
   } finally {

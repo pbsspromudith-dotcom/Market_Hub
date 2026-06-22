@@ -333,11 +333,11 @@ const UserProfile: React.FC = () => {
     setReplyText("");
     
     // Check if there are any unread messages for me
-    const hasUnread = thread.messages.some((m: any) => !m.is_read && m.receiver_id === user.id);
+    const hasUnread = thread.messages.some((m: any) => !m.is_read && Number(m.receiver_id) === Number(user.id));
     if (hasUnread) {
       // Optimistically update local state
       const updatedMessages = messages.map(m => {
-        if (m.listing_id === thread.listing_id && m.sender_id === thread.otherUserId && m.receiver_id === user.id) {
+        if (m.listing_id === thread.listing_id && m.sender_id === thread.otherUserId && Number(m.receiver_id) === Number(user.id)) {
           return { ...m, is_read: true };
         }
         return m;
@@ -580,7 +580,7 @@ const UserProfile: React.FC = () => {
               threads.map(thread => {
                 const latestMsg = thread.messages[thread.messages.length - 1];
                 const isActive = activeThreadId === thread.threadId;
-                const hasUnread = thread.messages.some((m: any) => !m.is_read && m.receiver_id === user.id);
+                const hasUnread = thread.messages.some((m: any) => !m.is_read && Number(m.receiver_id) === Number(user.id));
                 return (
                   <button 
                     key={thread.threadId}
@@ -640,9 +640,14 @@ const UserProfile: React.FC = () => {
                     <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
                       <div className={`max-w-[75%] rounded-2xl p-4 ${isMe ? 'bg-primary text-white rounded-br-sm' : 'bg-white border border-slate-100 text-slate-800 rounded-bl-sm shadow-sm'}`}>
                         <p className="text-sm">{msg.message}</p>
-                        <p className={`text-[9px] font-bold uppercase tracking-widest mt-2 ${isMe ? 'text-right text-primary-200' : 'text-left text-slate-400'}`}>
+                        <div className={`text-[9px] flex items-center justify-${isMe ? 'end' : 'start'} gap-1 font-bold uppercase tracking-widest mt-2 ${isMe ? 'text-primary-200' : 'text-slate-400'}`}>
                           {new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                        </p>
+                          {isMe && (
+                            <span className="material-icons text-[12px]" title={msg.is_read ? "Read" : "Delivered"}>
+                              {msg.is_read ? 'done_all' : 'check'}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   );
