@@ -561,7 +561,7 @@ const PostAd: React.FC = () => {
                   const key = parts[0].trim();
                   const val = parts.slice(1).join(":").trim();
                   if (key === "Features") {
-                    features.push(...val.split(",").map(f => f.trim()));
+                    features.push(...val.split(",").map((f: string) => f.trim()));
                   } else {
                     attrVals[key] = val;
                   }
@@ -1563,7 +1563,10 @@ const PostAd: React.FC = () => {
                                   return (
                                     <li
                                       key={idx}
-                                      onClick={() => !isAlreadyAdded && handleSelectCity(place)}
+                                      onMouseDown={(e) => {
+                                        e.preventDefault(); // Prevent onBlur on input
+                                        if (!isAlreadyAdded) handleSelectCity(place);
+                                      }}
                                       className={`px-4 py-3 border-b border-slate-50 last:border-0 flex items-start gap-3 transition-colors ${
                                         isAlreadyAdded
                                           ? "bg-green-50 cursor-default"
@@ -1699,7 +1702,10 @@ const PostAd: React.FC = () => {
                                 return (
                                   <li
                                     key={idx}
-                                    onClick={() => handleSelectLocation(place)}
+                                    onMouseDown={(e) => {
+                                      e.preventDefault(); // Prevent input from losing focus
+                                      handleSelectLocation(place);
+                                    }}
                                     className="px-4 py-3 hover:bg-slate-50 cursor-pointer border-b border-slate-50 last:border-0 flex items-start gap-3 transition-colors"
                                   >
                                     <span className="material-icons text-slate-300 text-lg mt-0.5">

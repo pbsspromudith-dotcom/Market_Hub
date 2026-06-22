@@ -328,6 +328,35 @@ const UserProfile: React.FC = () => {
     }
   };
 
+  const handleThreadClick = async (thread: any) => {
+    setActiveThreadId(thread.threadId);
+    setReplyText("");
+    
+    // Check if there are any unread messages for me
+    const hasUnread = thread.messages.some((m: any) => !m.is_read && m.receiver_id === user.id);
+    if (hasUnread) {
+      // Optimistically update local state
+      const updatedMessages = messages.map(m => {
+        if (m.listing_id === thread.listing_id && m.sender_id === thread.otherUserId && m.receiver_id === user.id) {
+          return { ...m, is_read: true };
+        }
+        return m;
+      });
+      setMessages(updatedMessages);
+
+      // Tell backend
+      fetch('/api/messages/mark_read', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          listing_id: thread.listing_id,
+          sender_id: thread.otherUserId,
+          receiver_id: user.id
+        })
+      }).catch(console.error);
+    }
+  };
+
   if (!user) return null;
 
   const avatarInitials = user.name?.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2) || 'U';
@@ -551,24 +580,28 @@ const UserProfile: React.FC = () => {
               threads.map(thread => {
                 const latestMsg = thread.messages[thread.messages.length - 1];
                 const isActive = activeThreadId === thread.threadId;
+                const hasUnread = thread.messages.some((m: any) => !m.is_read && m.receiver_id === user.id);
                 return (
                   <button 
                     key={thread.threadId}
-                    onClick={() => { setActiveThreadId(thread.threadId); setReplyText(""); }}
-                    className={`w-full text-left p-4 rounded-2xl transition-all ${isActive ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'bg-white hover:bg-slate-50 border border-slate-100'}`}
+                    onClick={() => handleThreadClick(thread)}
+                    className={`w-full text-left p-4 rounded-2xl transition-all relative ${isActive ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'bg-white hover:bg-slate-50 border border-slate-100'}`}
                   >
+                    {hasUnread && !isActive && (
+                      <span className="absolute top-4 right-4 w-2.5 h-2.5 bg-red-500 rounded-full shadow-sm"></span>
+                    )}
                     <div className="flex justify-between items-start mb-2">
                       <p className={`text-sm font-black truncate pr-2 ${isActive ? 'text-white' : 'text-slate-800'}`}>
                         {thread.otherUserName}
                       </p>
-                      <span className={`text-[10px] font-bold uppercase tracking-wider shrink-0 ${isActive ? 'text-primary-100' : 'text-slate-400'}`}>
+                      <span className={`text-[10px] font-bold uppercase tracking-wider shrink-0 ${hasUnread && !isActive ? 'text-red-500 mr-3' : (isActive ? 'text-primary-100' : 'text-slate-400')}`}>
                         {new Date(latestMsg.created_at).toLocaleDateString(undefined, {month: 'short', day: 'numeric'})}
                       </span>
                     </div>
                     <p className={`text-xs font-medium truncate mb-1 ${isActive ? 'text-primary-100' : 'text-primary'}`}>
                       Ad: {thread.listing_title}
                     </p>
-                    <p className={`text-xs truncate ${isActive ? 'text-primary-50' : 'text-slate-500'}`}>
+                    <p className={`text-xs truncate ${isActive ? 'text-primary-50' : (hasUnread ? 'text-slate-800 font-bold' : 'text-slate-500')}`}>
                       {latestMsg.sender_id === user.id ? 'You: ' : ''}{latestMsg.message}
                     </p>
                   </button>
