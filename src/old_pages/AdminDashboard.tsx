@@ -274,27 +274,21 @@ const AdminDashboard: React.FC = () => {
 
 
   // Read user role from localStorage to filter tabs
-  const userRole = (() => {
-    try {
-      const userStr = localStorage.getItem('user');
-      if (!userStr) return 'admin';
-      const user = JSON.parse(userStr);
-      return user.role ? String(user.role).trim().toLowerCase() : 'admin';
-    } catch {
-      return 'admin';
-    }
-  })();
+  const [userRole, setUserRole] = useState('admin');
+  const [userName, setUserName] = useState('Admin');
+  const [mounted, setMounted] = useState(false);
 
-  const userName = (() => {
+  useEffect(() => {
+    setMounted(true);
     try {
       const userStr = localStorage.getItem('user');
-      if (!userStr) return 'Admin';
-      const user = JSON.parse(userStr);
-      return user.name || 'Admin';
-    } catch {
-      return 'Admin';
-    }
-  })();
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        if (user.role) setUserRole(String(user.role).trim().toLowerCase());
+        if (user.name) setUserName(user.name);
+      }
+    } catch {}
+  }, []);
 
   const allTabs = [
     { id: 'overview', label: 'Overview', icon: 'dashboard' },
@@ -968,6 +962,8 @@ const AdminDashboard: React.FC = () => {
     { label: 'Total Users', value: '-', change: '0%', icon: 'people', color: 'red' },
     { label: 'Total Listing Value', value: '-', change: '0%', icon: 'payments', color: 'green' },
   ];
+
+  if (!mounted) return null;
 
   return (
     <div className="max-w-[1600px] mx-auto px-6 py-10">
@@ -3115,9 +3111,9 @@ const AdminDashboard: React.FC = () => {
                                     className="hidden"
                                     checked={isEnabled}
                                     onChange={(e) => {
-                                      let current = tplConfig.carFeaturesList || ["Alloy Wheels", "Bluetooth", "Cruise Control", "Navigation System", "Sunroof/Moonroof", "Backup Camera", "Leather Seats", "Remote Start", "Blind Spot Monitor", "Heated Seats"];
+                                      let current: string[] = tplConfig.carFeaturesList || ["Alloy Wheels", "Bluetooth", "Cruise Control", "Navigation System", "Sunroof/Moonroof", "Backup Camera", "Leather Seats", "Remote Start", "Blind Spot Monitor", "Heated Seats"];
                                       if (e.target.checked) current = [...current, f];
-                                      else current = current.filter(x => x !== f);
+                                      else current = current.filter((x: string) => x !== f);
                                       setTplConfig({...tplConfig, carFeaturesList: current});
                                     }}
                                   />

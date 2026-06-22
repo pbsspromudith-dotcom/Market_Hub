@@ -36,8 +36,11 @@ export async function POST(req: Request) {
     // NOTE: Email sending is not implemented in the Next.js version.
     // The token is stored in the DB; in production, integrate with nodemailer or similar.
     
-    // For local development, log the reset link to the terminal so we can test it!
-    const resetLink = `http://localhost:3000/login?mode=reset&token=${token}`;
+    // Extract the base URL dynamically from the incoming request
+    const originUrl = new URL(req.url);
+    const baseUrl = `${originUrl.protocol}//${originUrl.host}`;
+    const resetLink = `${baseUrl}/login?mode=reset&token=${token}`;
+    
     console.log('\n\n=========================================');
     console.log('PASSWORD RESET REQUESTED');
     console.log(`Email: ${user.email}`);
