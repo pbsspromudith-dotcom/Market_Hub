@@ -173,12 +173,12 @@ const getTitlePlaceholder = (category: string) => {
 const PostAd: React.FC = () => {
   const [step, setStep] = useState(1);
   const navigate = useRouter();
-  const locationObj = useLocation();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { showAlert, showConfirm } = useUI();
 
   useEffect(() => {
-    const params = new URLSearchParams(locationObj.search);
-    if (!params.get("edit")) {
+    if (!searchParams?.get("edit")) {
       setStep(1);
       setCategory("");
       setTitle("");
@@ -201,7 +201,7 @@ const PostAd: React.FC = () => {
       setCategoryPath([]);
       setTemplateConfig({});
     }
-  }, [locationObj.key]);
+  }, [pathname, searchParams]);
 
   const [isEditMode, setIsEditMode] = useState(false);
   const [loadingEditData, setLoadingEditData] = useState(false);
@@ -285,7 +285,7 @@ const PostAd: React.FC = () => {
   const [dbOptions, setDbOptions] = useState<any[]>([]);
 
   useEffect(() => {
-    fetch("/api/options/read.php")
+    fetch("/api/options/read")
       .then((res) => res.json())
       .then((data) => {
         if (data.success && Array.isArray(data.data)) {
@@ -296,7 +296,7 @@ const PostAd: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    fetch("/api/options/read.php?type=price_option")
+    fetch("/api/options/read?type=price_option")
       .then((res) => res.json())
       .then((data) => {
         if (data.success && Array.isArray(data.data)) {
@@ -456,7 +456,7 @@ const PostAd: React.FC = () => {
   };
 
   useEffect(() => {
-    fetch("/api/categories/read.php")
+    fetch("/api/categories/read")
       .then((res) => res.json())
       .then((res) => {
         if (res.success && Array.isArray(res.data)) {
@@ -466,13 +466,12 @@ const PostAd: React.FC = () => {
       .catch((err) => console.error("Error loading categories", err));
   }, []);
 
-  const queryParams = new URLSearchParams(window.location.search);
-  const editId = queryParams.get("edit");
+  const editId = searchParams?.get("edit") || null;
 
   useEffect(() => {
     if (editId && categoriesTree.length > 0) {
       setLoadingEditData(true);
-      fetch(`/api/listings/read_single.php?id=${editId}`)
+      fetch(`/api/listings/read_single?id=${editId}`)
         .then((res) => res.json())
         .then((l) => {
           if (l.error) {
@@ -589,7 +588,7 @@ const PostAd: React.FC = () => {
   useEffect(() => {
     if (category) {
       fetch(
-        `/api/categories/attributes.php?category_name=${encodeURIComponent(category)}`,
+        `/api/categories/attributes?category_name=${encodeURIComponent(category)}`,
       )
         .then((res) => res.json())
         .then((res) => {
@@ -683,7 +682,7 @@ const PostAd: React.FC = () => {
         validFiles.forEach((file: File) => {
           formData.append("images[]", file);
         });
-        const uploadRes = await fetch("/api/upload.php", {
+        const uploadRes = await fetch("/api/upload", {
           method: "POST",
           body: formData,
         });
@@ -711,7 +710,7 @@ const PostAd: React.FC = () => {
         }
       }
 
-      const urlEndpoint = isEditMode ? "/api/listings/update.php" : "/api/listings/create.php";
+      const urlEndpoint = isEditMode ? "/api/listings/update" : "/api/listings/create";
       
       const payload: any = {
         title: finalTitle,
@@ -775,7 +774,7 @@ const PostAd: React.FC = () => {
         if (hasPromotions) {
           setCreatedListingId(data.id);
 
-          const preloadRes = await fetch("/api/payments/preload.php", {
+          const preloadRes = await fetch("/api/payments/preload", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
