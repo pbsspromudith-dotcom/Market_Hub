@@ -1,1 +1,0 @@
-const r=(t,h,a,M)=>{const s=(a-t)*(Math.PI/180),c=(M-h)*(Math.PI/180),n=Math.sin(s/2)*Math.sin(s/2)+Math.cos(t*(Math.PI/180))*Math.cos(a*(Math.PI/180))*Math.sin(c/2)*Math.sin(c/2);return 3958.8*(2*Math.atan2(Math.sqrt(n),Math.sqrt(1-n)))};export{r as c};
