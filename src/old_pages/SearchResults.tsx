@@ -84,7 +84,7 @@ const SearchResults: React.FC = () => {
 
   useEffect(() => {
     setIsLoading(true);
-    fetch('/api/listings/read.php')
+    fetch('/api/listings/read')
       .then(res => res.json())
       .then(data => {
         setListings(data);
@@ -97,7 +97,7 @@ const SearchResults: React.FC = () => {
       .finally(() => setIsLoading(false));
 
     // Fetch options for dropdowns
-    fetch('/api/options/read.php')
+    fetch('/api/options/read')
       .then(res => res.json())
       .then(data => {
         if (data && data.success && Array.isArray(data.data)) {
