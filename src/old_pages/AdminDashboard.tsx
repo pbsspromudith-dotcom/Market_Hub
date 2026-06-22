@@ -91,7 +91,7 @@ const AdminDashboard: React.FC = () => {
   // Load categories tree for templates tab
   useEffect(() => {
     if (activeTab === 'templates' && tplCategories.length === 0) {
-      fetch('/api/categories/read.php')
+      fetch('/api/categories/read')
         .then(r => r.json())
         .then(r => { if (r.success) setTplCategories(r.data); })
         .catch(console.error);
@@ -139,7 +139,7 @@ const AdminDashboard: React.FC = () => {
     setTplIsOwn(isOwn || !resolvedFrom);
 
     // Load attributes for the selected category
-    fetch(`/api/categories/attributes.php?category_id=${selectedId}`)
+    fetch(`/api/categories/attributes?category_id=${selectedId}`)
       .then(r => r.json())
       .then(r => { if (r.success) setTplAttributes(r.data); })
       .catch(console.error);
@@ -151,7 +151,7 @@ const AdminDashboard: React.FC = () => {
     setTplSaving(true);
     setTplMsg(null);
     try {
-      const res = await fetch('/api/categories/save_template.php', {
+      const res = await fetch('/api/categories/save_template', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ category_id: selectedId, template_config: tplConfig })
@@ -181,7 +181,7 @@ const AdminDashboard: React.FC = () => {
     if (!selectedId) return;
     setTplSaving(true);
     try {
-      const res = await fetch('/api/categories/save_template.php', {
+      const res = await fetch('/api/categories/save_template', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ category_id: selectedId, template_config: null })
@@ -210,7 +210,7 @@ const AdminDashboard: React.FC = () => {
     setTplAddingAttr(true);
     try {
       const opts = (tplNewAttrType === 'Dropdown' || tplNewAttrType === 'CheckboxGroup') ? tplNewAttrOptions.split(',').map(s => s.trim()).filter(Boolean) : [];
-      const res = await fetch('/api/categories/add_attribute.php', {
+      const res = await fetch('/api/categories/add_attribute', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -225,7 +225,7 @@ const AdminDashboard: React.FC = () => {
       if (data.success) {
         setTplNewAttrName(''); setTplNewAttrOptions(''); setTplNewAttrRequired(false);
         // Reload attributes
-        const r2 = await fetch(`/api/categories/attributes.php?category_id=${selectedId}`);
+        const r2 = await fetch(`/api/categories/attributes?category_id=${selectedId}`);
         const d2 = await r2.json();
         if (d2.success) setTplAttributes(d2.data);
         setTplMsg({ type: 'success', text: 'Attribute added!' });
@@ -240,7 +240,7 @@ const AdminDashboard: React.FC = () => {
   const doTplDeleteAttr = async (attrId: number) => {
     setTplDeletingAttr(attrId);
     try {
-      const res = await fetch('/api/categories/delete_attribute.php', {
+      const res = await fetch('/api/categories/delete_attribute', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ attribute_id: attrId })
@@ -392,7 +392,7 @@ const AdminDashboard: React.FC = () => {
 
     // Only fetch admin-only data for admin users
     if (userRole !== 'seo') {
-      fetch('/api/admin/stats.php')
+      fetch('/api/admin/stats')
         .then(res => res.json())
         .then(data => {
           if (data.success) {
@@ -413,7 +413,7 @@ const AdminDashboard: React.FC = () => {
   }, []);
 
   const fetchSeoSettings = () => {
-    fetch('/api/admin/seo_read.php?t=' + new Date().getTime())
+    fetch('/api/admin/seo_read?t=' + new Date().getTime())
       .then(res => res.json())
       .then(data => {
         if (data.success && data.settings) {
@@ -428,7 +428,7 @@ const AdminDashboard: React.FC = () => {
     setIsSavingSeo(true);
     setSeoSaveMsg(null);
     try {
-      const response = await fetch('/api/admin/seo_update.php', {
+      const response = await fetch('/api/admin/seo_update', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(seoSettings),
@@ -452,7 +452,7 @@ const AdminDashboard: React.FC = () => {
     setIsSavingSocial(true);
     setSocialSaveMsg(null);
     try {
-      const response = await fetch('/api/admin/seo_update.php', {
+      const response = await fetch('/api/admin/seo_update', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -486,7 +486,7 @@ const AdminDashboard: React.FC = () => {
   };
 
   const fetchMenuCategories = () => {
-    fetch('/api/categories/read.php')
+    fetch('/api/categories/read')
       .then(res => res.json())
       .then(data => {
         if (data.success && Array.isArray(data.data)) {
@@ -501,7 +501,7 @@ const AdminDashboard: React.FC = () => {
     setIsSavingCat(true);
     setCatMsg(null);
     try {
-      const response = await fetch('/api/categories/create.php', {
+      const response = await fetch('/api/categories/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -541,7 +541,7 @@ const AdminDashboard: React.FC = () => {
         setIsDeletingCat(id);
         setCatMsg(null);
         try {
-          const response = await fetch('/api/categories/delete.php', {
+          const response = await fetch('/api/categories/delete', {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ CategoryID: id })
@@ -569,7 +569,7 @@ const AdminDashboard: React.FC = () => {
     if (seoSearch) params.append('search', seoSearch);
     if (seoCategoryFilter) params.append('category', seoCategoryFilter);
     if (seoStatusFilter) params.append('seo_status', seoStatusFilter);
-    fetch('/api/listings/seo_read.php?' + params.toString())
+    fetch('/api/listings/seo_read?' + params.toString())
       .then(res => res.json())
       .then(data => {
         if (data.success) {
@@ -588,7 +588,7 @@ const AdminDashboard: React.FC = () => {
     setIsSavingListingSeo(true);
     setListingSeoMsg(null);
     try {
-      const res = await fetch('/api/listings/seo_update.php', {
+      const res = await fetch('/api/listings/seo_update', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ listing_id: editingSeoListing.id, ...seoForm }),
@@ -611,7 +611,7 @@ const AdminDashboard: React.FC = () => {
   const handleGenerateListingSeo = async (listingId: number) => {
     setIsGeneratingSeo(true);
     try {
-      const res = await fetch('/api/listings/seo_generate.php?listing_id=' + listingId);
+      const res = await fetch('/api/listings/seo_generate?listing_id=' + listingId);
       const data = await res.json();
       if (data.success && data.generated) {
         setSeoForm({
@@ -636,7 +636,7 @@ const AdminDashboard: React.FC = () => {
       isDestructive: true,
       onConfirm: async () => {
         try {
-          const res = await fetch('/api/listings/seo_update.php', {
+          const res = await fetch('/api/listings/seo_update', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ listing_id: listingId, reset: true }),
@@ -668,7 +668,7 @@ const AdminDashboard: React.FC = () => {
   };
 
   const fetchUsers = () => {
-    fetch('/api/users/read.php')
+    fetch('/api/users/read')
       .then(res => res.json())
       .then(data => {
         if (data.success && Array.isArray(data.data)) {
@@ -686,7 +686,7 @@ const AdminDashboard: React.FC = () => {
       onConfirm: async () => {
         setIsDeletingUser(id);
         try {
-          const response = await fetch('/api/users/delete.php', {
+          const response = await fetch('/api/users/delete', {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ id }),
@@ -712,7 +712,7 @@ const AdminDashboard: React.FC = () => {
     e.preventDefault();
     if (!editingUser) return;
     try {
-      const response = await fetch('/api/users/update.php', {
+      const response = await fetch('/api/users/update', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(editingUser),
@@ -732,7 +732,7 @@ const AdminDashboard: React.FC = () => {
   };
 
   const fetchOptions = () => {
-    fetch('/api/options/read.php')
+    fetch('/api/options/read')
       .then(res => res.json())
       .then(data => {
         if (data.success && Array.isArray(data.data)) {
@@ -743,7 +743,7 @@ const AdminDashboard: React.FC = () => {
   };
 
   const fetchListings = () => {
-    fetch('/api/listings/read.php')
+    fetch('/api/listings/read')
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) {
@@ -761,7 +761,7 @@ const AdminDashboard: React.FC = () => {
       onConfirm: async () => {
         setIsDeleting(id);
         try {
-          const response = await fetch('/api/listings/delete.php', {
+          const response = await fetch('/api/listings/delete', {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ id }),
@@ -796,7 +796,7 @@ const AdminDashboard: React.FC = () => {
         let deletedCount = 0;
         for (const id of ids) {
           try {
-            const res = await fetch('/api/listings/delete.php', {
+            const res = await fetch('/api/listings/delete', {
               method: 'DELETE',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ id }),
@@ -822,7 +822,7 @@ const AdminDashboard: React.FC = () => {
     if (!newOptionValue.trim()) return;
     setIsCreatingOption(true);
     try {
-      const response = await fetch('/api/options/create.php', {
+      const response = await fetch('/api/options/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -852,7 +852,7 @@ const AdminDashboard: React.FC = () => {
 
   const handleUpdateParentId = async (id: number, optionType: string, parentId: string) => {
     try {
-      const response = await fetch('/api/options/update.php', {
+      const response = await fetch('/api/options/update', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, option_type: optionType, parent_id: parentId }),
@@ -878,7 +878,7 @@ const AdminDashboard: React.FC = () => {
       onConfirm: async () => {
         setIsDeletingOption(id);
         try {
-          const response = await fetch('/api/options/delete.php', {
+          const response = await fetch('/api/options/delete', {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ id, option_type: optionType }),
@@ -901,7 +901,7 @@ const AdminDashboard: React.FC = () => {
   };
 
   const fetchEmailConfig = () => {
-    fetch('/api/admin/email_config.php')
+    fetch('/api/admin/email_config')
       .then(res => res.json())
       .then(data => {
         if (data.success && data.settings) {
@@ -916,7 +916,7 @@ const AdminDashboard: React.FC = () => {
     setIsSavingEmail(true);
     setEmailSaveMsg(null);
     try {
-      const response = await fetch('/api/admin/email_config.php', {
+      const response = await fetch('/api/admin/email_config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(emailConfig),
@@ -940,7 +940,7 @@ const AdminDashboard: React.FC = () => {
     setIsSendingTest(true);
     setEmailSaveMsg(null);
     try {
-      const response = await fetch('/api/admin/email_config.php', {
+      const response = await fetch('/api/admin/email_config', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ test_email: testEmail }),

@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from 'next/link';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { CURRENT_USER } from "../constants";
-import logoImg from "../assets/HitAds.png";
+import logoImg from "../../public/logo.png";
 import footerImg from "../assets/Footer.jpeg";
 
 interface LayoutProps {

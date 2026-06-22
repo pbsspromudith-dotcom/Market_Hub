@@ -147,7 +147,7 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn }) => {
       const delayFn = setTimeout(() => {
         setIsSearchingLocation(true);
         fetch(
-          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(locationSearch)}&countrycodes=ca&format=json&addressdetails=1&limit=5`,
+          `/api/locations/search?q=${encodeURIComponent(locationSearch)}`
         )
           .then((res) => res.json())
           .then((data) => setLocationSuggestions(data))

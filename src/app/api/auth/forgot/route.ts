@@ -35,10 +35,20 @@ export async function POST(req: Request) {
 
     // NOTE: Email sending is not implemented in the Next.js version.
     // The token is stored in the DB; in production, integrate with nodemailer or similar.
+    
+    // For local development, log the reset link to the terminal so we can test it!
+    const resetLink = `http://localhost:3000/login?mode=reset&token=${token}`;
+    console.log('\n\n=========================================');
+    console.log('PASSWORD RESET REQUESTED');
+    console.log(`Email: ${user.email}`);
+    console.log(`Reset Link: ${resetLink}`);
+    console.log('=========================================\n\n');
+
     // For now, return success so the UI flow works.
     return NextResponse.json({
       success: true,
-      message: 'Password reset link sent! Please check your email.',
+      message: 'Password reset link sent! (Check your terminal for the link)',
+      resetLink: process.env.NODE_ENV === 'development' ? resetLink : undefined
     });
   } catch (error) {
     console.error('Forgot password error:', error);

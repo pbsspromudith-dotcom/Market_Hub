@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import logoImg from '../assets/HitAds.png';
+import logoImg from "../../public/logo.png";
 import { trackUserRegistration } from '../analytics';
 
 interface LoginProps {
@@ -21,6 +21,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const [devResetLink, setDevResetLink] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const initialMode = (searchParams?.get('mode') as any) || location.state?.mode || 'login';
@@ -35,7 +36,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     }
   }, [location.state]);
 
-  // Handle ?verified=true or ?verified=already from verify.php redirect, or ?mode=reset&token=TOKEN
+  // Handle ?verified=true or ?verified=already from verify redirect, or ?mode=reset&token=TOKEN
   useEffect(() => {
     let params = new URLSearchParams(location.search);
     if (!params.get('verified') && !params.get('token')) {
@@ -79,7 +80,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           const errData = await response.json();
           setError(errData.message || `Server error ${response.status}`);
         } catch {
-          setError(`Server error ${response.status}: Please check if resend-verify.php is uploaded to the server.`);
+          setError(`Server error ${response.status}: Please check if resend-verify is uploaded to the server.`);
         }
         return;
       }
@@ -116,7 +117,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
             const errData = await response.json();
             setError(errData.message || `Server error ${response.status}`);
           } catch {
-            setError(`Server error ${response.status}: Please check if login.php is uploaded.`);
+            setError(`Server error ${response.status}: Please check if login is uploaded.`);
           }
           return;
         }
@@ -148,7 +149,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
             const errData = await response.json();
             setError(errData.message || `Server error ${response.status}`);
           } catch {
-            setError(`Server error ${response.status}: Please check if register.php is uploaded.`);
+            setError(`Server error ${response.status}: Please check if register is uploaded.`);
           }
           return;
         }
@@ -176,7 +177,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
             const errData = await response.json();
             setError(errData.message || `Server error ${response.status}`);
           } catch {
-            setError(`Server error ${response.status}: Please check if forgot.php is uploaded.`);
+            setError(`Server error ${response.status}: Please check if forgot is uploaded.`);
           }
           return;
         }
@@ -184,6 +185,9 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         
         if (data.success) {
           setSuccessMsg(data.message || 'Password reset link sent! Check your email.');
+          if (data.resetLink) {
+            setDevResetLink(data.resetLink);
+          }
           setEmail('');
         } else {
           setError(data.message || 'Failed to send reset link.');
@@ -201,7 +205,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
             const errData = await response.json();
             setError(errData.message || `Server error ${response.status}`);
           } catch {
-            setError(`Server error ${response.status}: Please check if reset.php is uploaded.`);
+            setError(`Server error ${response.status}: Please check if reset is uploaded.`);
           }
           return;
         }
@@ -348,9 +352,23 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
             )}
             
             {successMsg && (
-              <div className="bg-green-50 border border-green-100 text-green-600 px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-2">
-                <span className="material-icons text-sm">check_circle</span>
-                {successMsg}
+              <div className="space-y-3">
+                <div className="bg-green-50 border border-green-100 text-green-600 px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-2">
+                  <span className="material-icons text-sm">check_circle</span>
+                  {successMsg}
+                </div>
+                {devResetLink && (
+                  <div className="bg-blue-50 border border-blue-100 text-blue-800 px-4 py-4 rounded-xl text-xs flex flex-col items-center justify-center gap-2 text-center">
+                    <span className="font-bold">Development Mode Active</span>
+                    <p className="text-blue-600">Email sending is skipped. Click the button below to test the password reset flow.</p>
+                    <a 
+                      href={devResetLink} 
+                      className="mt-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition-colors inline-block"
+                    >
+                      Reset My Password Now
+                    </a>
+                  </div>
+                )}
               </div>
             )}
 

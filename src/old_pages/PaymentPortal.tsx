@@ -19,7 +19,7 @@ const PaymentPortal: React.FC = () => {
     const userData = JSON.parse(userStr);
     setUser(userData);
 
-    fetch(`/api/payments/read_user.php?user_id=${userData.id}`)
+    fetch(`/api/payments/read_user?user_id=${userData.id}`)
       .then((res) => res.json())
       .then((data) => {
         if (data.success && Array.isArray(data.data)) {

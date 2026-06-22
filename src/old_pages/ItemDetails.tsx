@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import { CURRENT_USER, formatPrice } from '../constants';
 import { trackContactClick } from '../analytics';
 
@@ -30,7 +31,7 @@ const ItemDetails: React.FC = () => {
 
   useEffect(() => {
     setLoading(true);
-    fetch('/api/listings/read_single.php?id=' + id)
+    fetch('/api/listings/read_single?id=' + id)
       .then(res => res.json())
       .then(data => {
         if (!data.error) {
@@ -41,7 +42,7 @@ const ItemDetails: React.FC = () => {
       .catch(console.error)
       .finally(() => setLoading(false));
 
-    fetch('/api/admin/seo_read.php?t=' + new Date().getTime())
+    fetch('/api/admin/seo_read?t=' + new Date().getTime())
       .then(res => res.json())
       .then(data => {
         if (data.success && data.settings) {
@@ -60,7 +61,7 @@ const ItemDetails: React.FC = () => {
     
     try {
       const user = JSON.parse(localStorage.getItem('user') || 'null');
-      const response = await fetch('/api/messages/create.php', {
+      const response = await fetch('/api/messages/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

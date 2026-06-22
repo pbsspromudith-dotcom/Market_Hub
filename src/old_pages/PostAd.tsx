@@ -178,6 +178,14 @@ const PostAd: React.FC = () => {
   const { showAlert, showConfirm } = useUI();
 
   useEffect(() => {
+    // Auth Check
+    const userStr = localStorage.getItem("user");
+    if (!userStr) {
+      showAlert("You must be logged in to post an ad.", "info");
+      navigate.push("/login?redirect=/post-ad");
+      return;
+    }
+
     if (!searchParams?.get("edit")) {
       setStep(1);
       setCategory("");
@@ -360,7 +368,7 @@ const PostAd: React.FC = () => {
       const delayFn = setTimeout(() => {
         setIsSearchingLocation(true);
         fetch(
-          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(location)}&countrycodes=ca&format=json&addressdetails=1&limit=5`,
+          `/api/locations/search?q=${encodeURIComponent(location)}`
         )
           .then((res) => res.json())
           .then((data) => setLocationSuggestions(data))
@@ -379,7 +387,7 @@ const PostAd: React.FC = () => {
       const delayFn = setTimeout(() => {
         setIsSearchingCity(true);
         fetch(
-          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(citySearchQuery)}&countrycodes=ca&format=json&addressdetails=1&limit=5`,
+          `/api/locations/search?q=${encodeURIComponent(citySearchQuery)}`
         )
           .then((res) => res.json())
           .then((data) => setCitySearchSuggestions(data))

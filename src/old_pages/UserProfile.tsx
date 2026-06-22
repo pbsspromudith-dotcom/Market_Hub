@@ -98,7 +98,7 @@ const UserProfile: React.FC = () => {
     setEditData({ name: userData.name || '', phone: userData.phone || '' });
 
     // Fetch this user's listings
-    fetch('/api/listings/read.php')
+    fetch('/api/listings/read')
       .then(res => res.json())
       .then(data => {
         const myListings = data.filter((l: any) => l.user_id === userData.id);
@@ -109,7 +109,7 @@ const UserProfile: React.FC = () => {
 
     // Fetch user messages
     setIsMessagesLoading(true);
-    fetch(`/api/messages/read_user.php?user_id=${userData.id}`)
+    fetch(`/api/messages/read_user?user_id=${userData.id}`)
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) setMessages(data);
@@ -139,7 +139,7 @@ const UserProfile: React.FC = () => {
       formData.append('avatar', file);
       formData.append('user_id', user.id.toString());
 
-      const response = await fetch('/api/users/upload-avatar.php', {
+      const response = await fetch('/api/users/upload-avatar', {
         method: 'POST',
         body: formData,
       });
@@ -166,7 +166,7 @@ const UserProfile: React.FC = () => {
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch('/api/users/update.php', {
+      const response = await fetch('/api/users/update', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -221,7 +221,7 @@ const UserProfile: React.FC = () => {
     }
 
     try {
-      const response = await fetch('/api/payments/preload.php', {
+      const response = await fetch('/api/payments/preload', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -272,7 +272,7 @@ const UserProfile: React.FC = () => {
     if (!listingToDelete) return;
     
     try {
-      const response = await fetch(`/api/listings/delete.php`, {
+      const response = await fetch(`/api/listings/delete`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: listingToDelete })
@@ -296,7 +296,7 @@ const UserProfile: React.FC = () => {
     if (!replyText.trim() || !activeThread) return;
     setIsSendingReply(true);
     try {
-      const response = await fetch('/api/messages/create.php', {
+      const response = await fetch('/api/messages/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -312,7 +312,7 @@ const UserProfile: React.FC = () => {
         showAlert("Reply sent successfully!", "success");
         setReplyText("");
         // Optimistically reload messages
-        fetch(`/api/messages/read_user.php?user_id=${user.id}`)
+        fetch(`/api/messages/read_user?user_id=${user.id}`)
           .then(res => res.json())
           .then(resData => {
             if (Array.isArray(resData)) setMessages(resData);

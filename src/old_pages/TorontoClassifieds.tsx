@@ -8,7 +8,7 @@ const TorontoClassifieds: React.FC = () => {
   const [listings, setListings] = useState<any[]>([]);
 
   useEffect(() => {
-    fetch('/api/listings/read.php')
+    fetch('/api/listings/read')
       .then(res => res.json())
       .then(data => setListings(data.slice(0, 8)))
       .catch(console.error);

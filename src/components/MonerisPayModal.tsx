@@ -134,7 +134,7 @@ const MonerisPayModal: React.FC<MonerisPayModalProps> = ({
     setError(null);
 
     try {
-      const response = await fetch('/api/payments/verify.php', {
+      const response = await fetch('/api/payments/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ticket: completedTicket }),
