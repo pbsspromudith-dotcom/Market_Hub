@@ -61,11 +61,13 @@ export default function ClientApp({ children }: { children: React.ReactNode }) {
 
   return (
     <UIProvider>
-      <LocationPrompt />
-      <ChatBot />
-      <Layout isLoggedIn={isLoggedIn} isAdmin={isAdmin} onLogout={handleLogout}>
-        {children}
-      </Layout>
+      <React.Suspense fallback={<div className="h-full flex items-center justify-center">Loading...</div>}>
+        <LocationPrompt />
+        <ChatBot />
+        <Layout isLoggedIn={isLoggedIn} isAdmin={isAdmin} onLogout={handleLogout}>
+          {children}
+        </Layout>
+      </React.Suspense>
     </UIProvider>
   );
 }

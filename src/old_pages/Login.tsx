@@ -28,7 +28,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const initialMode =
-    (searchParams?.get("mode") as any) || location.state?.mode || "login";
+    (searchParams?.get("mode") as any) || "login";
   const [authMode, setAuthMode] = useState<
     "login" | "register" | "forgot" | "verify-pending" | "reset"
   >(initialMode);
@@ -37,10 +37,8 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [resending, setResending] = useState(false);
 
   useEffect(() => {
-    if (location.state?.mode) {
-      setAuthMode(location.state.mode);
-    }
-  }, [location.state]);
+    // legacy state sync removed
+  }, []);
 
   // Handle ?verified=true or ?verified=already from verify redirect, or ?mode=reset&token=TOKEN
   useEffect(() => {

@@ -75,7 +75,7 @@ const ItemDetails: React.FC = () => {
       if (data.success) {
         setSentStatus('Message sent successfully!');
         setMessage('');
-        trackContactClick(id || '0', 'message');
+        trackContactClick(String(id) || '0', 'message');
       } else {
         setSentStatus('Failed to send message.');
       }
