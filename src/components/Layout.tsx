@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from 'next/link';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { CURRENT_USER } from "../constants";
-import logoImg from "../../public/logo.png";
+import logoImg from "../../assets/Tophome.jpeg";
 import footerImg from "../assets/Footer.jpeg";
 
 interface LayoutProps {
@@ -49,18 +49,33 @@ const Layout: React.FC<LayoutProps> = ({
   const [expandedFooter, setExpandedFooter] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/categories/read")
-      .then((res) => res.json())
-      .then((res) => {
+    // Retry helper for cold database connections after deployment
+    const fetchWithRetry = async (url: string, retries = 3, delay = 1000): Promise<any> => {
+      for (let i = 0; i < retries; i++) {
+        try {
+          const res = await fetch(url);
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return await res.json();
+        } catch (err) {
+          if (i < retries - 1) {
+            await new Promise(r => setTimeout(r, delay * Math.pow(2, i)));
+          } else {
+            throw err;
+          }
+        }
+      }
+    };
+
+    fetchWithRetry("/api/categories/read")
+      .then((res: any) => {
         if (res.success && Array.isArray(res.data)) {
           setCategoriesTree(res.data);
         }
       })
-      .catch((err) => console.error("Error loading categories:", err));
+      .catch((err: any) => console.error("Error loading categories:", err));
 
-    fetch("/api/admin/seo_read?t=" + new Date().getTime())
-      .then((res) => res.json())
-      .then((data) => {
+    fetchWithRetry("/api/admin/seo_read?t=" + new Date().getTime())
+      .then((data: any) => {
         if (data.success && data.settings) {
           setSocialLinks({
             facebook: data.settings.social_facebook || "",
@@ -72,7 +87,7 @@ const Layout: React.FC<LayoutProps> = ({
           }
         }
       })
-      .catch((err) => console.error("Error loading social settings:", err));
+      .catch((err: any) => console.error("Error loading social settings:", err));
   }, []);
 
   const CATEGORIES = categoriesTree.map((cat) => cat.CategoryName);
@@ -124,7 +139,7 @@ const Layout: React.FC<LayoutProps> = ({
                   width="160"
                   height="80"
                   fetchPriority="high"
-                  className="h-14 md:h-20 w-auto object-contain transition-transform hover:scale-105 mix-blend-multiply"
+                  className="h-20 md:h-28 w-auto object-contain transition-transform hover:scale-105 mix-blend-multiply"
                 />
               </Link>
             </div>

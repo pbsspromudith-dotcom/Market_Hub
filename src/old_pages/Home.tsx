@@ -243,12 +243,12 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn }) => {
             <span className="text-primary-light">{heroText.title2}</span>
           </h1>
           <p className="text-base md:text-xl mb-10 max-w-2xl mx-auto leading-relaxed font-bold flex flex-wrap items-center justify-center gap-3 sm:gap-4">
-            <span className="w-10 h-[2px] bg-[#e63946] hidden sm:inline-block"></span>
+            <span className="w-10 h-[2px] bg-secondary hidden sm:inline-block"></span>
             <span className="text-slate-800">{heroText.tag1}</span>
-            <span className="text-[#e63946]">{heroText.tag2}</span>
+            <span className="text-secondary">{heroText.tag2}</span>
             <span className="text-[#1a2e5a]">{heroText.tag3}</span>
-            <span className="text-[#e63946]">{heroText.tag4}</span>
-            <span className="w-10 h-[2px] bg-[#e63946] hidden sm:inline-block"></span>
+            <span className="text-secondary">{heroText.tag4}</span>
+            <span className="w-10 h-[2px] bg-secondary hidden sm:inline-block"></span>
           </p>
 
           <div className="max-w-4xl mx-auto bg-white p-2.5 rounded-[2.5rem] shadow-2xl shadow-primary-neutral/40 border border-slate-100 flex flex-col md:flex-row gap-2">

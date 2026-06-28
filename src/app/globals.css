@@ -7,13 +7,13 @@
 
 @theme inline {
   /* ── Custom Theme Colors (Original Mappings) ── */
-  --color-primary: #D72638;
-  --color-primary-hover: #A81224;
-  --color-primary-light: #D72638;
-  --color-primary-soft: #E8525F;
+  --color-primary: #2F80ED;
+  --color-primary-hover: #1D4ED8;
+  --color-primary-light: #4285F4;
+  --color-primary-soft: #93C5FD;
   --color-primary-neutral: #5B616A;
-  --color-secondary: #A81224;
-  --color-secondary-hover: #8A0E1D;
+  --color-secondary: #D72638;
+  --color-secondary-hover: #A81224;
   --color-accent: #D72638;
   --color-accent-gold: #F2C94C;
   --color-accent-beige: #F6F1EB;
@@ -87,8 +87,8 @@ body {
 .bg-gradient-mesh {
   background-color: #F7F7F7;
   background-image:
-    radial-gradient(at 0% 0%, rgba(215, 38, 56, 0.08) 0px, transparent 50%),
-    radial-gradient(at 100% 0%, rgba(168, 18, 36, 0.06) 0px, transparent 50%);
+    radial-gradient(at 0% 0%, rgba(47, 128, 237, 0.08) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(215, 38, 56, 0.06) 0px, transparent 50%);
 }
 
 /* ── Line Clamp ── */
