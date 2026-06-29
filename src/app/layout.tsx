@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import ClientApp from "@/components/ClientApp";
 import Script from "next/script";
+
+const inter = Inter({ subsets: ["latin"], display: "swap" });
 
 export const metadata: Metadata = {
   title: "HitAds.ca - Canada's Free Business Classifieds",
@@ -29,11 +32,13 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
 
-        {/* Inter Font + Material Icons */}
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
-        <link href="https://fonts.googleapis.com/icon?family=Material+Icons&display=swap" rel="stylesheet" />
+        {/* Material Icons */}
+        <link 
+          rel="stylesheet" 
+          href="https://fonts.googleapis.com/icon?family=Material+Icons&display=swap" 
+        />
       </head>
-      <body className="min-h-full flex flex-col bg-background-light text-slate-900">
+      <body className={`min-h-full flex flex-col bg-background-light text-slate-900 ${inter.className}`}>
         {/* Google Tag Manager (noscript) */}
         <noscript>
           <iframe

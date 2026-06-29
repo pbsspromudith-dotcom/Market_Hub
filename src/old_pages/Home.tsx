@@ -7,6 +7,8 @@ import { calculateDistance } from "../utils";
 
 interface HomeProps {
   isLoggedIn: boolean;
+  initialCategories?: any[];
+  initialSeoSettings?: Record<string, string>;
 }
 
 const getGoogleStyleAddress = (place: any) => {
@@ -116,17 +118,19 @@ const getCleanAddressString = (place: any) => {
   return parts.filter((val, index, self) => self.indexOf(val) === index && val !== "").join(", ");
 };
 
-const Home: React.FC<HomeProps> = ({ isLoggedIn }) => {
-  const [categories, setCategories] = useState<any[]>([]);
+const Home: React.FC<HomeProps> = ({ isLoggedIn, initialCategories = [], initialSeoSettings = {} }) => {
+  const [categories, setCategories] = useState<any[]>(initialCategories);
   const [heroText, setHeroText] = useState({
-    title1: "Find what you need,",
-    title2: "right in your community.",
-    tag1: "Free Ads.",
-    tag2: "Sell Fast.",
-    tag3: "Buy Local.",
-    tag4: "Canada-Wide."
+    title1: initialSeoSettings.homepage_hero_title_1 || "Find what you need,",
+    title2: initialSeoSettings.homepage_hero_title_2 || "right in your community.",
+    tag1: initialSeoSettings.homepage_hero_tag_1 || "Free Ads.",
+    tag2: initialSeoSettings.homepage_hero_tag_2 || "Sell Fast.",
+    tag3: initialSeoSettings.homepage_hero_tag_3 || "Buy Local.",
+    tag4: initialSeoSettings.homepage_hero_tag_4 || "Canada-Wide."
   });
-  const [homepageAdCount, setHomepageAdCount] = useState(12);
+  const [homepageAdCount, setHomepageAdCount] = useState(
+    parseInt(initialSeoSettings.homepage_ad_count || "12", 10) || 12
+  );
 
   const [serverMessage, setServerMessage] = useState<string>(
     "Checking backend connection...",
@@ -173,17 +177,7 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn }) => {
   };
 
   useEffect(() => {
-    fetch("/api/categories/read")
-      .then((res) => res.json())
-      .then((res) => {
-        if (res.success && Array.isArray(res.data)) {
-          setCategories(res.data.map((cat: any) => ({
-            name: cat.CategoryName,
-            icon: cat.Icon || 'category'
-          })));
-        }
-      })
-      .catch((err) => console.error("Error loading categories:", err));
+    // Categories are now loaded server-side and passed via props
 
     fetch("/api/status")
       .then((res) => res.json())
@@ -197,24 +191,7 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn }) => {
       .then((data) => setListings(data))
       .catch((err) => console.error("DB fetch error", err));
 
-    fetch("/api/admin/seo_read?t=" + new Date().getTime())
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success && data.settings) {
-          if (data.settings.homepage_ad_count) {
-            setHomepageAdCount(parseInt(data.settings.homepage_ad_count, 10) || 12);
-          }
-          setHeroText({
-            title1: data.settings.homepage_hero_title_1 || "Find what you need,",
-            title2: data.settings.homepage_hero_title_2 || "right in your community.",
-            tag1: data.settings.homepage_hero_tag_1 || "Free Ads.",
-            tag2: data.settings.homepage_hero_tag_2 || "Sell Fast.",
-            tag3: data.settings.homepage_hero_tag_3 || "Buy Local.",
-            tag4: data.settings.homepage_hero_tag_4 || "Canada-Wide."
-          });
-        }
-      })
-      .catch((err) => console.error("Error loading hero text settings:", err));
+    // SEO settings are now loaded server-side and passed via props
 
     const handleLocationUpdate = () => {
       const loc = localStorage.getItem("user_location");
@@ -442,6 +419,9 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn }) => {
                       }
                       alt={item.title}
                       loading="lazy"
+                      width="800"
+                      height="600"
+                      decoding="async"
                       className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-700"
                     />
                     <button className="absolute top-5 right-5 w-10 h-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors shadow-sm">
