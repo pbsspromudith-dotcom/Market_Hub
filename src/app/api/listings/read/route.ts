@@ -41,11 +41,37 @@ export async function GET() {
         }
       }
 
+      // Check if promotions are expired
+      const now = new Date();
+      let { is_top_ad, is_highlighted, is_urgent, is_home_gallery } = row;
+      const promotion_expires_at = (row as any).promotion_expires_at;
+      
+      if (promotion_expires_at && new Date(promotion_expires_at) < now) {
+        is_top_ad = false;
+        is_highlighted = false;
+        is_urgent = false;
+        is_home_gallery = false;
+      }
+
       return {
         ...row,
+        is_top_ad,
+        is_highlighted,
+        is_urgent,
+        is_home_gallery,
         image: fixImagePath(image),
         allImages: allImages.map(fixImagePath)
       };
+    });
+
+    // Sort: Top ads first, then by newest
+    mappedListings.sort((a, b) => {
+      if (a.is_top_ad && !b.is_top_ad) return -1;
+      if (!a.is_top_ad && b.is_top_ad) return 1;
+      
+      const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+      const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+      return dateB - dateA;
     });
 
     return NextResponse.json(mappedListings);

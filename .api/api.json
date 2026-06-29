@@ -1,0 +1,11 @@
+{
+  "version": "1.0",
+  "apis": [
+    {
+      "identifier": "moneris-xvde",
+      "source": "@moneris-xvde/v6.0#1dgni5z3mq9o0gnz",
+      "integrity": "sha512-TUNWCz7tGgk9oiuhcRzvxT5mA6d6QI5uiPLN6/xZ23oU3q6hyTCYGMqg6DUIMEiqV4hsGa2+SqW+A33b71hF1Q==",
+      "installerVersion": "6.1.3"
+    }
+  ]
+}

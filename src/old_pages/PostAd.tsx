@@ -220,10 +220,16 @@ const PostAd: React.FC = () => {
   // Promotion selection state
   const [promotionData, setPromotionData] = useState({
     is_top_ad: false,
+    top_ad_duration: 7,
     is_highlighted: false,
+    highlighted_duration: 7,
     is_urgent: false,
+    urgent_duration: 7,
     is_home_gallery: false,
+    home_gallery_duration: 7,
   });
+  
+  const [promotionPricing, setPromotionPricing] = useState<any[]>([]);
 
   // Moneris Checkout payment state
   const [isPayModalOpen, setIsPayModalOpen] = useState(false);
@@ -309,6 +315,17 @@ const PostAd: React.FC = () => {
       .then((data) => {
         if (data.success && Array.isArray(data.data)) {
           setPriceOptions(data.data);
+        }
+      })
+      .catch(console.error);
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/promotions/pricing")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.data)) {
+          setPromotionPricing(data.data);
         }
       })
       .catch(console.error);
@@ -646,6 +663,19 @@ const PostAd: React.FC = () => {
     categoryPath.length === 0
       ? categoriesTree
       : categoryPath[categoryPath.length - 1].children || [];
+
+  const getPromotionOptions = (promoType: string, defaultPrice: number) => {
+    const options = promotionPricing.filter(p => p.promotion_type === promoType);
+    if (options.length === 0) {
+      return [{ duration_days: 7, price: defaultPrice }];
+    }
+    return options;
+  };
+
+  const calculatePrice = (promoType: string, duration: number, fallbackPrice: number) => {
+    const option = promotionPricing.find(p => p.promotion_type === promoType && p.duration_days === duration);
+    return option ? Number(option.price) : fallbackPrice;
+  };
 
   const handlePublish = async () => {
     setIsPublishing(true);
@@ -1905,11 +1935,20 @@ const PostAd: React.FC = () => {
                         <div className="flex items-center gap-2 flex-wrap mb-1">
                           <span className="text-sm font-black text-slate-900">Top Ad</span>
                           <span className="inline-flex items-center text-[11px] font-bold bg-gradient-to-r from-amber-100 to-orange-100 text-amber-700 px-2.5 py-0.5 rounded-lg">
-                            $9.99
+                            ${calculatePrice('top_ad', promotionData.top_ad_duration, 9.99).toFixed(2)}
                           </span>
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded-md">
-                            <span className="material-icons text-[10px]">schedule</span> 7 Days
-                          </span>
+                          <select 
+                            value={promotionData.top_ad_duration}
+                            onChange={(e) => setPromotionData({...promotionData, top_ad_duration: Number(e.target.value)})}
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-[10px] font-bold text-slate-600 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-md focus:ring-0 focus:border-blue-500 cursor-pointer"
+                          >
+                            {getPromotionOptions('top_ad', 9.99).map(opt => (
+                              <option key={opt.duration_days} value={opt.duration_days}>
+                                {opt.duration_days} Days
+                              </option>
+                            ))}
+                          </select>
                         </div>
                         <p className="text-xs text-slate-500 font-medium leading-relaxed mb-3">
                           Keep your listing at the top of category search results for 7 days.
@@ -1960,11 +1999,20 @@ const PostAd: React.FC = () => {
                         <div className="flex items-center gap-2 flex-wrap mb-1">
                           <span className="text-sm font-black text-slate-900">Highlighted</span>
                           <span className="inline-flex items-center text-[11px] font-bold bg-gradient-to-r from-amber-100 to-orange-100 text-amber-700 px-2.5 py-0.5 rounded-lg">
-                            $4.99
+                            ${calculatePrice('highlighted', promotionData.highlighted_duration, 4.99).toFixed(2)}
                           </span>
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded-md">
-                            <span className="material-icons text-[10px]">schedule</span> 7 Days
-                          </span>
+                          <select 
+                            value={promotionData.highlighted_duration}
+                            onChange={(e) => setPromotionData({...promotionData, highlighted_duration: Number(e.target.value)})}
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-[10px] font-bold text-slate-600 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-md focus:ring-0 focus:border-blue-500 cursor-pointer"
+                          >
+                            {getPromotionOptions('highlighted', 4.99).map(opt => (
+                              <option key={opt.duration_days} value={opt.duration_days}>
+                                {opt.duration_days} Days
+                              </option>
+                            ))}
+                          </select>
                         </div>
                         <p className="text-xs text-slate-500 font-medium leading-relaxed mb-3">
                           Highlight your listing with a premium background color to attract more attention.
@@ -2015,11 +2063,20 @@ const PostAd: React.FC = () => {
                         <div className="flex items-center gap-2 flex-wrap mb-1">
                           <span className="text-sm font-black text-slate-900">Urgent</span>
                           <span className="inline-flex items-center text-[11px] font-bold bg-gradient-to-r from-amber-100 to-orange-100 text-amber-700 px-2.5 py-0.5 rounded-lg">
-                            $5.99
+                            ${calculatePrice('urgent', promotionData.urgent_duration, 5.99).toFixed(2)}
                           </span>
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded-md">
-                            <span className="material-icons text-[10px]">schedule</span> 7 Days
-                          </span>
+                          <select 
+                            value={promotionData.urgent_duration}
+                            onChange={(e) => setPromotionData({...promotionData, urgent_duration: Number(e.target.value)})}
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-[10px] font-bold text-slate-600 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-md focus:ring-0 focus:border-blue-500 cursor-pointer"
+                          >
+                            {getPromotionOptions('urgent', 5.99).map(opt => (
+                              <option key={opt.duration_days} value={opt.duration_days}>
+                                {opt.duration_days} Days
+                              </option>
+                            ))}
+                          </select>
                         </div>
                         <p className="text-xs text-slate-500 font-medium leading-relaxed mb-3">
                           Display a red &quot;URGENT&quot; badge to encourage faster buyer engagement.
@@ -2070,11 +2127,20 @@ const PostAd: React.FC = () => {
                         <div className="flex items-center gap-2 flex-wrap mb-1">
                           <span className="text-sm font-black text-slate-900">Home Gallery</span>
                           <span className="inline-flex items-center text-[11px] font-bold bg-gradient-to-r from-amber-100 to-orange-100 text-amber-700 px-2.5 py-0.5 rounded-lg">
-                            $14.99
+                            ${calculatePrice('home_gallery', promotionData.home_gallery_duration, 14.99).toFixed(2)}
                           </span>
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded-md">
-                            <span className="material-icons text-[10px]">schedule</span> 7 Days
-                          </span>
+                          <select 
+                            value={promotionData.home_gallery_duration}
+                            onChange={(e) => setPromotionData({...promotionData, home_gallery_duration: Number(e.target.value)})}
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-[10px] font-bold text-slate-600 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-md focus:ring-0 focus:border-blue-500 cursor-pointer"
+                          >
+                            {getPromotionOptions('home_gallery', 14.99).map(opt => (
+                              <option key={opt.duration_days} value={opt.duration_days}>
+                                {opt.duration_days} Days
+                              </option>
+                            ))}
+                          </select>
                         </div>
                         <p className="text-xs text-slate-500 font-medium leading-relaxed mb-3">
                           Feature your listing on the homepage gallery for maximum exposure.
@@ -2106,43 +2172,43 @@ const PostAd: React.FC = () => {
                       {promotionData.is_top_ad && (
                         <div className="flex justify-between items-center text-sm">
                           <span className="text-slate-600 font-medium flex items-center gap-2">
-                            <span className="text-base leading-none">&#11088;</span> Top Ad
+                            <span className="text-base leading-none">&#11088;</span> Top Ad <span className="text-xs text-slate-400">({promotionData.top_ad_duration} days)</span>
                           </span>
-                          <span className="font-bold text-slate-800">$9.99</span>
+                          <span className="font-bold text-slate-800">${calculatePrice('top_ad', promotionData.top_ad_duration, 9.99).toFixed(2)}</span>
                         </div>
                       )}
                       {promotionData.is_highlighted && (
                         <div className="flex justify-between items-center text-sm">
                           <span className="text-slate-600 font-medium flex items-center gap-2">
-                            <span className="text-base leading-none">&#128310;</span> Highlighted
+                            <span className="text-base leading-none">&#128310;</span> Highlighted <span className="text-xs text-slate-400">({promotionData.highlighted_duration} days)</span>
                           </span>
-                          <span className="font-bold text-slate-800">$4.99</span>
+                          <span className="font-bold text-slate-800">${calculatePrice('highlighted', promotionData.highlighted_duration, 4.99).toFixed(2)}</span>
                         </div>
                       )}
                       {promotionData.is_urgent && (
                         <div className="flex justify-between items-center text-sm">
                           <span className="text-slate-600 font-medium flex items-center gap-2">
-                            <span className="text-base leading-none">&#128293;</span> Urgent
+                            <span className="text-base leading-none">&#128293;</span> Urgent <span className="text-xs text-slate-400">({promotionData.urgent_duration} days)</span>
                           </span>
-                          <span className="font-bold text-slate-800">$5.99</span>
+                          <span className="font-bold text-slate-800">${calculatePrice('urgent', promotionData.urgent_duration, 5.99).toFixed(2)}</span>
                         </div>
                       )}
                       {promotionData.is_home_gallery && (
                         <div className="flex justify-between items-center text-sm">
                           <span className="text-slate-600 font-medium flex items-center gap-2">
-                            <span className="text-base leading-none">&#127968;</span> Home Gallery
+                            <span className="text-base leading-none">&#127968;</span> Home Gallery <span className="text-xs text-slate-400">({promotionData.home_gallery_duration} days)</span>
                           </span>
-                          <span className="font-bold text-slate-800">$14.99</span>
+                          <span className="font-bold text-slate-800">${calculatePrice('home_gallery', promotionData.home_gallery_duration, 14.99).toFixed(2)}</span>
                         </div>
                       )}
                       <div className="border-t border-slate-200 pt-3 mt-3 flex justify-between items-center">
                         <span className="text-sm font-black text-slate-900">Total</span>
                         <span className="text-lg font-black text-blue-600">
                           ${(
-                            (promotionData.is_top_ad ? 9.99 : 0) +
-                            (promotionData.is_highlighted ? 4.99 : 0) +
-                            (promotionData.is_urgent ? 5.99 : 0) +
-                            (promotionData.is_home_gallery ? 14.99 : 0)
+                            (promotionData.is_top_ad ? calculatePrice('top_ad', promotionData.top_ad_duration, 9.99) : 0) +
+                            (promotionData.is_highlighted ? calculatePrice('highlighted', promotionData.highlighted_duration, 4.99) : 0) +
+                            (promotionData.is_urgent ? calculatePrice('urgent', promotionData.urgent_duration, 5.99) : 0) +
+                            (promotionData.is_home_gallery ? calculatePrice('home_gallery', promotionData.home_gallery_duration, 14.99) : 0)
                           ).toFixed(2)}
                         </span>
                       </div>

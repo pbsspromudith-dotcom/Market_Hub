@@ -10,10 +10,11 @@ if (!rawUrl) {
   throw new Error("DATABASE_URL is not defined in the environment");
 }
 const envUrl = rawUrl.replace(/^["']|["']$/g, '');
-const connectionUrl = envUrl;
+const dbUrl = new URL(envUrl);
 
-// Parse the connection URL to create adapter options explicitly
-const dbUrl = new URL(connectionUrl);
+if (!globalForPrisma.prisma) {
+  console.log('🚀 INITIALIZING NEW PRISMA POOL INSTANCE IN WORKER');
+}
 
 export const prisma =
   globalForPrisma.prisma ??
@@ -24,12 +25,17 @@ export const prisma =
       user: dbUrl.username,
       password: decodeURIComponent(dbUrl.password),
       database: dbUrl.pathname.slice(1),
-      connectionLimit: 5,
-      connectTimeout: 10000, // 10s timeout — fail fast if DB is unreachable
+      // Next.js uses 11+ Worker Threads during build/dev, which DO NOT share globalThis.
+      // If each worker opens 5 connections, it spikes to 55+ concurrent connections,
+      // crashing the Hostinger DB limits. Limit to 1 per worker.
+      connectionLimit: 1,
+      connectTimeout: 20000,          // 20s to establish a new connection
+      acquireTimeout: 20000,          // 20s to acquire from pool
+      idleTimeout: 10,                // MUST be < server wait_timeout (20s)
+      minimumIdle: 0,
+      minDelayValidation: 200,
     }),
     log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
   });
 
-// Cache the client globally in ALL environments (prevents creating
-// multiple PrismaClient instances on every server action / API route)
 globalForPrisma.prisma = prisma;

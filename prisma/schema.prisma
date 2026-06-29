@@ -122,6 +122,7 @@ model listings {
   is_highlighted  Boolean?  @default(false)
   is_urgent       Boolean?  @default(false)
   is_home_gallery Boolean?  @default(false)
+  promotion_expires_at DateTime? @db.DateTime(0)
   youtube_link    String?   @db.VarChar(500)
   facebook_link   String?   @db.VarChar(500)
   price_type      String?   @default("amount") @db.VarChar(50)
@@ -211,4 +212,15 @@ model vehicle_types {
   id         Int      @id @default(autoincrement())
   name       String   @db.VarChar(255)
   created_at DateTime @default(now()) @db.Timestamp(0)
+}
+
+model promotion_pricing {
+  id               Int       @id @default(autoincrement())
+  promotion_type   String    @db.VarChar(50)
+  duration_days    Int
+  price            Decimal   @db.Decimal(10, 2)
+  is_active        Boolean?  @default(true)
+  created_at       DateTime? @default(now()) @db.Timestamp(0)
+
+  @@unique([promotion_type, duration_days], map: "unique_promotion_duration")
 }

@@ -6,6 +6,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import Link from 'next/link';
 import { formatPrice } from '../constants';
 import { useUI } from '../components/UIProvider';
+import PromotionsAdmin from '@/components/admin/PromotionsAdmin';
 
 const AdminDashboard: React.FC = () => {
   const [adminStats, setAdminStats] = useState<any>(null);
@@ -299,6 +300,7 @@ const AdminDashboard: React.FC = () => {
     { id: 'lookups', label: 'Sub Masters', icon: 'category' },
     { id: 'listing-seo', label: 'Listing SEO', icon: 'travel_explore' },
     { id: 'email', label: 'Email Setup', icon: 'email' },
+    { id: 'promotions', label: 'Promotions Pricing', icon: 'sell' },
     { id: 'seo', label: 'SEO Settings', icon: 'manage_search' },
     { id: 'social', label: 'Homepage & Footer', icon: 'home' }
   ];
@@ -2379,6 +2381,10 @@ const AdminDashboard: React.FC = () => {
       )}
 
       {/* 6. SEO Settings Tab */}
+      {activeTab === 'promotions' && (
+        <PromotionsAdmin />
+      )}
+
       {activeTab === 'seo' && (
         <div className="mt-10 bg-white p-6 sm:p-8 rounded-[2rem] border border-slate-200 shadow-sm flex flex-col md:flex-row gap-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
           {/* Sub Tab Sidebar */}
