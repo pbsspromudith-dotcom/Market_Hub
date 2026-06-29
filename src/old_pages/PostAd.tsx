@@ -1845,130 +1845,310 @@ const PostAd: React.FC = () => {
               </section>
               )}
 
-              <section className="pt-6 border-t border-slate-100">
-                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-4">
-                  Promote Your Ad (Optional)
-                </label>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <label className="flex items-start gap-4 p-4 border border-slate-200 rounded-2xl cursor-pointer hover:border-primary transition-colors bg-slate-50">
-                    <div className="mt-0.5">
-                      <input
-                        type="checkbox"
-                        checked={promotionData.is_top_ad}
-                        onChange={(e) =>
-                          setPromotionData({
-                            ...promotionData,
-                            is_top_ad: e.target.checked,
-                          })
-                        }
-                        className="w-5 h-5 text-primary border-slate-300 rounded focus:ring-primary"
-                      />
+              <section className="pt-8 border-t border-slate-100">
+                {/* Section Header */}
+                <div className="mb-2">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                      <span className="material-icons text-white text-lg">campaign</span>
                     </div>
                     <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-sm font-black text-slate-800">
-                          Top Ad
-                        </span>
-                        <span className="text-[10px] font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded uppercase tracking-widest">
-                          $9.99
-                        </span>
+                      <h3 className="text-lg font-black text-slate-900 tracking-tight">Promote Your Ad <span className="text-sm font-medium text-slate-400">(Optional)</span></h3>
+                    </div>
+                  </div>
+                  <p className="text-sm text-slate-500 font-medium ml-[52px]">
+                    Increase your listing visibility and sell faster by selecting one or more promotional options.
+                  </p>
+                </div>
+
+                {/* Promotion Cards Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-6">
+
+                  {/* Top Ad Card */}
+                  <label
+                    className={`relative flex flex-col p-6 rounded-2xl cursor-pointer transition-all duration-200 group border-2 ${
+                      promotionData.is_top_ad
+                        ? "border-blue-500 bg-blue-50/50 shadow-lg shadow-blue-500/10"
+                        : "border-slate-100 bg-white hover:border-slate-200 hover:shadow-md"
+                    }`}
+                  >
+                    {/* Most Popular Badge */}
+                    <div className="absolute -top-3 right-5">
+                      <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider bg-gradient-to-r from-blue-600 to-blue-500 text-white px-3 py-1 rounded-full shadow-md shadow-blue-500/30">
+                        <span className="material-icons text-[10px]">star</span> Most Popular
+                      </span>
+                    </div>
+
+                    <div className="flex items-start gap-4">
+                      {/* Checkbox */}
+                      <div className="pt-0.5 shrink-0">
+                        <input
+                          type="checkbox"
+                          checked={promotionData.is_top_ad}
+                          onChange={(e) =>
+                            setPromotionData({
+                              ...promotionData,
+                              is_top_ad: e.target.checked,
+                            })
+                          }
+                          className="w-5 h-5 text-blue-600 border-2 border-slate-300 rounded-md focus:ring-blue-500 focus:ring-offset-0 transition-all duration-200 cursor-pointer checked:border-blue-600"
+                        />
                       </div>
-                      <p className="text-xs text-slate-500 font-medium">
-                        Keep your ad at the top of the category listings for 7
-                        days.
-                      </p>
+                      {/* Icon */}
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 transition-all duration-200 ${
+                        promotionData.is_top_ad ? "bg-blue-100" : "bg-slate-50 group-hover:bg-slate-100"
+                      }`}>
+                        <span className="text-2xl leading-none">&#11088;</span>
+                      </div>
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                          <span className="text-sm font-black text-slate-900">Top Ad</span>
+                          <span className="inline-flex items-center text-[11px] font-bold bg-gradient-to-r from-amber-100 to-orange-100 text-amber-700 px-2.5 py-0.5 rounded-lg">
+                            $9.99
+                          </span>
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded-md">
+                            <span className="material-icons text-[10px]">schedule</span> 7 Days
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500 font-medium leading-relaxed mb-3">
+                          Keep your listing at the top of category search results for 7 days.
+                        </p>
+                        <div className="flex flex-wrap gap-x-4 gap-y-1">
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600">
+                            <span className="material-icons text-[11px]">check_circle</span> Higher visibility
+                          </span>
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600">
+                            <span className="material-icons text-[11px]">check_circle</span> More impressions
+                          </span>
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600">
+                            <span className="material-icons text-[11px]">check_circle</span> Higher click-through
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   </label>
 
-                  <label className="flex items-start gap-4 p-4 border border-slate-200 rounded-2xl cursor-pointer hover:border-primary transition-colors bg-slate-50">
-                    <div className="mt-0.5">
-                      <input
-                        type="checkbox"
-                        checked={promotionData.is_highlighted}
-                        onChange={(e) =>
-                          setPromotionData({
-                            ...promotionData,
-                            is_highlighted: e.target.checked,
-                          })
-                        }
-                        className="w-5 h-5 text-primary border-slate-300 rounded focus:ring-primary"
-                      />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-sm font-black text-slate-800">
-                          Highlighted
-                        </span>
-                        <span className="text-[10px] font-bold bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded uppercase tracking-widest">
-                          $4.99
-                        </span>
+                  {/* Highlighted Card */}
+                  <label
+                    className={`relative flex flex-col p-6 rounded-2xl cursor-pointer transition-all duration-200 group border-2 ${
+                      promotionData.is_highlighted
+                        ? "border-blue-500 bg-blue-50/50 shadow-lg shadow-blue-500/10"
+                        : "border-slate-100 bg-white hover:border-slate-200 hover:shadow-md"
+                    }`}
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="pt-0.5 shrink-0">
+                        <input
+                          type="checkbox"
+                          checked={promotionData.is_highlighted}
+                          onChange={(e) =>
+                            setPromotionData({
+                              ...promotionData,
+                              is_highlighted: e.target.checked,
+                            })
+                          }
+                          className="w-5 h-5 text-blue-600 border-2 border-slate-300 rounded-md focus:ring-blue-500 focus:ring-offset-0 transition-all duration-200 cursor-pointer checked:border-blue-600"
+                        />
                       </div>
-                      <p className="text-xs text-slate-500 font-medium">
-                        Make your ad stand out with a bright highlighted
-                        background.
-                      </p>
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 transition-all duration-200 ${
+                        promotionData.is_highlighted ? "bg-yellow-100" : "bg-slate-50 group-hover:bg-slate-100"
+                      }`}>
+                        <span className="text-2xl leading-none">&#128310;</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                          <span className="text-sm font-black text-slate-900">Highlighted</span>
+                          <span className="inline-flex items-center text-[11px] font-bold bg-gradient-to-r from-amber-100 to-orange-100 text-amber-700 px-2.5 py-0.5 rounded-lg">
+                            $4.99
+                          </span>
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded-md">
+                            <span className="material-icons text-[10px]">schedule</span> 7 Days
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500 font-medium leading-relaxed mb-3">
+                          Highlight your listing with a premium background color to attract more attention.
+                        </p>
+                        <div className="flex flex-wrap gap-x-4 gap-y-1">
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600">
+                            <span className="material-icons text-[11px]">check_circle</span> Yellow highlighted card
+                          </span>
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600">
+                            <span className="material-icons text-[11px]">check_circle</span> More clicks
+                          </span>
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600">
+                            <span className="material-icons text-[11px]">check_circle</span> Better visibility
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   </label>
 
-                  <label className="flex items-start gap-4 p-4 border border-slate-200 rounded-2xl cursor-pointer hover:border-primary transition-colors bg-slate-50">
-                    <div className="mt-0.5">
-                      <input
-                        type="checkbox"
-                        checked={promotionData.is_urgent}
-                        onChange={(e) =>
-                          setPromotionData({
-                            ...promotionData,
-                            is_urgent: e.target.checked,
-                          })
-                        }
-                        className="w-5 h-5 text-primary border-slate-300 rounded focus:ring-primary"
-                      />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-sm font-black text-slate-800">
-                          Urgent
-                        </span>
-                        <span className="text-[10px] font-bold bg-red-100 text-red-700 px-2 py-0.5 rounded uppercase tracking-widest">
-                          $5.99
-                        </span>
+                  {/* Urgent Card */}
+                  <label
+                    className={`relative flex flex-col p-6 rounded-2xl cursor-pointer transition-all duration-200 group border-2 ${
+                      promotionData.is_urgent
+                        ? "border-blue-500 bg-blue-50/50 shadow-lg shadow-blue-500/10"
+                        : "border-slate-100 bg-white hover:border-slate-200 hover:shadow-md"
+                    }`}
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="pt-0.5 shrink-0">
+                        <input
+                          type="checkbox"
+                          checked={promotionData.is_urgent}
+                          onChange={(e) =>
+                            setPromotionData({
+                              ...promotionData,
+                              is_urgent: e.target.checked,
+                            })
+                          }
+                          className="w-5 h-5 text-blue-600 border-2 border-slate-300 rounded-md focus:ring-blue-500 focus:ring-offset-0 transition-all duration-200 cursor-pointer checked:border-blue-600"
+                        />
                       </div>
-                      <p className="text-xs text-slate-500 font-medium">
-                        Add an eye-catching 'Urgent' badge to sell your item
-                        faster.
-                      </p>
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 transition-all duration-200 ${
+                        promotionData.is_urgent ? "bg-red-100" : "bg-slate-50 group-hover:bg-slate-100"
+                      }`}>
+                        <span className="text-2xl leading-none">&#128293;</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                          <span className="text-sm font-black text-slate-900">Urgent</span>
+                          <span className="inline-flex items-center text-[11px] font-bold bg-gradient-to-r from-amber-100 to-orange-100 text-amber-700 px-2.5 py-0.5 rounded-lg">
+                            $5.99
+                          </span>
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded-md">
+                            <span className="material-icons text-[10px]">schedule</span> 7 Days
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500 font-medium leading-relaxed mb-3">
+                          Display a red &quot;URGENT&quot; badge to encourage faster buyer engagement.
+                        </p>
+                        <div className="flex flex-wrap gap-x-4 gap-y-1">
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600">
+                            <span className="material-icons text-[11px]">check_circle</span> Urgent badge
+                          </span>
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600">
+                            <span className="material-icons text-[11px]">check_circle</span> Increased trust
+                          </span>
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600">
+                            <span className="material-icons text-[11px]">check_circle</span> Higher response rate
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   </label>
 
-                  <label className="flex items-start gap-4 p-4 border border-slate-200 rounded-2xl cursor-pointer hover:border-primary transition-colors bg-slate-50">
-                    <div className="mt-0.5">
-                      <input
-                        type="checkbox"
-                        checked={promotionData.is_home_gallery}
-                        onChange={(e) =>
-                          setPromotionData({
-                            ...promotionData,
-                            is_home_gallery: e.target.checked,
-                          })
-                        }
-                        className="w-5 h-5 text-primary border-slate-300 rounded focus:ring-primary"
-                      />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-sm font-black text-slate-800">
-                          Home Gallery
-                        </span>
-                        <span className="text-[10px] font-bold bg-blue-100 text-blue-700 px-2 py-0.5 rounded uppercase tracking-widest">
-                          $14.99
-                        </span>
+                  {/* Home Gallery Card */}
+                  <label
+                    className={`relative flex flex-col p-6 rounded-2xl cursor-pointer transition-all duration-200 group border-2 ${
+                      promotionData.is_home_gallery
+                        ? "border-blue-500 bg-blue-50/50 shadow-lg shadow-blue-500/10"
+                        : "border-slate-100 bg-white hover:border-slate-200 hover:shadow-md"
+                    }`}
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="pt-0.5 shrink-0">
+                        <input
+                          type="checkbox"
+                          checked={promotionData.is_home_gallery}
+                          onChange={(e) =>
+                            setPromotionData({
+                              ...promotionData,
+                              is_home_gallery: e.target.checked,
+                            })
+                          }
+                          className="w-5 h-5 text-blue-600 border-2 border-slate-300 rounded-md focus:ring-blue-500 focus:ring-offset-0 transition-all duration-200 cursor-pointer checked:border-blue-600"
+                        />
                       </div>
-                      <p className="text-xs text-slate-500 font-medium">
-                        Feature your ad directly on the HitAds homepage gallery.
-                      </p>
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 transition-all duration-200 ${
+                        promotionData.is_home_gallery ? "bg-blue-100" : "bg-slate-50 group-hover:bg-slate-100"
+                      }`}>
+                        <span className="text-2xl leading-none">&#127968;</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                          <span className="text-sm font-black text-slate-900">Home Gallery</span>
+                          <span className="inline-flex items-center text-[11px] font-bold bg-gradient-to-r from-amber-100 to-orange-100 text-amber-700 px-2.5 py-0.5 rounded-lg">
+                            $14.99
+                          </span>
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded-md">
+                            <span className="material-icons text-[10px]">schedule</span> 7 Days
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500 font-medium leading-relaxed mb-3">
+                          Feature your listing on the homepage gallery for maximum exposure.
+                        </p>
+                        <div className="flex flex-wrap gap-x-4 gap-y-1">
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600">
+                            <span className="material-icons text-[11px]">check_circle</span> Homepage placement
+                          </span>
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600">
+                            <span className="material-icons text-[11px]">check_circle</span> Large featured card
+                          </span>
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600">
+                            <span className="material-icons text-[11px]">check_circle</span> Maximum impressions
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   </label>
                 </div>
+
+                {/* Promotion Summary */}
+                {(promotionData.is_top_ad || promotionData.is_highlighted || promotionData.is_urgent || promotionData.is_home_gallery) && (
+                  <div className="mt-6 bg-slate-50 rounded-2xl border border-slate-100 p-6 transition-all duration-200">
+                    <div className="flex items-center gap-2 mb-4">
+                      <span className="material-icons text-blue-600 text-lg">receipt_long</span>
+                      <h4 className="text-sm font-black text-slate-900">Promotion Summary</h4>
+                    </div>
+                    <div className="space-y-2.5">
+                      {promotionData.is_top_ad && (
+                        <div className="flex justify-between items-center text-sm">
+                          <span className="text-slate-600 font-medium flex items-center gap-2">
+                            <span className="text-base leading-none">&#11088;</span> Top Ad
+                          </span>
+                          <span className="font-bold text-slate-800">$9.99</span>
+                        </div>
+                      )}
+                      {promotionData.is_highlighted && (
+                        <div className="flex justify-between items-center text-sm">
+                          <span className="text-slate-600 font-medium flex items-center gap-2">
+                            <span className="text-base leading-none">&#128310;</span> Highlighted
+                          </span>
+                          <span className="font-bold text-slate-800">$4.99</span>
+                        </div>
+                      )}
+                      {promotionData.is_urgent && (
+                        <div className="flex justify-between items-center text-sm">
+                          <span className="text-slate-600 font-medium flex items-center gap-2">
+                            <span className="text-base leading-none">&#128293;</span> Urgent
+                          </span>
+                          <span className="font-bold text-slate-800">$5.99</span>
+                        </div>
+                      )}
+                      {promotionData.is_home_gallery && (
+                        <div className="flex justify-between items-center text-sm">
+                          <span className="text-slate-600 font-medium flex items-center gap-2">
+                            <span className="text-base leading-none">&#127968;</span> Home Gallery
+                          </span>
+                          <span className="font-bold text-slate-800">$14.99</span>
+                        </div>
+                      )}
+                      <div className="border-t border-slate-200 pt-3 mt-3 flex justify-between items-center">
+                        <span className="text-sm font-black text-slate-900">Total</span>
+                        <span className="text-lg font-black text-blue-600">
+                          ${(
+                            (promotionData.is_top_ad ? 9.99 : 0) +
+                            (promotionData.is_highlighted ? 4.99 : 0) +
+                            (promotionData.is_urgent ? 5.99 : 0) +
+                            (promotionData.is_home_gallery ? 14.99 : 0)
+                          ).toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </section>
 
               <div className="pt-10 border-t border-slate-100 flex justify-between items-center">
