@@ -1,16 +1,9 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { pool } from '@/lib/prisma';
 
 export async function GET() {
   try {
-    const categories = await prisma.category.findMany({
-      where: {
-        IsActive: true
-      },
-      orderBy: {
-        SortOrder: 'asc'
-      }
-    });
+    const categories = await pool.query('SELECT * FROM category WHERE IsActive = 1 ORDER BY SortOrder ASC');
 
     const buildCategoryTree = (elements: any[], parentId: number | null = null): any[] => {
       const branch: any[] = [];

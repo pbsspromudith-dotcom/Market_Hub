@@ -188,7 +188,15 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn, initialCategories = [], initial
 
     fetch("/api/listings/read")
       .then((res) => res.json())
-      .then((data) => setListings(data))
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setListings(data);
+        } else if (data && Array.isArray(data.data)) {
+          setListings(data.data);
+        } else {
+          setListings([]);
+        }
+      })
       .catch((err) => console.error("DB fetch error", err));
 
     // SEO settings are now loaded server-side and passed via props

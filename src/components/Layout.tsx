@@ -50,7 +50,7 @@ const Layout: React.FC<LayoutProps> = ({
 
   useEffect(() => {
     // Retry helper for cold database connections after deployment
-    const fetchWithRetry = async (url: string, retries = 3, delay = 1000): Promise<any> => {
+    const fetchWithRetry = async (url: string, retries = 2, delay = 2000): Promise<any> => {
       for (let i = 0; i < retries; i++) {
         try {
           const res = await fetch(url);

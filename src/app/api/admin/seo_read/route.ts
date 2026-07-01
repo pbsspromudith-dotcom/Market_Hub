@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { pool } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export async function GET() {
   try {
-    const rows = await prisma.seo_settings.findMany();
+    const rows = await pool.query('SELECT * FROM seo_settings');
     
     const settings: Record<string, string> = {};
     for (const row of rows) {
