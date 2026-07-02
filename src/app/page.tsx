@@ -9,10 +9,8 @@ export default async function Page() {
   let initialSeoSettings: Record<string, string> = {};
 
   try {
-    const conn = await pool.getConnection();
-
     // 1. Fetch Top-Level Categories
-    const categories = await conn.query('SELECT * FROM category WHERE IsActive = 1 AND ParentCategoryID IS NULL ORDER BY SortOrder ASC');
+    const categories = await pool.query('SELECT * FROM category WHERE IsActive = 1 AND ParentCategoryID IS NULL ORDER BY SortOrder ASC');
     
     initialCategories = categories.map((cat: any) => ({
       name: cat.CategoryName,
@@ -20,12 +18,10 @@ export default async function Page() {
     }));
 
     // 2. Fetch SEO/Homepage Settings
-    const seoRows = await conn.query('SELECT * FROM seo_settings');
+    const seoRows = await pool.query('SELECT * FROM seo_settings');
     for (const row of seoRows) {
       initialSeoSettings[row.setting_key] = row.setting_value;
     }
-
-    conn.release();
   } catch (error) {
     console.error("Error fetching initial data in Page:", error);
   }

@@ -13,10 +13,8 @@ if (!globalForPrisma.poolConfig) {
   const envUrl = rawUrl.replace(/^["']|["']$/g, '');
   const dbUrl = new URL(envUrl);
 
-  const ipHost = "194.59.164.94";
-
   globalForPrisma.poolConfig = {
-    host: ipHost,
+    host: dbUrl.hostname,
     port: Number(dbUrl.port) || 3306,
     user: dbUrl.username,
     password: decodeURIComponent(dbUrl.password),
