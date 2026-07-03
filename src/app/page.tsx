@@ -1,8 +1,8 @@
 import Home from '@/old_pages/Home';
 import { pool } from '@/lib/prisma';
 
-// Revalidate occasionally, or keep it dynamic
-export const revalidate = 60; // Cache for 60 seconds to improve Speed Index
+// Make page fully dynamic so it doesn't attempt to connect to the DB during build
+export const dynamic = 'force-dynamic';
 
 export default async function Page() {
   let initialCategories: any[] = [];
