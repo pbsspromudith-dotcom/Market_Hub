@@ -1,16 +1,18 @@
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 
 // GET — Read current email settings
 export async function GET() {
   try {
-    const rows = await prisma.email_settings.findMany({
-      select: { setting_key: true, setting_value: true }
-    });
+    const { data: rows, error } = await supabase
+      .from('email_settings')
+      .select('setting_key, setting_value');
+
+    if (error) throw error;
 
     const settings: Record<string, string> = {};
-    for (const row of rows) {
+    for (const row of rows || []) {
       if (!row.setting_key) continue;
       // Don't expose the full password — mask it
       if (row.setting_key === 'smtp_password' && row.setting_value) {
@@ -41,31 +43,36 @@ export async function POST(req: Request) {
       'smtp_password', 'smtp_from_email', 'smtp_from_name', 'smtp_encryption'
     ];
 
-    await prisma.$transaction(async (tx) => {
-      for (const [key, value] of Object.entries(data)) {
-        if (!allowedKeys.includes(key)) continue;
+    for (const [key, value] of Object.entries(data)) {
+      if (!allowedKeys.includes(key)) continue;
 
-        const valStr = String(value);
+      const valStr = String(value);
 
-        // Skip masked password — don't overwrite with bullets
-        if (key === 'smtp_password' && (!valStr || valStr === '••••••••••••')) {
-          continue;
-        }
-
-        // Upsert setting
-        const existing = await tx.email_settings.findFirst({ where: { setting_key: key } });
-        if (existing) {
-          await tx.email_settings.update({
-            where: { id: existing.id },
-            data: { setting_value: valStr }
-          });
-        } else {
-          await tx.email_settings.create({
-            data: { setting_key: key, setting_value: valStr }
-          });
-        }
+      // Skip masked password — don't overwrite with bullets
+      if (key === 'smtp_password' && (!valStr || valStr === '••••••••••••')) {
+        continue;
       }
-    });
+
+      // Upsert setting
+      const { data: existing } = await supabase
+        .from('email_settings')
+        .select('id')
+        .eq('setting_key', key)
+        .maybeSingle();
+
+      if (existing) {
+        const { error: updateError } = await supabase
+          .from('email_settings')
+          .update({ setting_value: valStr })
+          .eq('id', existing.id);
+        if (updateError) throw updateError;
+      } else {
+        const { error: insertError } = await supabase
+          .from('email_settings')
+          .insert({ setting_key: key, setting_value: valStr });
+        if (insertError) throw insertError;
+      }
+    }
 
     return NextResponse.json({ success: true, message: 'Email settings saved successfully' });
   } catch (error: any) {
@@ -85,9 +92,11 @@ export async function PUT(req: Request) {
     }
 
     // Load settings from DB
-    const rows = await prisma.email_settings.findMany();
+    const { data: rows, error } = await supabase.from('email_settings').select('*');
+    if (error) throw error;
+    
     const cfg: Record<string, string> = {};
-    for (const row of rows) {
+    for (const row of rows || []) {
       if (row.setting_key) cfg[row.setting_key] = row.setting_value || '';
     }
 

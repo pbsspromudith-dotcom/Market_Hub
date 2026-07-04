@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 
 export async function POST(req: Request) {
   try {
@@ -14,15 +14,22 @@ export async function POST(req: Request) {
     }
 
     // 1. Find the pending transaction by ticket
-    const transaction = await prisma.transactions.findFirst({
-      where: { ticket, status: 'pending' },
-    });
+    const { data: transaction } = await supabase
+      .from('transactions')
+      .select('*')
+      .eq('ticket', ticket)
+      .eq('status', 'pending')
+      .maybeSingle();
 
     if (!transaction) {
       // Check if already completed (idempotent)
-      const completed = await prisma.transactions.findFirst({
-        where: { ticket, status: 'completed' },
-      });
+      const { data: completed } = await supabase
+        .from('transactions')
+        .select('receipt_id')
+        .eq('ticket', ticket)
+        .eq('status', 'completed')
+        .maybeSingle();
+        
       if (completed) {
         return NextResponse.json({
           success: true,
@@ -99,26 +106,28 @@ export async function POST(req: Request) {
       // Calculate expiry date dynamically
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + maxDurationDays);
-      promoUpdate.promotion_expires_at = expiresAt;
+      promoUpdate.promotion_expires_at = expiresAt.toISOString();
 
-      // 5. Use a transaction to update both records atomically
-      await prisma.$transaction([
-        // Update the transaction record
-        prisma.transactions.update({
-          where: { id: transaction.id },
-          data: {
-            status: 'completed',
-            receipt_id: receiptId,
-            response_code: String(responseCode),
-            payment_type: 'moneris_checkout',
-          },
-        }),
-        // Activate promotions on the listing
-        prisma.listings.update({
-          where: { id: transaction.listing_id },
-          data: promoUpdate,
-        }),
-      ]);
+      // 5. Use sequential queries to update both records
+      const { error: txError } = await supabase
+        .from('transactions')
+        .update({
+          status: 'completed',
+          receipt_id: receiptId,
+          response_code: String(responseCode),
+          payment_type: 'moneris_checkout',
+        })
+        .eq('id', transaction.id);
+        
+      if (txError) throw txError;
+
+      // Activate promotions on the listing
+      const { error: listingError } = await supabase
+        .from('listings')
+        .update(promoUpdate)
+        .eq('id', transaction.listing_id);
+        
+      if (listingError) throw listingError;
 
       return NextResponse.json({
         success: true,
@@ -129,13 +138,15 @@ export async function POST(req: Request) {
 
     } else {
       // Payment was declined
-      await prisma.transactions.update({
-        where: { id: transaction.id },
-        data: {
+      const { error: declError } = await supabase
+        .from('transactions')
+        .update({
           status: 'declined',
           response_code: String(responseCode),
-        },
-      });
+        })
+        .eq('id', transaction.id);
+        
+      if (declError) throw declError;
 
       return NextResponse.json(
         { 

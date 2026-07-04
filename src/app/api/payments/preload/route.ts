@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 
 export async function POST(req: Request) {
   try {
@@ -19,11 +19,15 @@ export async function POST(req: Request) {
       );
     }
 
-    // Fetch all active pricing options from DB using raw SQL
-    const rawOptions: any[] = await (prisma as any).$queryRawUnsafe(
-      `SELECT promotion_type, duration_days, price FROM promotion_pricing WHERE is_active = 1`
-    );
-    const pricingOptions = rawOptions.map((r: any) => ({
+    // Fetch all active pricing options from DB
+    const { data: rawOptions, error: pricingError } = await supabase
+      .from('promotion_pricing')
+      .select('promotion_type, duration_days, price')
+      .eq('is_active', true);
+
+    if (pricingError) throw pricingError;
+
+    const pricingOptions = (rawOptions || []).map((r: any) => ({
       promotion_type: r.promotion_type,
       duration_days: Number(r.duration_days),
       price: Number(r.price),
@@ -119,16 +123,18 @@ export async function POST(req: Request) {
     }
 
     // 4. Save pending transaction record in database
-    await prisma.transactions.create({
-      data: {
+    const { error: insertError } = await supabase
+      .from('transactions')
+      .insert({
         user_id: parseInt(user_id, 10),
         listing_id: parseInt(listing_id, 10),
         ticket: monerisData.ticket,
         amount: total,
         promotions: selectedPromotions.join(','),
         status: 'pending',
-      },
-    });
+      });
+      
+    if (insertError) throw insertError;
 
     // 5. Return ticket to frontend
     return NextResponse.json({

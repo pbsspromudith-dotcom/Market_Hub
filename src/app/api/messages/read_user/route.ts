@@ -1,6 +1,6 @@
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -13,17 +13,14 @@ export async function GET(req: Request) {
   const userIdInt = parseInt(userId, 10);
 
   try {
-    const messages = await prisma.messages.findMany({
-      where: {
-        OR: [
-          { receiver_id: userIdInt },
-          { sender_id: userIdInt }
-        ]
-      },
-      orderBy: {
-        created_at: 'asc'
-      }
-    });
+    const { data: messages, error: msgError } = await supabase
+      .from('messages')
+      .select('*')
+      .or(`receiver_id.eq.${userIdInt},sender_id.eq.${userIdInt}`)
+      .order('created_at', { ascending: true });
+
+    if (msgError) throw msgError;
+    if (!messages) return NextResponse.json([], { status: 200 });
 
     // Manually fetch related data since Prisma relations are missing
     const listingIds = [...new Set(messages.map(m => m.listing_id))];
@@ -32,16 +29,17 @@ export async function GET(req: Request) {
       ...messages.map(m => m.receiver_id).filter(id => id > 0)
     ])];
 
-    const [listings, users] = await Promise.all([
-      prisma.listings.findMany({
-        where: { id: { in: listingIds } },
-        select: { id: true, title: true, image: true }
-      }),
-      prisma.users.findMany({
-        where: { id: { in: userIds } },
-        select: { id: true, name: true, email: true }
-      })
-    ]);
+    let listings: any[] = [];
+    if (listingIds.length > 0) {
+      const { data } = await supabase.from('listings').select('id, title, image').in('id', listingIds);
+      listings = data || [];
+    }
+
+    let users: any[] = [];
+    if (userIds.length > 0) {
+      const { data } = await supabase.from('users').select('id, name, email').in('id', userIds);
+      users = data || [];
+    }
 
     const listingsMap = listings.reduce((acc, l) => {
       acc[l.id] = l;

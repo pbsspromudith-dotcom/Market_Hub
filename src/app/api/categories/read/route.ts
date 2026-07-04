@@ -1,10 +1,16 @@
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
-import { pool } from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 
 export async function GET() {
   try {
-    const categories = await pool.query('SELECT * FROM category WHERE IsActive = 1 ORDER BY SortOrder ASC');
+    const { data: categories, error } = await supabase
+      .from('category')
+      .select('*')
+      .eq('IsActive', true)
+      .order('SortOrder', { ascending: true });
+
+    if (error) throw error;
 
     const buildCategoryTree = (elements: any[], parentId: number | null = null): any[] => {
       const branch: any[] = [];

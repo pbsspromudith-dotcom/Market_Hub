@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 
 export async function POST(req: Request) {
   try {
@@ -22,10 +22,11 @@ export async function POST(req: Request) {
 
     if (explicit_receiver_id) {
       // Reply mode: we know who the receiver is
-      const receiverUser = await prisma.users.findUnique({
-        where: { id: explicit_receiver_id },
-        select: { email: true, name: true }
-      });
+      const { data: receiverUser } = await supabase
+        .from('users')
+        .select('email, name')
+        .eq('id', explicit_receiver_id)
+        .maybeSingle();
 
       if (!receiverUser) {
         return NextResponse.json({ success: false, message: 'Receiver not found' }, { status: 404 });
@@ -36,27 +37,30 @@ export async function POST(req: Request) {
       receiver_name = receiverUser.name;
 
       // Get listing title
-      const listingRow = await prisma.listings.findUnique({
-        where: { id: listing_id },
-        select: { title: true }
-      });
+      const { data: listingRow } = await supabase
+        .from('listings')
+        .select('title')
+        .eq('id', listing_id)
+        .maybeSingle();
       
       listing_title = listingRow ? `Re: ${listingRow.title}` : 'Reply to your inquiry';
     } else {
       // Original mode: fetch from listing
-      const listing = await prisma.listings.findUnique({
-        where: { id: listing_id },
-        select: { title: true, contact_email: true, user_id: true }
-      });
+      const { data: listing } = await supabase
+        .from('listings')
+        .select('title, contact_email, user_id')
+        .eq('id', listing_id)
+        .maybeSingle();
 
       if (!listing || !listing.user_id) {
         return NextResponse.json({ success: false, message: 'Listing or owner not found' }, { status: 404 });
       }
 
-      const listingOwner = await prisma.users.findUnique({
-        where: { id: listing.user_id },
-        select: { email: true, name: true }
-      });
+      const { data: listingOwner } = await supabase
+        .from('users')
+        .select('email, name')
+        .eq('id', listing.user_id)
+        .maybeSingle();
 
       if (!listingOwner) {
         return NextResponse.json({ success: false, message: 'Listing owner not found' }, { status: 404 });
@@ -69,15 +73,17 @@ export async function POST(req: Request) {
     }
 
     // Save to database
-    await prisma.messages.create({
-      data: {
+    const { error: insertError } = await supabase
+      .from('messages')
+      .insert({
         listing_id,
         sender_id,
         receiver_id,
         message,
         sender_name
-      }
-    });
+      });
+
+    if (insertError) throw insertError;
 
     // We'll skip sending the real email here in local dev mode,
     // just as we disabled emails for password reset previously.

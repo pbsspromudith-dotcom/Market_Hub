@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server';
-import { pool } from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export async function GET() {
   try {
-    const rows = await pool.query('SELECT * FROM seo_settings');
+    const { data: rows, error } = await supabase.from('seo_settings').select('*');
+    if (error) throw error;
     
     const settings: Record<string, string> = {};
     for (const row of rows) {

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 
 export async function DELETE(req: Request) {
   try {
@@ -13,18 +13,30 @@ export async function DELETE(req: Request) {
     let targetId = parseInt(data.id, 10);
 
     if (deleteAll) {
-      const parentCheck = await prisma.listings.findUnique({
-        where: { id: targetId },
-        select: { parent_id: true }
-      });
+      const { data: parentCheck } = await supabase
+        .from('listings')
+        .select('parent_id')
+        .eq('id', targetId)
+        .maybeSingle();
+        
       if (parentCheck && parentCheck.parent_id) {
         targetId = parentCheck.parent_id;
       }
+      
+      const { error: deleteError } = await supabase
+        .from('listings')
+        .delete()
+        .or(`id.eq.${targetId},parent_id.eq.${targetId}`);
+        
+      if (deleteError) throw deleteError;
+    } else {
+      const { error: deleteError } = await supabase
+        .from('listings')
+        .delete()
+        .eq('id', targetId);
+        
+      if (deleteError) throw deleteError;
     }
-
-    await prisma.listings.delete({
-      where: { id: targetId }
-    });
 
     return NextResponse.json({ success: true, message: 'Listing deleted successfully' }, { status: 200 });
 

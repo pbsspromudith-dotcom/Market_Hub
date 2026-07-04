@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
@@ -12,11 +12,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, message: 'Email and password required' }, { status: 400 });
     }
 
-    const user = await prisma.users.findUnique({
-      where: { email },
-    });
+    const { data: user, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', email)
+      .maybeSingle();
 
-    if (!user) {
+    if (error || !user) {
       return NextResponse.json({ success: false, message: 'Invalid credentials' }, { status: 401 });
     }
 

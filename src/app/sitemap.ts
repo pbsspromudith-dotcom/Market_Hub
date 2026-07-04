@@ -1,5 +1,5 @@
 import { MetadataRoute } from 'next';
-import { prisma } from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
@@ -49,12 +49,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // 2. Fetch Categories dynamically
   let categoryRoutes: MetadataRoute.Sitemap = [];
   try {
-    const categories = await prisma.category.findMany({
-      where: { IsActive: true },
-      select: { Slug: true, CategoryName: true }
-    });
+    const { data: categories, error } = await supabase
+      .from('category')
+      .select('Slug, CategoryName')
+      .eq('IsActive', true);
+      
+    if (error) throw error;
     
-    categoryRoutes = categories.map((cat) => ({
+    categoryRoutes = (categories || []).map((cat) => ({
       url: `${baseUrl}/search?category=${encodeURIComponent(cat.Slug || cat.CategoryName)}`,
       lastModified: new Date(),
       changeFrequency: 'daily',
@@ -67,14 +69,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // 3. Fetch Listings dynamically
   let listingRoutes: MetadataRoute.Sitemap = [];
   try {
-    // Only grab active/published listings (in this schema, all existing are active unless deleted)
-    const listings = await prisma.listings.findMany({
-      select: { id: true, created_at: true },
-      orderBy: { created_at: 'desc' },
-      take: 20000 // Limit to prevent memory issues for massive dbs, or paginate if needed. Next.js limit is 50k
-    });
+    // Only grab active/published listings
+    const { data: listings, error } = await supabase
+      .from('listings')
+      .select('id, created_at')
+      .order('created_at', { ascending: false })
+      .limit(20000);
 
-    listingRoutes = listings.map((listing) => ({
+    if (error) throw error;
+
+    listingRoutes = (listings || []).map((listing) => ({
       url: `${baseUrl}/item/${listing.id}`,
       lastModified: listing.created_at ? new Date(listing.created_at) : new Date(),
       changeFrequency: 'weekly',

@@ -1,14 +1,15 @@
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 
 export async function GET() {
   try {
-    const listingsList = await prisma.listings.findMany({
-      orderBy: {
-        created_at: 'desc'
-      }
-    });
+    const { data: listingsList, error } = await supabase
+      .from('listings')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
 
     const fixImagePath = (path: string | null) => {
       if (!path) return path;

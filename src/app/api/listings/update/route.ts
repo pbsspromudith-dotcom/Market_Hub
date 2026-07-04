@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 
 export async function POST(req: Request) {
   try {
@@ -15,21 +15,23 @@ export async function POST(req: Request) {
     }
 
     // 1. Fetch current listing to verify owner/auth
-    const listing = await prisma.listings.findUnique({
-      where: { id: parseInt(data.id, 10) },
-      select: { user_id: true, parent_id: true }
-    });
+    const { data: listing, error: findError } = await supabase
+      .from('listings')
+      .select('user_id, parent_id')
+      .eq('id', parseInt(data.id, 10))
+      .maybeSingle();
 
-    if (!listing) {
+    if (findError || !listing) {
       return NextResponse.json({ success: false, error: 'Listing not found' }, { status: 404 });
     }
 
     // Verify owner or admin status
     if (listing.user_id !== parseInt(data.user_id, 10)) {
-      const user = await prisma.users.findUnique({
-        where: { id: parseInt(data.user_id, 10) },
-        select: { role: true }
-      });
+      const { data: user } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', parseInt(data.user_id, 10))
+        .maybeSingle();
       
       const userRole = user?.role?.trim().toLowerCase() || '';
       
@@ -38,55 +40,50 @@ export async function POST(req: Request) {
       }
     }
 
-    await prisma.$transaction(async (tx) => {
-      // 2. Perform UPDATE
-      await tx.listings.update({
-        where: { id: parseInt(data.id, 10) },
-        data: {
-          title: data.title,
-          price: parseFloat(data.price) || 0,
-          category: data.category || null,
-          location: data.location || null,
-          description: data.description || null,
-          image: imageToSave,
-          contact_email: data.contact_email || null,
-          contact_phone: data.contact_phone || null,
-          postal_code: data.postal_code || null,
-          youtube_link: data.youtube_link || null,
-          facebook_link: data.facebook_link || null,
-          price_type: data.price_type || 'amount',
-          latitude: data.latitude ? data.latitude.toString() : null,
-          longitude: data.longitude ? data.longitude.toString() : null,
-        }
-      });
+    // 2. Perform UPDATE
+    const { error: updateError } = await supabase
+      .from('listings')
+      .update({
+        title: data.title,
+        price: parseFloat(data.price) || 0,
+        category: data.category || null,
+        location: data.location || null,
+        description: data.description || null,
+        image: imageToSave,
+        contact_email: data.contact_email || null,
+        contact_phone: data.contact_phone || null,
+        postal_code: data.postal_code || null,
+        youtube_link: data.youtube_link || null,
+        facebook_link: data.facebook_link || null,
+        price_type: data.price_type || 'amount',
+        latitude: data.latitude || null,
+        longitude: data.longitude || null,
+      })
+      .eq('id', parseInt(data.id, 10));
 
-      // Sync edits to child/sibling listings (multi-city copies)
-      const pId = listing.parent_id || parseInt(data.id, 10);
+    if (updateError) throw updateError;
 
-      await tx.listings.updateMany({
-        where: {
-          OR: [
-            { id: pId },
-            { parent_id: pId }
-          ],
-          NOT: {
-            id: parseInt(data.id, 10)
-          }
-        },
-        data: {
-          title: data.title,
-          price: parseFloat(data.price) || 0,
-          category: data.category || null,
-          description: data.description || null,
-          image: imageToSave,
-          contact_email: data.contact_email || null,
-          contact_phone: data.contact_phone || null,
-          youtube_link: data.youtube_link || null,
-          facebook_link: data.facebook_link || null,
-          price_type: data.price_type || 'amount',
-        }
-      });
-    });
+    // Sync edits to child/sibling listings (multi-city copies)
+    const pId = listing.parent_id || parseInt(data.id, 10);
+
+    const { error: syncError } = await supabase
+      .from('listings')
+      .update({
+        title: data.title,
+        price: parseFloat(data.price) || 0,
+        category: data.category || null,
+        description: data.description || null,
+        image: imageToSave,
+        contact_email: data.contact_email || null,
+        contact_phone: data.contact_phone || null,
+        youtube_link: data.youtube_link || null,
+        facebook_link: data.facebook_link || null,
+        price_type: data.price_type || 'amount',
+      })
+      .or(`id.eq.${pId},parent_id.eq.${pId}`)
+      .neq('id', parseInt(data.id, 10));
+
+    if (syncError) throw syncError;
 
     return NextResponse.json({ success: true, message: 'Listing updated successfully' }, { status: 200 });
 

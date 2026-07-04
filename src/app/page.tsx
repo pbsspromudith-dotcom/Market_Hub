@@ -1,5 +1,5 @@
 import Home from '@/old_pages/Home';
-import { pool } from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 
 // Make page fully dynamic so it doesn't attempt to connect to the DB during build
 export const dynamic = 'force-dynamic';
@@ -10,16 +10,25 @@ export default async function Page() {
 
   try {
     // 1. Fetch Top-Level Categories
-    const categories = await pool.query('SELECT * FROM category WHERE IsActive = 1 AND ParentCategoryID IS NULL ORDER BY SortOrder ASC');
+    const { data: categories, error: catError } = await supabase
+      .from('category')
+      .select('*')
+      .eq('IsActive', true)
+      .is('ParentCategoryID', null)
+      .order('SortOrder', { ascending: true });
+      
+    if (catError) throw catError;
     
-    initialCategories = categories.map((cat: any) => ({
+    initialCategories = (categories || []).map((cat: any) => ({
       name: cat.CategoryName,
       icon: cat.Icon || 'category'
     }));
 
     // 2. Fetch SEO/Homepage Settings
-    const seoRows = await pool.query('SELECT * FROM seo_settings');
-    for (const row of seoRows) {
+    const { data: seoRows, error: seoError } = await supabase.from('seo_settings').select('*');
+    if (seoError) throw seoError;
+    
+    for (const row of seoRows || []) {
       initialSeoSettings[row.setting_key] = row.setting_value;
     }
   } catch (error) {

@@ -1,6 +1,6 @@
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -17,34 +17,33 @@ export async function GET(req: Request) {
   }
 
   try {
-    const listing = await prisma.listings.findUnique({
-      where: { id }
-    });
+    const { data: listing, error: findError } = await supabase
+      .from('listings')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle();
 
-    if (!listing) {
+    if (findError || !listing) {
       return NextResponse.json({ error: 'Not found' }, { status: 404 });
     }
 
     let seller = null;
     if (listing.user_id) {
-      seller = await prisma.users.findUnique({
-        where: { id: listing.user_id },
-        select: {
-          name: true,
-          avatar: true,
-          join_date: true,
-          email: true,
-          phone: true
-        }
-      });
+      const { data: sellerData } = await supabase
+        .from('users')
+        .select('name, avatar, join_date, email, phone')
+        .eq('id', listing.user_id)
+        .maybeSingle();
+      
+      seller = sellerData;
     }
 
     // Increment views
     const currentViews = listing.views || 0;
-    await prisma.listings.update({
-      where: { id },
-      data: { views: currentViews + 1 }
-    });
+    await supabase
+      .from('listings')
+      .update({ views: currentViews + 1 })
+      .eq('id', id);
     
     // Update local variable
     listing.views = currentViews + 1;

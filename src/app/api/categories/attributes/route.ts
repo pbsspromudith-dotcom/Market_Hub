@@ -1,6 +1,6 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 
 export async function GET(request: NextRequest) {
   try {
@@ -16,10 +16,12 @@ export async function GET(request: NextRequest) {
         categoryName = parts[parts.length - 1];
       }
 
-      const cat = await prisma.category.findFirst({
-        where: { CategoryName: categoryName },
-        select: { CategoryID: true },
-      });
+      const { data: cat } = await supabase
+        .from('category')
+        .select('CategoryID')
+        .eq('CategoryName', categoryName)
+        .maybeSingle();
+        
       categoryId = cat?.CategoryID ?? null;
     }
 
@@ -28,18 +30,27 @@ export async function GET(request: NextRequest) {
     }
 
     // Query attributes for this category
-    const rawAttributes = await prisma.categoryattribute.findMany({
-      where: { CategoryID: categoryId },
-      orderBy: { AttributeID: 'asc' },
-    });
+    const { data: rawAttributes, error: attrError } = await supabase
+      .from('categoryattribute')
+      .select('*')
+      .eq('CategoryID', categoryId)
+      .order('AttributeID', { ascending: true });
+
+    if (attrError) throw attrError;
 
     // Query all options for these attributes
-    const attributeIds = rawAttributes.map(a => a.AttributeID);
-    const rawOptions = attributeIds.length > 0
-      ? await prisma.categoryattributeoption.findMany({
-          where: { AttributeID: { in: attributeIds } },
-        })
-      : [];
+    const attributeIds = (rawAttributes || []).map((a: any) => a.AttributeID);
+    
+    let rawOptions: any[] = [];
+    if (attributeIds.length > 0) {
+      const { data: opts, error: optsError } = await supabase
+        .from('categoryattributeoption')
+        .select('*')
+        .in('AttributeID', attributeIds);
+        
+      if (optsError) throw optsError;
+      rawOptions = opts || [];
+    }
 
     // Group options by AttributeID
     const optionsByAttr: Record<number, string[]> = {};

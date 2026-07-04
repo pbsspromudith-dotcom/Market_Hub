@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 import bcrypt from 'bcryptjs';
 
 export async function POST(req: Request) {
@@ -12,9 +12,11 @@ export async function POST(req: Request) {
     }
 
     // Check if user already exists
-    const existingUser = await prisma.users.findUnique({
-      where: { email },
-    });
+    const { data: existingUser } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', email)
+      .maybeSingle();
 
     if (existingUser) {
       return NextResponse.json({ success: false, message: 'Email already in use' }, { status: 400 });
@@ -24,16 +26,22 @@ export async function POST(req: Request) {
     const hashedPassword = await bcrypt.hash(password, 12);
 
     // Create user. In the original PHP, new users have 'user' role.
-    const newUser = await prisma.users.create({
-      data: {
+    const { data: newUser, error: createError } = await supabase
+      .from('users')
+      .insert({
         name,
         email,
         password: hashedPassword,
         role: 'user',
         // In the PHP code, is_verified isn't necessarily present in all DB schemas, 
         // but if we are adding verification, we could set a default. We'll stick to basic fields.
-      },
-    });
+      })
+      .select()
+      .single();
+      
+    if (createError) {
+      throw createError;
+    }
 
     // We don't send the password back
     const { password: _, ...userWithoutPassword } = newUser;

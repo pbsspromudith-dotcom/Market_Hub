@@ -1,6 +1,6 @@
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 
 export async function GET(req: Request) {
   try {
@@ -12,44 +12,39 @@ export async function GET(req: Request) {
       return date;
     };
 
-    const date24hAgo = getPastDate(1);
-    const date48hAgo = getPastDate(2);
-    const date30DaysAgo = getPastDate(30);
-    const date60DaysAgo = getPastDate(60);
+    const date24hAgo = getPastDate(1).toISOString();
+    const date48hAgo = getPastDate(2).toISOString();
+    const date30DaysAgo = getPastDate(30).toISOString();
+    const date60DaysAgo = getPastDate(60).toISOString();
 
     // 1. Core Totals
-    const [
-      totalListings,
-      totalUsers,
-      newUsersToday,
-      revenueResult,
-      recentActivity
-    ] = await Promise.all([
-      prisma.listings.count(),
-      prisma.users.count(),
-      prisma.users.count({ where: { join_date: { gte: date24hAgo } } }),
-      prisma.listings.aggregate({ _sum: { price: true } }),
-      prisma.listings.findMany({
-        select: { id: true, title: true, created_at: true },
-        orderBy: { created_at: 'desc' },
-        take: 5
-      })
-    ]);
+    const p1 = supabase.from('listings').select('*', { count: 'exact', head: true });
+    const p2 = supabase.from('users').select('*', { count: 'exact', head: true });
+    const p3 = supabase.from('users').select('*', { count: 'exact', head: true }).gte('join_date', date24hAgo);
+    const p4 = supabase.from('listings').select('price'); // for revenue
+    const p5 = supabase.from('listings').select('id, title, created_at').order('created_at', { ascending: false }).limit(5);
+    
+    const [res1, res2, res3, res4, res5] = await Promise.all([p1, p2, p3, p4, p5]);
 
-    const revenue = revenueResult._sum.price ? Number(revenueResult._sum.price) : 0;
+    const totalListings = res1.count || 0;
+    const totalUsers = res2.count || 0;
+    const newUsersToday = res3.count || 0;
+    const recentActivity = res5.data || [];
+    const revenue = (res4.data || []).reduce((acc, curr) => acc + (Number(curr.price) || 0), 0);
 
     // 2. Listing Trends for the last 30 days
-    const recentListings = await prisma.listings.findMany({
-      where: { created_at: { gte: date30DaysAgo } },
-      select: { created_at: true }
-    });
+    const { data: recentListings } = await supabase
+      .from('listings')
+      .select('created_at')
+      .gte('created_at', date30DaysAgo);
 
     const rawTrends: Record<string, number> = {};
-    for (const listing of recentListings) {
-      if (!listing.created_at) continue;
-      // Format as YYYY-MM-DD
-      const dateStr = listing.created_at.toISOString().split('T')[0];
-      rawTrends[dateStr] = (rawTrends[dateStr] || 0) + 1;
+    if (recentListings) {
+      for (const listing of recentListings) {
+        if (!listing.created_at) continue;
+        const dateStr = listing.created_at.split('T')[0];
+        rawTrends[dateStr] = (rawTrends[dateStr] || 0) + 1;
+      }
     }
 
     const listingTrends = [];
@@ -66,24 +61,19 @@ export async function GET(req: Request) {
     }
 
     // 3. Dynamic percentage changes
-    const getListingCountRange = async (start: Date, end: Date) => {
-      return prisma.listings.count({
-        where: { created_at: { gte: start, lt: end } }
-      });
+    const getListingCountRange = async (start: string, end: string) => {
+      const { count } = await supabase.from('listings').select('*', { count: 'exact', head: true }).gte('created_at', start).lt('created_at', end);
+      return count || 0;
     };
 
-    const getUserCountRange = async (start: Date, end: Date) => {
-      return prisma.users.count({
-        where: { join_date: { gte: start, lt: end } }
-      });
+    const getUserCountRange = async (start: string, end: string) => {
+      const { count } = await supabase.from('users').select('*', { count: 'exact', head: true }).gte('join_date', start).lt('join_date', end);
+      return count || 0;
     };
 
-    const getRevenueRange = async (start: Date, end: Date) => {
-      const res = await prisma.listings.aggregate({
-        where: { created_at: { gte: start, lt: end } },
-        _sum: { price: true }
-      });
-      return res._sum.price ? Number(res._sum.price) : 0;
+    const getRevenueRange = async (start: string, end: string) => {
+      const { data } = await supabase.from('listings').select('price').gte('created_at', start).lt('created_at', end);
+      return (data || []).reduce((acc, curr) => acc + (Number(curr.price) || 0), 0);
     };
 
     const calculatePercentageChange = (current: number, previous: number) => {
@@ -94,18 +84,17 @@ export async function GET(req: Request) {
       return (diff >= 0 ? '+' : '') + diff.toFixed(1) + '%';
     };
 
-    // Calculations
     const [
       listingsCurrent, listingsPrevious,
       usersCurrent, usersPrevious,
       revenueCurrent, revenuePrevious,
       newUsersYesterday
     ] = await Promise.all([
-      getListingCountRange(date30DaysAgo, now),
+      getListingCountRange(date30DaysAgo, now.toISOString()),
       getListingCountRange(date60DaysAgo, date30DaysAgo),
-      getUserCountRange(date30DaysAgo, now),
+      getUserCountRange(date30DaysAgo, now.toISOString()),
       getUserCountRange(date60DaysAgo, date30DaysAgo),
-      getRevenueRange(date30DaysAgo, now),
+      getRevenueRange(date30DaysAgo, now.toISOString()),
       getRevenueRange(date60DaysAgo, date30DaysAgo),
       getUserCountRange(date48hAgo, date24hAgo)
     ]);

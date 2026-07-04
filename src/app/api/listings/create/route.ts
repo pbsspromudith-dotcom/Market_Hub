@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 
 export async function POST(req: Request) {
   try {
@@ -19,15 +19,15 @@ export async function POST(req: Request) {
     // Determine if multi-city or single-city posting
     const locations: any[] = [];
     if (data.locations && Array.isArray(data.locations) && data.locations.length >= 1) {
-      // Multi-city mode
       for (const loc of data.locations) {
         locations.push({
           location: loc.location || 'Unknown',
           postal_code: loc.postal_code || null,
+          latitude: null,
+          longitude: null,
         });
       }
     } else {
-      // Single-city (legacy) mode
       locations.push({
         location: data.location || 'Unknown',
         postal_code: data.postal_code || null,
@@ -37,49 +37,70 @@ export async function POST(req: Request) {
     }
 
     const allIds: number[] = [];
-    let parentId: number | null = null;
+    
+    // Insert Parent (first location)
+    const firstLoc = locations[0];
+    const parentPayload = {
+      title: data.title,
+      price: parseFloat(data.price) || 0,
+      category: data.category || null,
+      location: firstLoc.location,
+      description: data.description || null,
+      image: imageToSave,
+      user_id: parseInt(data.user_id, 10),
+      time: time,
+      contact_email: data.contact_email || null,
+      contact_phone: data.contact_phone || null,
+      postal_code: firstLoc.postal_code,
+      youtube_link: data.youtube_link || null,
+      facebook_link: data.facebook_link || null,
+      price_type: data.price_type || 'amount',
+      parent_id: null,
+      latitude: firstLoc.latitude,
+      longitude: firstLoc.longitude,
+    };
 
-    // We use a transaction to ensure all inserts happen or none
-    await prisma.$transaction(async (tx) => {
-      for (let i = 0; i < locations.length; i++) {
-        const loc = locations[i];
-        
-        const listing = await tx.listings.create({
-          data: {
-            title: data.title,
-            price: parseFloat(data.price) || 0,
-            category: data.category || null,
-            location: loc.location,
-            description: data.description || null,
-            image: imageToSave,
-            user_id: parseInt(data.user_id, 10),
-            time: time,
-            contact_email: data.contact_email || null,
-            contact_phone: data.contact_phone || null,
-            postal_code: loc.postal_code,
-            youtube_link: data.youtube_link || null,
-            facebook_link: data.facebook_link || null,
-            price_type: data.price_type || 'amount',
-            parent_id: parentId, // null for first (parent), set for children
-            latitude: loc.latitude ? loc.latitude.toString() : null, // Prisma schema might use String or Float? Usually Decimal/Float, but let's cast if needed. Let's just pass the value if schema allows it.
-            // Wait, latitude is likely Decimal or Float. If it fails, we will see it. Let's cast to number if provided.
-          }
-        });
+    const { data: parentListing, error: parentError } = await supabase
+      .from('listings')
+      .insert(parentPayload)
+      .select()
+      .single();
 
-        // Prisma schema might define latitude/longitude as Decimal. 
-        // We'll let Prisma handle type coercion if we pass numbers, but wait! In schema.prisma we didn't check latitude/longitude types.
-        
-        allIds.push(listing.id);
+    if (parentError || !parentListing) {
+      throw parentError || new Error('Failed to create parent listing');
+    }
+    
+    allIds.push(parentListing.id);
+    const parentId = parentListing.id;
 
-        if (i === 0) {
-          parentId = listing.id;
-        }
+    // Insert Children (if multi-city)
+    if (locations.length > 1) {
+      const childrenPayloads = locations.slice(1).map(loc => ({
+        ...parentPayload,
+        location: loc.location,
+        postal_code: loc.postal_code,
+        latitude: loc.latitude,
+        longitude: loc.longitude,
+        parent_id: parentId
+      }));
+
+      const { data: childrenListings, error: childrenError } = await supabase
+        .from('listings')
+        .insert(childrenPayloads)
+        .select('id');
+
+      if (childrenError) {
+        throw childrenError;
       }
-    });
+      
+      if (childrenListings) {
+        allIds.push(...childrenListings.map(c => c.id));
+      }
+    }
 
     return NextResponse.json({
       success: true,
-      id: allIds[0], // Parent ID for redirect / promotions
+      id: allIds[0],
       all_ids: allIds,
       cities_count: allIds.length
     }, { status: 201 });

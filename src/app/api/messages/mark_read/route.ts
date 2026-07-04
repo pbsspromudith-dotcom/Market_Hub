@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 
 export async function POST(req: Request) {
   try {
@@ -14,17 +14,15 @@ export async function POST(req: Request) {
     const receiver_id = parseInt(data.receiver_id, 10);
 
     // Update all unread messages in this thread directed to this receiver
-    await prisma.messages.updateMany({
-      where: {
-        listing_id,
-        sender_id,
-        receiver_id,
-        is_read: false
-      },
-      data: {
-        is_read: true
-      }
-    });
+    const { error: updateError } = await supabase
+      .from('messages')
+      .update({ is_read: true })
+      .eq('listing_id', listing_id)
+      .eq('sender_id', sender_id)
+      .eq('receiver_id', receiver_id)
+      .eq('is_read', false);
+
+    if (updateError) throw updateError;
 
     return NextResponse.json({ success: true, message: 'Messages marked as read' });
 

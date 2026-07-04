@@ -1,20 +1,19 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const type = searchParams.get('type');
 
-    let optionsList;
+    let query = supabase.from('options').select('*');
     if (type) {
-      optionsList = await prisma.options.findMany({
-        where: { option_type: type },
-      });
-    } else {
-      optionsList = await prisma.options.findMany();
+      query = query.eq('option_type', type);
     }
+    
+    const { data: optionsList, error } = await query;
+    if (error) throw error;
 
     return NextResponse.json({ success: true, data: optionsList });
   } catch (error: any) {

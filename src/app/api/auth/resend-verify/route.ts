@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 import crypto from 'crypto';
 
 export async function POST(req: Request) {
@@ -11,9 +11,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, message: 'Email is required' }, { status: 400 });
     }
 
-    const user = await prisma.users.findUnique({
-      where: { email: email.trim() },
-    });
+    const { data: user } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', email.trim())
+      .maybeSingle();
 
     if (!user) {
       // Don't reveal if email exists or not
@@ -27,12 +29,14 @@ export async function POST(req: Request) {
     // Generate new verification token
     const newToken = crypto.randomBytes(32).toString('hex');
 
-    await prisma.users.update({
-      where: { id: user.id },
-      data: {
+    const { error: updateError } = await supabase
+      .from('users')
+      .update({
         verification_token: newToken,
-      },
-    });
+      })
+      .eq('id', user.id);
+
+    if (updateError) throw updateError;
 
     // NOTE: Email sending is not implemented in the Next.js version.
     // The token is stored in the DB; in production, integrate with nodemailer or similar.
