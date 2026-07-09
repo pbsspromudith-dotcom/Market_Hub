@@ -35,7 +35,7 @@ export async function POST(req: Request) {
         email,
         password: hashedPassword,
         role: 'user',
-        is_verified: 0,
+        is_verified: false,
         verification_token: crypto.randomBytes(32).toString('hex'),
       })
       .select()
@@ -49,7 +49,16 @@ export async function POST(req: Request) {
     const { password: _, ...userWithoutPassword } = newUser;
 
     const originUrl = new URL(req.url);
-    const baseUrl = `${originUrl.protocol}//${originUrl.host}`;
+    const forwardedHost = req.headers.get('x-forwarded-host');
+    const forwardedProto = req.headers.get('x-forwarded-proto') || 'https';
+    let baseUrl = forwardedHost ? `${forwardedProto}://${forwardedHost}` : `${originUrl.protocol}//${originUrl.host}`;
+    
+    if (baseUrl.includes('0.0.0.0') || baseUrl.includes('127.0.0.1') || baseUrl.includes('localhost:3000')) {
+      if (process.env.NODE_ENV === 'production' || !baseUrl.includes('localhost')) {
+        baseUrl = 'https://hitads.ca';
+      }
+    }
+
     const verifyLink = `${baseUrl}/api/auth/verify?token=${newUser.verification_token}`;
     
     const emailHtml = getThemedEmailHtml(

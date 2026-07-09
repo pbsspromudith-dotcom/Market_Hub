@@ -28,8 +28,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, message: 'Invalid credentials' }, { status: 401 });
     }
 
-    // Since is_verified doesn't seem to exist in the introspected schema (wait, does it?), we check if the property exists
-    if ('is_verified' in user && (user as any).is_verified === 0) {
+    // Check if user is verified
+    if ('is_verified' in user && !(user as any).is_verified) {
       return NextResponse.json({
         success: false,
         message: 'Please verify your email before logging in. Check your inbox for the verification link.',

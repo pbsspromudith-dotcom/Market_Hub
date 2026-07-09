@@ -39,7 +39,16 @@ export async function POST(req: Request) {
     if (updateError) throw updateError;
 
     const originUrl = new URL(req.url);
-    const baseUrl = `${originUrl.protocol}//${originUrl.host}`;
+    const forwardedHost = req.headers.get('x-forwarded-host');
+    const forwardedProto = req.headers.get('x-forwarded-proto') || 'https';
+    let baseUrl = forwardedHost ? `${forwardedProto}://${forwardedHost}` : `${originUrl.protocol}//${originUrl.host}`;
+    
+    if (baseUrl.includes('0.0.0.0') || baseUrl.includes('127.0.0.1') || baseUrl.includes('localhost:3000')) {
+      if (process.env.NODE_ENV === 'production' || !baseUrl.includes('localhost')) {
+        baseUrl = 'https://hitads.ca';
+      }
+    }
+
     const resetLink = `${baseUrl}/login?mode=reset&token=${token}`;
     
     // Send Email
