@@ -7,7 +7,7 @@ import Script from "next/script";
 const inter = Inter({ subsets: ["latin"], display: "swap" });
 
 export const metadata: Metadata = {
-  title: "HitAds.ca - Find what you need, right in your community. Free Ads. Sell Fast. Buy Local. Canada-Wide.",
+  title: "HitAds.ca - Free Ads. Sell Fast. Buy Local. Canada-Wide.",
   description: "Buy and sell locally in Canada. Free ads for vehicles, real estate, jobs, services and more on HitAds.ca.",
   verification: {
     google: "c-cidgyEcNErCFJpYOhfp_RQm8Cqm9Xn1uHpVmNkvVM",
