@@ -2,12 +2,27 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    const { data: listingsList, error } = await supabase
+    const url = new URL(req.url);
+    const showAll = url.searchParams.get('show_all') === 'true'; // Admin flag
+    const userId = url.searchParams.get('user_id'); // For user's own listings
+
+    let query = supabase
       .from('listings')
       .select('*')
       .order('created_at', { ascending: false });
+
+    // Public reads: only show active listings
+    // Admin reads (show_all=true): show everything
+    // User's own listings: show all statuses for that user
+    if (userId) {
+      query = query.eq('user_id', parseInt(userId, 10));
+    } else if (!showAll) {
+      query = query.or('status.eq.active,status.is.null');
+    }
+
+    const { data: listingsList, error } = await query;
 
     if (error) throw error;
 

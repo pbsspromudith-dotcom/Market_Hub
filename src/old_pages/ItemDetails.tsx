@@ -20,6 +20,7 @@ const ItemDetails: React.FC = () => {
   const { id } = useParams();
   const [listing, setListing] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [activeIdx, setActiveIdx] = useState(0);
   const touchStartX = useRef<number | null>(null);
   const [message, setMessage] = useState('');
@@ -31,15 +32,32 @@ const ItemDetails: React.FC = () => {
 
   useEffect(() => {
     setLoading(true);
-    fetch('/api/listings/read_single?id=' + id)
+    setErrorMsg(null);
+
+    const userStr = localStorage.getItem('user');
+    let viewerParams = '';
+    if (userStr) {
+      try {
+        const u = JSON.parse(userStr);
+        if (u.id) viewerParams += `&viewer_id=${u.id}`;
+        if (u.role) viewerParams += `&viewer_role=${u.role}`;
+      } catch (e) {}
+    }
+
+    fetch('/api/listings/read_single?id=' + id + viewerParams)
       .then(res => res.json())
       .then(data => {
         if (!data.error) {
           setListing(data);
           setActiveIdx(0);
+        } else {
+          setErrorMsg(data.error);
         }
       })
-      .catch(console.error)
+      .catch(err => {
+        console.error(err);
+        setErrorMsg('Error loading listing details.');
+      })
       .finally(() => setLoading(false));
 
     fetch('/api/admin/seo_read?t=' + new Date().getTime())
@@ -87,6 +105,7 @@ const ItemDetails: React.FC = () => {
   };
 
   if (loading) return <div className="p-20 text-center font-bold">Loading listing...</div>;
+  if (errorMsg) return <div className="p-20 text-center font-bold text-red-500">{errorMsg}</div>;
   if (!listing) return <div className="p-20 text-center font-bold text-red-500">Listing not found.</div>;
 
   return (

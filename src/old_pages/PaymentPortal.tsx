@@ -3,12 +3,19 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import CardVerificationModal from '../components/CardVerificationModal';
+import MonerisPayModal from '../components/MonerisPayModal';
 
 const PaymentPortal: React.FC = () => {
   const navigate = useRouter();
   const [user, setUser] = useState<any>(null);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [showCheckoutModal, setShowCheckoutModal] = useState(false);
+  const [checkoutTicket, setCheckoutTicket] = useState('');
+  const [checkoutAmount, setCheckoutAmount] = useState(0);
+  const [isPreloading, setIsPreloading] = useState(false);
 
   useEffect(() => {
     const userStr = localStorage.getItem('user');
@@ -39,6 +46,34 @@ const PaymentPortal: React.FC = () => {
   const activePromoCount = transactions.filter(
     (tx) => tx.status === 'approved'
   ).length;
+
+  const handleTestCheckout = async () => {
+    try {
+      setIsPreloading(true);
+      // Call preload with dummy data to test the integration
+      const res = await fetch('/api/payments/preload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: user.id,
+          listing_id: '9999', // Dummy listing ID for testing
+          is_highlighted: true, // Triggers $4.99 price
+        }),
+      });
+      const data = await res.json();
+      if (data.success && data.ticket) {
+        setCheckoutTicket(data.ticket);
+        setCheckoutAmount(data.amount);
+        setShowCheckoutModal(true);
+      } else {
+        alert('Checkout Test Failed: ' + data.message);
+      }
+    } catch (err: any) {
+      alert('Error initializing checkout test.');
+    } finally {
+      setIsPreloading(false);
+    }
+  };
 
   return (
     <div className="w-full px-4 sm:px-6 lg:px-10 py-12 max-w-7xl mx-auto">
@@ -203,9 +238,52 @@ const PaymentPortal: React.FC = () => {
             <p className="text-xs text-slate-500 leading-relaxed font-medium">
               We process credit card transactions securely using Moneris Checkout. We do not store credit card details directly on our server. All data entry is securely routed to Moneris' PCI compliant environment.
             </p>
+            <button
+              onClick={() => setShowVerificationModal(true)}
+              className="mt-6 w-full py-3 px-4 bg-white border-2 border-primary text-primary font-bold rounded-xl hover:bg-primary/5 transition-colors flex items-center justify-center gap-2 text-sm"
+            >
+              <span className="material-icons text-base">credit_score</span>
+              Verify & Save Card
+            </button>
+            <button
+              onClick={handleTestCheckout}
+              disabled={isPreloading}
+              className="mt-3 w-full py-3 px-4 bg-primary text-white font-bold rounded-xl hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 text-sm shadow-lg shadow-primary/20 disabled:opacity-50"
+            >
+              {isPreloading ? (
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                <span className="material-icons text-base">shopping_cart</span>
+              )}
+              Test Checkout ($4.99)
+            </button>
           </div>
         </div>
       </div>
+
+      {showVerificationModal && (
+        <CardVerificationModal
+          onSuccess={(receiptId) => {
+            alert('Card successfully verified! Receipt: ' + receiptId);
+            setShowVerificationModal(false);
+          }}
+          onCancel={() => setShowVerificationModal(false)}
+        />
+      )}
+
+      {showCheckoutModal && checkoutTicket && (
+        <MonerisPayModal
+          ticket={checkoutTicket}
+          amount={checkoutAmount}
+          environment="qa"
+          onSuccess={(receiptId) => {
+            alert('Test Checkout Successful! Receipt: ' + receiptId);
+            setShowCheckoutModal(false);
+            window.location.reload();
+          }}
+          onCancel={() => setShowCheckoutModal(false)}
+        />
+      )}
     </div>
   );
 };

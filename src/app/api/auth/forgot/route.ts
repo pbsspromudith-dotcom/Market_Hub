@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import crypto from 'crypto';
+import { sendEmail, getThemedEmailHtml } from '@/lib/email';
 
 export async function POST(req: Request) {
   try {
@@ -37,24 +38,42 @@ export async function POST(req: Request) {
 
     if (updateError) throw updateError;
 
-    // NOTE: Email sending is not implemented in the Next.js version.
-    // The token is stored in the DB; in production, integrate with nodemailer or similar.
-    
-    // Extract the base URL dynamically from the incoming request
     const originUrl = new URL(req.url);
     const baseUrl = `${originUrl.protocol}//${originUrl.host}`;
     const resetLink = `${baseUrl}/login?mode=reset&token=${token}`;
     
-    console.log('\n\n=========================================');
-    console.log('PASSWORD RESET REQUESTED');
-    console.log(`Email: ${user.email}`);
-    console.log(`Reset Link: ${resetLink}`);
-    console.log('=========================================\n\n');
-
-    // For now, return success so the UI flow works.
+    // Send Email
+    const emailHtml = getThemedEmailHtml(
+      'Password Reset Request',
+      `
+        <h1 style="margin: 0 0 20px 0; font-size: 24px; font-weight: 800; color: #111111; text-align: center; font-family: system-ui, sans-serif;">Reset Password</h1>
+        <p style="margin: 0 0 15px 0; font-size: 15px; line-height: 1.6; color: #5B616A; text-align: center;">
+          We received a request to reset the password for your HitAds.ca account.
+        </p>
+        <p style="margin: 0 0 30px 0; font-size: 15px; line-height: 1.6; color: #5B616A; text-align: center;">
+          Please click the button below to set a new password. This link will expire in 1 hour:
+        </p>
+        <div style="text-align: center; margin-bottom: 30px;">
+          <a href="${resetLink}" style="display: inline-block; padding: 14px 32px; background-color: #2F80ED; color: #ffffff; text-decoration: none; border-radius: 12px; font-weight: bold; font-size: 15px; box-shadow: 0 4px 12px rgba(47, 128, 237, 0.25);">Reset Password</a>
+        </div>
+        <div style="border-top: 1px solid #F1F1F1; padding-top: 20px; margin-top: 30px;">
+          <p style="margin: 0; font-size: 13px; line-height: 1.5; color: #5B616A; text-align: center; font-style: italic;">
+            If you did not request a password reset, please ignore this email.
+          </p>
+        </div>
+      `
+    );
+    
+    try {
+      await sendEmail(user.email, 'Market Hub - Password Reset', emailHtml);
+    } catch (err: any) {
+      console.error('Failed to send reset email:', err);
+      // Even if email fails, we shouldn't necessarily crash, but we should inform the user
+      return NextResponse.json({ success: false, message: 'Failed to send reset email. Check SMTP settings.' }, { status: 500 });
+    }
     return NextResponse.json({
       success: true,
-      message: 'Password reset link sent! (Check your terminal for the link)',
+      message: 'Password reset link sent! Please check your inbox.',
       resetLink: process.env.NODE_ENV === 'development' ? resetLink : undefined
     });
   } catch (error) {

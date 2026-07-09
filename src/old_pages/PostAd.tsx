@@ -496,7 +496,16 @@ const PostAd: React.FC = () => {
   useEffect(() => {
     if (editId && categoriesTree.length > 0) {
       setLoadingEditData(true);
-      fetch(`/api/listings/read_single?id=${editId}`)
+      const userStr = localStorage.getItem("user");
+      let viewerParams = '';
+      if (userStr) {
+        try {
+          const u = JSON.parse(userStr);
+          if (u.id) viewerParams += `&viewer_id=${u.id}`;
+          if (u.role) viewerParams += `&viewer_role=${u.role}`;
+        } catch (e) {}
+      }
+      fetch(`/api/listings/read_single?id=${editId}${viewerParams}`)
         .then((res) => res.json())
         .then((l) => {
           if (l.error) {
@@ -611,9 +620,10 @@ const PostAd: React.FC = () => {
 
 
   useEffect(() => {
-    if (category) {
+    const leafCategory = categoryPath.length > 0 ? categoryPath[categoryPath.length - 1] : null;
+    if (leafCategory && (!leafCategory.children || leafCategory.children.length === 0)) {
       fetch(
-        `/api/categories/attributes?category_name=${encodeURIComponent(category)}`,
+        `/api/categories/attributes?category_id=${leafCategory.CategoryID}`,
       )
         .then((res) => res.json())
         .then((res) => {
@@ -635,7 +645,7 @@ const PostAd: React.FC = () => {
       setDynamicAttributesList([]);
       setDynamicAttributesValues({});
     }
-  }, [category]);
+  }, [categoryPath]);
 
   const handleCategoryClick = (cat: any) => {
     const newPath = [...categoryPath, cat];
@@ -801,6 +811,16 @@ const PostAd: React.FC = () => {
           parseFloat(price) || 0,
           location || "Unknown",
         );
+
+        // Check if listing needs approval
+        if (data.needs_approval || data.status === 'pending_approval') {
+          showAlert(
+            "Your ad has been submitted for review. It will be visible once approved by an admin.",
+            "info"
+          );
+          navigate.push("/profile");
+          return;
+        }
 
         // Check if any promotions are selected
         const hasPromotions =

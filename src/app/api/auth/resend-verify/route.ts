@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import crypto from 'crypto';
+import { sendEmail, getThemedEmailHtml } from '@/lib/email';
 
 export async function POST(req: Request) {
   try {
@@ -38,8 +39,38 @@ export async function POST(req: Request) {
 
     if (updateError) throw updateError;
 
-    // NOTE: Email sending is not implemented in the Next.js version.
-    // The token is stored in the DB; in production, integrate with nodemailer or similar.
+    const originUrl = new URL(req.url);
+    const baseUrl = `${originUrl.protocol}//${originUrl.host}`;
+    const verifyLink = `${baseUrl}/api/auth/verify?token=${newToken}`;
+    
+    const emailHtml = getThemedEmailHtml(
+      'Verify Your Email',
+      `
+        <h1 style="margin: 0 0 20px 0; font-size: 24px; font-weight: 800; color: #111111; text-align: center; font-family: system-ui, sans-serif;">Verify Your Email</h1>
+        <p style="margin: 0 0 15px 0; font-size: 15px; line-height: 1.6; color: #5B616A; text-align: center;">
+          You requested a new verification link for HitAds.ca.
+        </p>
+        <p style="margin: 0 0 30px 0; font-size: 15px; line-height: 1.6; color: #5B616A; text-align: center;">
+          Please click the button below to verify your email address and activate your account:
+        </p>
+        <div style="text-align: center; margin-bottom: 30px;">
+          <a href="${verifyLink}" style="display: inline-block; padding: 14px 32px; background-color: #2F80ED; color: #ffffff; text-decoration: none; border-radius: 12px; font-weight: bold; font-size: 15px; box-shadow: 0 4px 12px rgba(47, 128, 237, 0.25);">Verify Email</a>
+        </div>
+        <div style="border-top: 1px solid #F1F1F1; padding-top: 20px; margin-top: 30px;">
+          <p style="margin: 0; font-size: 13px; line-height: 1.5; color: #5B616A; text-align: center; font-style: italic;">
+            If you did not request this, please ignore this email.
+          </p>
+        </div>
+      `
+    );
+    
+    try {
+      await sendEmail(user.email, 'Market Hub - Verify Your Email', emailHtml);
+    } catch (err: any) {
+      console.error('Failed to send verification email:', err);
+      return NextResponse.json({ success: false, message: 'Failed to send email. Check SMTP settings.' }, { status: 500 });
+    }
+    
     return NextResponse.json({ success: true, message: 'Verification email sent! Please check your inbox.' });
   } catch (error) {
     console.error('Resend verification error:', error);

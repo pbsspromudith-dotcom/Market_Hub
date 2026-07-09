@@ -61,6 +61,12 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
     const mode = params.get("mode");
     const token = params.get("token");
+    const urlError = params.get("error");
+
+    if (urlError) {
+      setError(urlError);
+    }
+
     if (mode === "reset" && token) {
       setAuthMode("reset");
       setResetToken(token);

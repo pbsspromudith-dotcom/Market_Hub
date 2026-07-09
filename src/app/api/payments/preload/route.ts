@@ -114,7 +114,9 @@ export async function POST(req: Request) {
 
     const monerisData = await monerisRes.json();
 
-    if (!monerisData.ticket || monerisData.response?.error) {
+    const ticket = monerisData.ticket || monerisData.response?.ticket;
+
+    if (!ticket || monerisData.response?.error) {
       console.error('Moneris preload failed:', monerisData);
       return NextResponse.json(
         { success: false, message: 'Payment gateway returned an error: ' + (monerisData.response?.error?.message || 'Unknown error') },
@@ -128,7 +130,7 @@ export async function POST(req: Request) {
       .insert({
         user_id: parseInt(user_id, 10),
         listing_id: parseInt(listing_id, 10),
-        ticket: monerisData.ticket,
+        ticket: ticket,
         amount: total,
         promotions: selectedPromotions.join(','),
         status: 'pending',
@@ -139,7 +141,7 @@ export async function POST(req: Request) {
     // 5. Return ticket to frontend
     return NextResponse.json({
       success: true,
-      ticket: monerisData.ticket,
+      ticket: ticket,
       amount: total,
       environment: environment,
       order_no: orderNo,

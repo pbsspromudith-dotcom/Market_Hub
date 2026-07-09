@@ -97,11 +97,11 @@ const UserProfile: React.FC = () => {
     setUser(userData);
     setEditData({ name: userData.name || '', phone: userData.phone || '' });
 
-    // Fetch this user's listings
-    fetch('/api/listings/read')
+    // Fetch this user's listings (including pending/rejected)
+    fetch(`/api/listings/read?user_id=${userData.id}`)
       .then(res => res.json())
       .then(data => {
-        const myListings = data.filter((l: any) => l.user_id === userData.id);
+        const myListings = Array.isArray(data) ? data : [];
         setUserListings(myListings);
       })
       .catch(console.error)
@@ -513,6 +513,24 @@ const UserProfile: React.FC = () => {
                 {/* Details Section */}
                 <div className="flex flex-col flex-1">
                   <Link href={`/item/${listing.id}`} className="p-6 flex-1 flex flex-col justify-center">
+                    {/* Status Badge */}
+                    {listing.status === 'pending_approval' && (
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <span className="flex items-center gap-1 px-2.5 py-1 bg-amber-50 text-amber-600 border border-amber-200 rounded-lg text-[10px] font-black uppercase tracking-widest">
+                          <span className="material-icons text-xs">schedule</span> Pending Approval
+                        </span>
+                      </div>
+                    )}
+                    {listing.status === 'rejected' && (
+                      <div className="mb-2">
+                        <span className="flex items-center gap-1 px-2.5 py-1 bg-red-50 text-red-600 border border-red-200 rounded-lg text-[10px] font-black uppercase tracking-widest w-fit">
+                          <span className="material-icons text-xs">cancel</span> Rejected
+                        </span>
+                        {listing.rejection_reason && (
+                          <p className="text-xs text-red-400 mt-1 italic">Reason: {listing.rejection_reason}</p>
+                        )}
+                      </div>
+                    )}
                     <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">{listing.category}</p>
                     <h3 className="text-xl font-black text-slate-800 mb-2 line-clamp-2 leading-tight">{listing.title}</h3>
                     <p className="text-2xl font-black text-slate-900 mb-3">{formatPrice(listing.price, listing.price_type)}</p>

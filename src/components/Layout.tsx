@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import Link from 'next/link';
-import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import Link from "next/link";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { CURRENT_USER } from "../constants";
-import logoImg from "../../assets/Tophome.jpeg";
+import logoImg from "../../assets/logo.png";
+import footerLogoImg from "../../assets/footer_logo.png";
 import footerImg from "../assets/Footer.jpeg";
 
 interface LayoutProps {
@@ -22,7 +23,11 @@ const Layout: React.FC<LayoutProps> = ({
 }) => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const location = { pathname, search: searchParams ? "?" + searchParams.toString() : "", state: null };
+  const location = {
+    pathname,
+    search: searchParams ? "?" + searchParams.toString() : "",
+    state: null,
+  };
   const navigate = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [globalSearch, setGlobalSearch] = useState("");
@@ -43,14 +48,20 @@ const Layout: React.FC<LayoutProps> = ({
   const [socialLinks, setSocialLinks] = useState({
     facebook: "",
     x: "",
-    instagram: ""
+    instagram: "",
   });
-  const [footerText, setFooterText] = useState("© 2026 HitAds.ca — Post free ads, sell fast, buy local, and connect with buyers and sellers across Canada.");
+  const [footerText, setFooterText] = useState(
+    "© 2026 HitAds.ca — Post free ads, sell fast, buy local, and connect with buyers and sellers across Canada.",
+  );
   const [expandedFooter, setExpandedFooter] = useState<string | null>(null);
 
   useEffect(() => {
     // Retry helper for cold database connections after deployment
-    const fetchWithRetry = async (url: string, retries = 2, delay = 2000): Promise<any> => {
+    const fetchWithRetry = async (
+      url: string,
+      retries = 2,
+      delay = 2000,
+    ): Promise<any> => {
       for (let i = 0; i < retries; i++) {
         try {
           const res = await fetch(url);
@@ -58,7 +69,7 @@ const Layout: React.FC<LayoutProps> = ({
           return await res.json();
         } catch (err) {
           if (i < retries - 1) {
-            await new Promise(r => setTimeout(r, delay * Math.pow(2, i)));
+            await new Promise((r) => setTimeout(r, delay * Math.pow(2, i)));
           } else {
             throw err;
           }
@@ -80,14 +91,16 @@ const Layout: React.FC<LayoutProps> = ({
           setSocialLinks({
             facebook: data.settings.social_facebook || "",
             x: data.settings.social_x || "",
-            instagram: data.settings.social_instagram || ""
+            instagram: data.settings.social_instagram || "",
           });
           if (data.settings.footer_copyright_text) {
             setFooterText(data.settings.footer_copyright_text);
           }
         }
       })
-      .catch((err: any) => console.error("Error loading social settings:", err));
+      .catch((err: any) =>
+        console.error("Error loading social settings:", err),
+      );
   }, []);
 
   const CATEGORIES = categoriesTree.map((cat) => cat.CategoryName);
@@ -136,10 +149,8 @@ const Layout: React.FC<LayoutProps> = ({
                 <img
                   src={logoImg.src}
                   alt="HitAds Logo"
-                  width="160"
-                  height="80"
                   fetchPriority="high"
-                  className="h-20 md:h-28 w-auto object-contain transition-transform hover:scale-105 mix-blend-multiply"
+                  className="h-14 md:h-20 w-auto object-contain transition-transform hover:scale-105"
                 />
               </Link>
             </div>
@@ -189,7 +200,8 @@ const Layout: React.FC<LayoutProps> = ({
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center gap-6 flex-1 justify-end shrink-0">
               {!isLoginPage && (
-                <Link href="/post-ad"
+                <Link
+                  href="/post-ad"
                   className="flex flex-col items-center justify-center text-slate-600 hover:text-primary transition-colors group"
                 >
                   <span className="material-icons text-[26px] group-hover:scale-110 transition-transform">
@@ -201,7 +213,8 @@ const Layout: React.FC<LayoutProps> = ({
 
               {!isLoggedIn && !isLoginPage ? (
                 <>
-                  <Link href="/login?mode=register"
+                  <Link
+                    href="/login?mode=register"
                     className="flex flex-col items-center justify-center text-slate-600 hover:text-primary transition-colors group"
                   >
                     <span className="material-icons text-[26px] group-hover:scale-110 transition-transform">
@@ -209,7 +222,8 @@ const Layout: React.FC<LayoutProps> = ({
                     </span>
                     <span className="text-[11px] font-bold mt-1">Sign up</span>
                   </Link>
-                  <Link href="/login"
+                  <Link
+                    href="/login"
                     className="flex flex-col items-center justify-center text-slate-600 hover:text-primary transition-colors group"
                   >
                     <span className="material-icons text-[26px] group-hover:scale-110 transition-transform">
@@ -222,7 +236,8 @@ const Layout: React.FC<LayoutProps> = ({
                 isLoggedIn && (
                   <>
                     {isAdmin && (
-                      <Link href="/dashboard"
+                      <Link
+                        href="/dashboard"
                         className="flex flex-col items-center justify-center text-slate-600 hover:text-primary transition-colors group"
                       >
                         <span className="material-icons text-[26px] group-hover:scale-110 transition-transform">
@@ -233,7 +248,8 @@ const Layout: React.FC<LayoutProps> = ({
                         </span>
                       </Link>
                     )}
-                    <Link href="/profile"
+                    <Link
+                      href="/profile"
                       className="flex flex-col items-center justify-center text-slate-600 hover:text-primary transition-colors group"
                     >
                       <span className="material-icons text-[26px] group-hover:scale-110 transition-transform">
@@ -243,7 +259,8 @@ const Layout: React.FC<LayoutProps> = ({
                         Profile
                       </span>
                     </Link>
-                    <Link href="/payment-portal"
+                    <Link
+                      href="/payment-portal"
                       className="flex flex-col items-center justify-center text-slate-600 hover:text-primary transition-colors group"
                     >
                       <span className="material-icons text-[26px] group-hover:scale-110 transition-transform">
@@ -270,7 +287,8 @@ const Layout: React.FC<LayoutProps> = ({
             {/* Mobile Actions */}
             <div className="flex md:hidden items-center gap-3">
               {!isLoginPage && (
-                <Link href="/post-ad"
+                <Link
+                  href="/post-ad"
                   className="bg-secondary text-white p-2 rounded-xl flex items-center justify-center shadow-lg shadow-secondary/20"
                 >
                   <span className="material-icons text-lg">add</span>
@@ -293,14 +311,16 @@ const Layout: React.FC<LayoutProps> = ({
           <div className="md:hidden absolute top-full left-0 w-full bg-white border-b border-slate-100 shadow-2xl py-6 px-4 space-y-4 animate-in slide-in-from-top-4 duration-200">
             {!isLoginPage && (
               <>
-                <Link href="/search"
+                <Link
+                  href="/search"
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="block px-4 py-3 text-lg font-black text-slate-900 hover:bg-slate-50 rounded-2xl transition-all"
                 >
                   Browse
                 </Link>
                 {isLoggedIn && isAdmin && (
-                  <Link href="/dashboard"
+                  <Link
+                    href="/dashboard"
                     onClick={() => setIsMobileMenuOpen(false)}
                     className="mx-4 px-4 py-3 text-sm font-black text-white bg-slate-900 rounded-2xl flex items-center gap-2 transition-all"
                   >
@@ -312,13 +332,15 @@ const Layout: React.FC<LayoutProps> = ({
                 )}
                 {isLoggedIn && (
                   <>
-                    <Link href="/profile"
+                    <Link
+                      href="/profile"
                       onClick={() => setIsMobileMenuOpen(false)}
                       className="block px-4 py-3 text-lg font-black text-slate-900 hover:bg-slate-50 rounded-2xl transition-all"
                     >
                       My Profile
                     </Link>
-                    <Link href="/payment-portal"
+                    <Link
+                      href="/payment-portal"
                       onClick={() => setIsMobileMenuOpen(false)}
                       className="block px-4 py-3 text-lg font-black text-slate-900 hover:bg-slate-50 rounded-2xl transition-all"
                     >
@@ -336,13 +358,15 @@ const Layout: React.FC<LayoutProps> = ({
                   </button>
                 ) : (
                   <div className="space-y-4 pt-2">
-                    <Link href="/login"
+                    <Link
+                      href="/login"
                       onClick={() => setIsMobileMenuOpen(false)}
                       className="block px-4 py-3 text-lg font-black text-slate-900 hover:bg-slate-50 rounded-2xl transition-all"
                     >
                       Sign In
                     </Link>
-                    <Link href="/login?mode=register"
+                    <Link
+                      href="/login?mode=register"
                       onClick={() => setIsMobileMenuOpen(false)}
                       className="block w-full text-center py-4 bg-primary text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl"
                     >
@@ -359,7 +383,8 @@ const Layout: React.FC<LayoutProps> = ({
                   <div className="grid grid-cols-2 gap-3 px-2">
                     {CATEGORIES.slice(0, 8).map((cat) => (
                       <Link
-                        key={cat} href={`/search?cat=${encodeURIComponent(cat)}`}
+                        key={cat}
+                        href={`/search?cat=${encodeURIComponent(cat)}`}
                         onClick={() => {
                           setIsMobileMenuOpen(false);
                           window.scrollTo(0, 0);
@@ -372,7 +397,8 @@ const Layout: React.FC<LayoutProps> = ({
                       </Link>
                     ))}
                   </div>
-                  <Link href="/search"
+                  <Link
+                    href="/search"
                     onClick={() => {
                       setIsMobileMenuOpen(false);
                       window.scrollTo(0, 0);
@@ -398,7 +424,8 @@ const Layout: React.FC<LayoutProps> = ({
                 {CATEGORIES.map((cat, index) => (
                   <React.Fragment key={cat}>
                     <li onMouseEnter={() => setHoveredCategory(cat)}>
-                      <Link href={`/search?cat=${encodeURIComponent(cat)}`}
+                      <Link
+                        href={`/search?cat=${encodeURIComponent(cat)}`}
                         onClick={handleNavClick}
                         className={`block px-4 lg:px-6 py-3 text-sm font-bold transition-all whitespace-nowrap border-b-2 ${hoveredCategory === cat ? "border-primary text-primary" : "border-transparent text-slate-700 hover:text-primary hover:border-primary/50"}`}
                       >
@@ -434,7 +461,8 @@ const Layout: React.FC<LayoutProps> = ({
                               key={subCat.CategoryID}
                               className="flex flex-col gap-2"
                             >
-                              <Link href={`/search?cat=${encodeURIComponent(hoveredCategoryObj.CategoryName)}&sub=${encodeURIComponent(subCat.CategoryName)}`}
+                              <Link
+                                href={`/search?cat=${encodeURIComponent(hoveredCategoryObj.CategoryName)}&sub=${encodeURIComponent(subCat.CategoryName)}`}
                                 onClick={handleNavClick}
                                 className="text-[13px] font-black text-slate-800 hover:text-primary transition-colors"
                               >
@@ -443,7 +471,8 @@ const Layout: React.FC<LayoutProps> = ({
                               <div className="flex flex-col gap-1.5 pl-3 border-l border-slate-200 mt-1">
                                 {subCat.children.map((nestedCat: any) => (
                                   <Link
-                                    key={nestedCat.CategoryID} href={`/search?cat=${encodeURIComponent(hoveredCategoryObj.CategoryName)}&sub=${encodeURIComponent(subCat.CategoryName)}&subsub=${encodeURIComponent(nestedCat.CategoryName)}`}
+                                    key={nestedCat.CategoryID}
+                                    href={`/search?cat=${encodeURIComponent(hoveredCategoryObj.CategoryName)}&sub=${encodeURIComponent(subCat.CategoryName)}&subsub=${encodeURIComponent(nestedCat.CategoryName)}`}
                                     onClick={handleNavClick}
                                     className="text-[12px] font-bold text-slate-500 hover:text-primary transition-colors truncate"
                                   >
@@ -456,7 +485,8 @@ const Layout: React.FC<LayoutProps> = ({
                         } else {
                           return (
                             <Link
-                              key={subCat.CategoryID} href={`/search?cat=${encodeURIComponent(hoveredCategoryObj.CategoryName)}&sub=${encodeURIComponent(subCat.CategoryName)}`}
+                              key={subCat.CategoryID}
+                              href={`/search?cat=${encodeURIComponent(hoveredCategoryObj.CategoryName)}&sub=${encodeURIComponent(subCat.CategoryName)}`}
                               onClick={handleNavClick}
                               className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors flex items-center gap-2 group"
                             >
@@ -478,35 +508,40 @@ const Layout: React.FC<LayoutProps> = ({
                     Discover more in our guides
                   </h3>
                   <div className="flex flex-col gap-4 mb-8">
-                    <Link href="/buying-guides"
+                    <Link
+                      href="/buying-guides"
                       onClick={handleNavClick}
                       className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
                     >
                       Buying Guides
                     </Link>
 
-                    <Link href="/selling-advice"
+                    <Link
+                      href="/selling-advice"
                       onClick={handleNavClick}
                       className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
                     >
                       Selling Advice
                     </Link>
 
-                    <Link href="/market-trends"
+                    <Link
+                      href="/market-trends"
                       onClick={handleNavClick}
                       className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
                     >
                       Market Trends
                     </Link>
 
-                    <Link href="/safety-tips"
+                    <Link
+                      href="/safety-tips"
                       onClick={handleNavClick}
                       className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
                     >
                       Safety Tips
                     </Link>
                   </div>
-                  <Link href="/buying-guides"
+                  <Link
+                    href="/buying-guides"
                     onClick={handleNavClick}
                     className="rounded-xl overflow-hidden shadow-md relative group cursor-pointer block"
                   >
@@ -566,16 +601,19 @@ const Layout: React.FC<LayoutProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-8 mb-10 sm:mb-16">
               {/* Column 1: Tips & Help */}
               <div className="border-b border-slate-100 sm:border-none pb-4 sm:pb-0">
-                <button 
-                  onClick={() => setExpandedFooter(expandedFooter === 'tips' ? null : 'tips')}
+                <button
+                  onClick={() =>
+                    setExpandedFooter(expandedFooter === "tips" ? null : "tips")
+                  }
                   className="w-full flex justify-between items-center sm:cursor-default sm:mb-6"
                 >
                   <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em]">
                     Tips & Help
                   </h4>
-                  <span className="material-icons sm:hidden text-slate-400">{expandedFooter === 'tips' ? 'remove' : 'add'}</span>
                 </button>
-                <ul className={`space-y-3 overflow-hidden transition-all duration-300 ${expandedFooter === 'tips' ? 'max-h-[500px] opacity-100 pt-4' : 'max-h-0 opacity-0 sm:max-h-[500px] sm:opacity-100 sm:pt-0'}`}>
+                <ul
+                  className={`space-y-3 overflow-hidden transition-all duration-300 ${expandedFooter === "tips" ? "max-h-[500px] opacity-100 pt-4" : "max-h-0 opacity-0 sm:max-h-[500px] sm:opacity-100 sm:pt-0"}`}
+                >
                   {/* <li>
                     <Link href="/help"
                       onClick={() =>
@@ -587,7 +625,8 @@ const Layout: React.FC<LayoutProps> = ({
                     </Link>
                   </li> */}
                   <li>
-                    <Link href="/contact"
+                    <Link
+                      href="/contact"
                       onClick={() =>
                         window.scrollTo({ top: 0, behavior: "smooth" })
                       }
@@ -597,7 +636,8 @@ const Layout: React.FC<LayoutProps> = ({
                     </Link>
                   </li>
                   <li>
-                    <Link href="/buying-guides"
+                    <Link
+                      href="/buying-guides"
                       onClick={() =>
                         window.scrollTo({ top: 0, behavior: "smooth" })
                       }
@@ -607,7 +647,8 @@ const Layout: React.FC<LayoutProps> = ({
                     </Link>
                   </li>
                   <li>
-                    <Link href="/safety-tips"
+                    <Link
+                      href="/safety-tips"
                       onClick={() =>
                         window.scrollTo({ top: 0, behavior: "smooth" })
                       }
@@ -618,7 +659,8 @@ const Layout: React.FC<LayoutProps> = ({
                   </li>
 
                   <li>
-                    <Link href="/selling-advice"
+                    <Link
+                      href="/selling-advice"
                       onClick={() =>
                         window.scrollTo({ top: 0, behavior: "smooth" })
                       }
@@ -628,7 +670,8 @@ const Layout: React.FC<LayoutProps> = ({
                     </Link>
                   </li>
                   <li>
-                    <Link href="/market-trends"
+                    <Link
+                      href="/market-trends"
                       onClick={() =>
                         window.scrollTo({ top: 0, behavior: "smooth" })
                       }
@@ -642,18 +685,24 @@ const Layout: React.FC<LayoutProps> = ({
 
               {/* Column 2: Legal */}
               <div className="border-b border-slate-100 sm:border-none pb-4 sm:pb-0">
-                <button 
-                  onClick={() => setExpandedFooter(expandedFooter === 'legal' ? null : 'legal')}
+                <button
+                  onClick={() =>
+                    setExpandedFooter(
+                      expandedFooter === "legal" ? null : "legal",
+                    )
+                  }
                   className="w-full flex justify-between items-center sm:cursor-default sm:mb-6"
                 >
                   <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em]">
                     Legal
                   </h4>
-                  <span className="material-icons sm:hidden text-slate-400">{expandedFooter === 'legal' ? 'remove' : 'add'}</span>
                 </button>
-                <ul className={`space-y-3 overflow-hidden transition-all duration-300 ${expandedFooter === 'legal' ? 'max-h-[500px] opacity-100 pt-4' : 'max-h-0 opacity-0 sm:max-h-[500px] sm:opacity-100 sm:pt-0'}`}>
+                <ul
+                  className={`space-y-3 overflow-hidden transition-all duration-300 ${expandedFooter === "legal" ? "max-h-[500px] opacity-100 pt-4" : "max-h-0 opacity-0 sm:max-h-[500px] sm:opacity-100 sm:pt-0"}`}
+                >
                   <li>
-                    <Link href="/terms"
+                    <Link
+                      href="/terms"
                       onClick={() => window.scrollTo(0, 0)}
                       className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
                     >
@@ -662,7 +711,8 @@ const Layout: React.FC<LayoutProps> = ({
                   </li>
 
                   <li>
-                    <Link href="/terms"
+                    <Link
+                      href="/terms"
                       onClick={() => window.scrollTo(0, 0)}
                       className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
                     >
@@ -670,7 +720,8 @@ const Layout: React.FC<LayoutProps> = ({
                     </Link>
                   </li>
                   <li>
-                    <Link href="/terms"
+                    <Link
+                      href="/terms"
                       onClick={() => window.scrollTo(0, 0)}
                       className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
                     >
@@ -678,7 +729,8 @@ const Layout: React.FC<LayoutProps> = ({
                     </Link>
                   </li>
                   <li>
-                    <Link href="/terms"
+                    <Link
+                      href="/terms"
                       onClick={() => window.scrollTo(0, 0)}
                       className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
                     >
@@ -690,18 +742,24 @@ const Layout: React.FC<LayoutProps> = ({
 
               {/* Column 3: For Business */}
               <div className="border-b border-slate-100 sm:border-none pb-4 sm:pb-0">
-                <button 
-                  onClick={() => setExpandedFooter(expandedFooter === 'business' ? null : 'business')}
+                <button
+                  onClick={() =>
+                    setExpandedFooter(
+                      expandedFooter === "business" ? null : "business",
+                    )
+                  }
                   className="w-full flex justify-between items-center sm:cursor-default sm:mb-6"
                 >
                   <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em]">
                     For Business
                   </h4>
-                  <span className="material-icons sm:hidden text-slate-400">{expandedFooter === 'business' ? 'remove' : 'add'}</span>
                 </button>
-                <ul className={`space-y-3 overflow-hidden transition-all duration-300 ${expandedFooter === 'business' ? 'max-h-[500px] opacity-100 pt-4' : 'max-h-0 opacity-0 sm:max-h-[500px] sm:opacity-100 sm:pt-0'}`}>
+                <ul
+                  className={`space-y-3 overflow-hidden transition-all duration-300 ${expandedFooter === "business" ? "max-h-[500px] opacity-100 pt-4" : "max-h-0 opacity-0 sm:max-h-[500px] sm:opacity-100 sm:pt-0"}`}
+                >
                   <li>
-                    <Link href="/contact"
+                    <Link
+                      href="/contact"
                       onClick={() => window.scrollTo(0, 0)}
                       className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
                     >
@@ -709,7 +767,8 @@ const Layout: React.FC<LayoutProps> = ({
                     </Link>
                   </li>
                   <li>
-                    <Link href="/contact"
+                    <Link
+                      href="/contact"
                       onClick={() => window.scrollTo(0, 0)}
                       className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
                     >
@@ -729,18 +788,24 @@ const Layout: React.FC<LayoutProps> = ({
 
               {/* Column 4: Explore */}
               <div className="border-b border-slate-100 sm:border-none pb-4 sm:pb-0">
-                <button 
-                  onClick={() => setExpandedFooter(expandedFooter === 'explore' ? null : 'explore')}
+                <button
+                  onClick={() =>
+                    setExpandedFooter(
+                      expandedFooter === "explore" ? null : "explore",
+                    )
+                  }
                   className="w-full flex justify-between items-center sm:cursor-default sm:mb-6"
                 >
                   <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em]">
                     Explore
                   </h4>
-                  <span className="material-icons sm:hidden text-slate-400">{expandedFooter === 'explore' ? 'remove' : 'add'}</span>
                 </button>
-                <ul className={`space-y-3 overflow-hidden transition-all duration-300 ${expandedFooter === 'explore' ? 'max-h-[500px] opacity-100 pt-4' : 'max-h-0 opacity-0 sm:max-h-[500px] sm:opacity-100 sm:pt-0'}`}>
+                <ul
+                  className={`space-y-3 overflow-hidden transition-all duration-300 ${expandedFooter === "explore" ? "max-h-[500px] opacity-100 pt-4" : "max-h-0 opacity-0 sm:max-h-[500px] sm:opacity-100 sm:pt-0"}`}
+                >
                   <li>
-                    <Link href="/search"
+                    <Link
+                      href="/search"
                       onClick={() => window.scrollTo(0, 0)}
                       className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
                     >
@@ -748,7 +813,8 @@ const Layout: React.FC<LayoutProps> = ({
                     </Link>
                   </li>
                   <li>
-                    <Link href="/search"
+                    <Link
+                      href="/search"
                       onClick={() => window.scrollTo(0, 0)}
                       className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
                     >
@@ -756,7 +822,8 @@ const Layout: React.FC<LayoutProps> = ({
                     </Link>
                   </li>
                   <li>
-                    <Link href="/search?q=Free"
+                    <Link
+                      href="/search?q=Free"
                       onClick={() => window.scrollTo(0, 0)}
                       className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
                     >
@@ -764,7 +831,8 @@ const Layout: React.FC<LayoutProps> = ({
                     </Link>
                   </li>
                   <li>
-                    <Link href="/market-trends"
+                    <Link
+                      href="/market-trends"
                       onClick={() => window.scrollTo(0, 0)}
                       className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
                     >
@@ -776,18 +844,24 @@ const Layout: React.FC<LayoutProps> = ({
 
               {/* Column 5: HitAds Vehicles */}
               <div className="border-b border-slate-100 sm:border-none pb-4 sm:pb-0">
-                <button 
-                  onClick={() => setExpandedFooter(expandedFooter === 'vehicles' ? null : 'vehicles')}
+                <button
+                  onClick={() =>
+                    setExpandedFooter(
+                      expandedFooter === "vehicles" ? null : "vehicles",
+                    )
+                  }
                   className="w-full flex justify-between items-center sm:cursor-default sm:mb-6"
                 >
                   <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em]">
                     HitAds Vehicles
                   </h4>
-                  <span className="material-icons sm:hidden text-slate-400">{expandedFooter === 'vehicles' ? 'remove' : 'add'}</span>
                 </button>
-                <ul className={`space-y-3 overflow-hidden transition-all duration-300 ${expandedFooter === 'vehicles' ? 'max-h-[500px] opacity-100 pt-4' : 'max-h-0 opacity-0 sm:max-h-[500px] sm:opacity-100 sm:pt-0'}`}>
+                <ul
+                  className={`space-y-3 overflow-hidden transition-all duration-300 ${expandedFooter === "vehicles" ? "max-h-[500px] opacity-100 pt-4" : "max-h-0 opacity-0 sm:max-h-[500px] sm:opacity-100 sm:pt-0"}`}
+                >
                   <li>
-                    <Link href="/search?q=Cars"
+                    <Link
+                      href="/search?q=Cars"
                       onClick={() => window.scrollTo(0, 0)}
                       className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
                     >
@@ -795,7 +869,8 @@ const Layout: React.FC<LayoutProps> = ({
                     </Link>
                   </li>
                   <li>
-                    <Link href="/search?q=SUV"
+                    <Link
+                      href="/search?q=SUV"
                       onClick={() => window.scrollTo(0, 0)}
                       className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
                     >
@@ -803,7 +878,8 @@ const Layout: React.FC<LayoutProps> = ({
                     </Link>
                   </li>
                   <li>
-                    <Link href="/search?q=Pickup"
+                    <Link
+                      href="/search?q=Pickup"
                       onClick={() => window.scrollTo(0, 0)}
                       className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
                     >
@@ -811,7 +887,8 @@ const Layout: React.FC<LayoutProps> = ({
                     </Link>
                   </li>
                   <li>
-                    <Link href="/search?q=Vans"
+                    <Link
+                      href="/search?q=Vans"
                       onClick={() => window.scrollTo(0, 0)}
                       className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
                     >
@@ -819,7 +896,8 @@ const Layout: React.FC<LayoutProps> = ({
                     </Link>
                   </li>
                   <li>
-                    <Link href="/search?q=Parts"
+                    <Link
+                      href="/search?q=Parts"
                       onClick={() => window.scrollTo(0, 0)}
                       className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
                     >
@@ -831,18 +909,24 @@ const Layout: React.FC<LayoutProps> = ({
 
               {/* Column 6: Top Categories */}
               <div className="border-b border-slate-100 sm:border-none pb-4 sm:pb-0">
-                <button 
-                  onClick={() => setExpandedFooter(expandedFooter === 'categories' ? null : 'categories')}
+                <button
+                  onClick={() =>
+                    setExpandedFooter(
+                      expandedFooter === "categories" ? null : "categories",
+                    )
+                  }
                   className="w-full flex justify-between items-center sm:cursor-default sm:mb-6"
                 >
                   <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em]">
                     Top Categories
                   </h4>
-                  <span className="material-icons sm:hidden text-slate-400">{expandedFooter === 'categories' ? 'remove' : 'add'}</span>
                 </button>
-                <ul className={`space-y-3 overflow-hidden transition-all duration-300 ${expandedFooter === 'categories' ? 'max-h-[500px] opacity-100 pt-4' : 'max-h-0 opacity-0 sm:max-h-[500px] sm:opacity-100 sm:pt-0'}`}>
+                <ul
+                  className={`space-y-3 overflow-hidden transition-all duration-300 ${expandedFooter === "categories" ? "max-h-[500px] opacity-100 pt-4" : "max-h-0 opacity-0 sm:max-h-[500px] sm:opacity-100 sm:pt-0"}`}
+                >
                   <li>
-                    <Link href="/search?q=Real%20Estate"
+                    <Link
+                      href="/search?q=Real%20Estate"
                       onClick={() => window.scrollTo(0, 0)}
                       className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
                     >
@@ -850,7 +934,8 @@ const Layout: React.FC<LayoutProps> = ({
                     </Link>
                   </li>
                   <li>
-                    <Link href="/search?q=Jobs"
+                    <Link
+                      href="/search?q=Jobs"
                       onClick={() => window.scrollTo(0, 0)}
                       className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
                     >
@@ -858,7 +943,8 @@ const Layout: React.FC<LayoutProps> = ({
                     </Link>
                   </li>
                   <li>
-                    <Link href="/search?q=Services"
+                    <Link
+                      href="/search?q=Services"
                       onClick={() => window.scrollTo(0, 0)}
                       className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
                     >
@@ -866,7 +952,8 @@ const Layout: React.FC<LayoutProps> = ({
                     </Link>
                   </li>
                   <li>
-                    <Link href="/search?q=Buy"
+                    <Link
+                      href="/search?q=Buy"
                       onClick={() => window.scrollTo(0, 0)}
                       className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
                     >
@@ -874,7 +961,8 @@ const Layout: React.FC<LayoutProps> = ({
                     </Link>
                   </li>
                   <li>
-                    <Link href="/search?q=Pets"
+                    <Link
+                      href="/search?q=Pets"
                       onClick={() => window.scrollTo(0, 0)}
                       className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
                     >
@@ -883,14 +971,16 @@ const Layout: React.FC<LayoutProps> = ({
                   </li>
                 </ul>
               </div>
+
             </div>
 
             <div className="pt-8 border-t border-slate-200 flex flex-col md:flex-row justify-between items-center gap-4">
               <div className="text-[10px] font-black text-slate-400 lowercase">
                 {footerText}
               </div>
-              <div className="flex gap-8 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                <Link href="/contact"
+              <div className="flex items-center gap-8 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                <Link
+                  href="/contact"
                   onClick={() =>
                     window.scrollTo({ top: 0, behavior: "smooth" })
                   }
@@ -898,6 +988,11 @@ const Layout: React.FC<LayoutProps> = ({
                 >
                   Contact
                 </Link>
+                <img
+                  src={footerLogoImg.src}
+                  alt="HitAds Footer Logo"
+                  className="h-8 md:h-10 w-auto object-contain opacity-80 hover:opacity-100 transition-opacity"
+                />
               </div>
             </div>
           </div>

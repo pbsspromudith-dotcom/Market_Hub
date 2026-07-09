@@ -25,7 +25,9 @@ const MonerisPayModal: React.FC<MonerisPayModalProps> = ({
 
   // Load Moneris Checkout script dynamically
   useEffect(() => {
-    const scriptUrl = 'https://gatewayt.moneris.com/chkt/js/chkt_v1.00.js';
+    const scriptUrl = environment === 'prod' 
+      ? 'https://gateway.moneris.com/chktv2/js/chkt_v3.00.js'
+      : 'https://gatewayt.moneris.com/chktv2/js/chkt_v3.00.js';
     
     const loadScript = () => {
       if (document.querySelector(`script[src="${scriptUrl}"]`)) {
@@ -54,7 +56,8 @@ const MonerisPayModal: React.FC<MonerisPayModalProps> = ({
         try {
           checkoutInstanceRef.current.closeCheckout();
         } catch (e) {
-          console.error(e);
+          // Ignore error during cleanup. In Next.js Strict Mode, 
+          // this fires immediately before the iframe is ready.
         }
       }
     };
@@ -72,7 +75,7 @@ const MonerisPayModal: React.FC<MonerisPayModalProps> = ({
         const myCheckout = new window.monerisCheckout();
         checkoutInstanceRef.current = myCheckout;
 
-        myCheckout.setMode(environment === 'prod' ? 'live' : 'qa');
+        myCheckout.setMode(environment === 'prod' ? 'prod' : 'qa');
         myCheckout.setCheckoutDiv('monerisCheckoutDiv');
 
         // Setup callbacks
@@ -96,6 +99,18 @@ const MonerisPayModal: React.FC<MonerisPayModalProps> = ({
             setError('An error occurred during payment processing.');
           }
           setIsInitializingCheckout(false);
+        });
+
+        // Additional v3.00 required callbacks
+        myCheckout.setCallback('page_closed', (data: string) => {
+          console.log('Moneris page closed:', data);
+          myCheckout.closeCheckout();
+          onCancel();
+        });
+
+        myCheckout.setCallback('payment_submitted', (data: string) => {
+          console.log('Moneris payment submitted:', data);
+          // Optional: handle UI loading state while waiting for payment_complete
         });
 
         myCheckout.setCallback('payment_complete', (data: string) => {

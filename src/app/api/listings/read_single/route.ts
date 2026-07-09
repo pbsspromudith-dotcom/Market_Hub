@@ -27,6 +27,20 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'Not found' }, { status: 404 });
     }
 
+    // Check approval status
+    const status = listing.status || 'active';
+    if (status !== 'active') {
+      const viewerIdStr = searchParams.get('viewer_id');
+      const viewerRole = searchParams.get('viewer_role');
+
+      const isOwner = viewerIdStr && listing.user_id === parseInt(viewerIdStr, 10);
+      const isAdmin = viewerRole === 'admin';
+
+      if (!isOwner && !isAdmin) {
+        return NextResponse.json({ error: 'This listing is pending approval or is not active.' }, { status: 403 });
+      }
+    }
+
     let seller = null;
     if (listing.user_id) {
       const { data: sellerData } = await supabase

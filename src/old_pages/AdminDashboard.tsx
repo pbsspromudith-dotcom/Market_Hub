@@ -82,6 +82,31 @@ const AdminDashboard: React.FC = () => {
   const [tplDeletingAttr, setTplDeletingAttr] = useState<number | null>(null);
   const { showAlert, showConfirm } = useUI();
 
+  // ── Approval Workflow State ──
+  const [approvalStages, setApprovalStages] = useState<any[]>([]);
+  const [approvalTemplates, setApprovalTemplates] = useState<any[]>([]);
+  const [pendingApprovals, setPendingApprovals] = useState<any[]>([]);
+  const [approvalSubTab, setApprovalSubTab] = useState<'stages' | 'templates' | 'pending'>('pending');
+  // Stage form
+  const [stageFormName, setStageFormName] = useState('');
+  const [stageFormDesc, setStageFormDesc] = useState('');
+  const [stageFormOrder, setStageFormOrder] = useState(0);
+  const [stageFormEditId, setStageFormEditId] = useState<number | null>(null);
+  const [isSavingStage, setIsSavingStage] = useState(false);
+  // Template form
+  const [tplFormName, setTplFormName] = useState('');
+  const [tplFormDesc, setTplFormDesc] = useState('');
+  const [tplFormIsDefault, setTplFormIsDefault] = useState(false);
+  const [tplFormCategoryId, setTplFormCategoryId] = useState<number | null>(null);
+  const [tplFormStageIds, setTplFormStageIds] = useState<number[]>([]);
+  const [tplFormEditId, setTplFormEditId] = useState<number | null>(null);
+  const [isSavingTemplate, setIsSavingTemplate] = useState(false);
+  // Approve/reject
+  const [isProcessingApproval, setIsProcessingApproval] = useState<number | null>(null);
+  const [rejectNoteId, setRejectNoteId] = useState<number | null>(null);
+  const [rejectNote, setRejectNote] = useState('');
+  const [approvalMsg, setApprovalMsg] = useState<{type: 'success' | 'error', text: string} | null>(null);
+
   const DEFAULT_TEMPLATE: any = {
     hideTitle: false, hideDescription: false, hideLocation: false,
     hidePrice: false, priceRequired: true, priceLabel: 'Price', pricePlaceholder: '0.00',
@@ -294,6 +319,7 @@ const AdminDashboard: React.FC = () => {
   const allTabs = [
     { id: 'overview', label: 'Overview', icon: 'dashboard' },
     { id: 'listings', label: 'Listings', icon: 'inventory_2' },
+    { id: 'approvals', label: 'Approvals', icon: 'verified' },
     { id: 'users', label: 'Users', icon: 'people' },
     { id: 'menu', label: 'Menu Layout', icon: 'menu_open' },
     { id: 'templates', label: 'Ad Templates', icon: 'tune' },
@@ -739,7 +765,7 @@ const AdminDashboard: React.FC = () => {
   };
 
   const fetchListings = () => {
-    fetch('/api/listings/read')
+    fetch('/api/listings/read?show_all=true')
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) {
@@ -747,6 +773,172 @@ const AdminDashboard: React.FC = () => {
         }
       })
       .catch(console.error);
+  };
+
+  // ── Approval Workflow Functions ──
+  const fetchApprovalStages = () => {
+    fetch('/api/admin/approval-stages')
+      .then(r => r.json())
+      .then(r => { if (r.success) setApprovalStages(r.data || []); })
+      .catch(console.error);
+  };
+
+  const fetchApprovalTemplates = () => {
+    fetch('/api/admin/approval-templates')
+      .then(r => r.json())
+      .then(r => { if (r.success) setApprovalTemplates(r.data || []); })
+      .catch(console.error);
+  };
+
+  const fetchPendingApprovals = () => {
+    fetch('/api/admin/pending-approvals')
+      .then(r => r.json())
+      .then(r => { if (r.success) setPendingApprovals(r.data || []); })
+      .catch(console.error);
+  };
+
+  useEffect(() => {
+    if (activeTab === 'approvals') {
+      fetchApprovalStages();
+      fetchApprovalTemplates();
+      fetchPendingApprovals();
+    }
+  }, [activeTab]);
+
+  const handleSaveStage = async () => {
+    if (!stageFormName.trim()) return;
+    setIsSavingStage(true);
+    try {
+      const res = await fetch('/api/admin/approval-stages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: stageFormEditId,
+          stage_name: stageFormName,
+          description: stageFormDesc,
+          stage_order: stageFormOrder,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setApprovalMsg({ type: 'success', text: stageFormEditId ? 'Stage updated!' : 'Stage created!' });
+        setStageFormName(''); setStageFormDesc(''); setStageFormOrder(0); setStageFormEditId(null);
+        fetchApprovalStages();
+      } else {
+        setApprovalMsg({ type: 'error', text: data.error || 'Failed' });
+      }
+    } catch { setApprovalMsg({ type: 'error', text: 'Network error' }); }
+    setIsSavingStage(false);
+    setTimeout(() => setApprovalMsg(null), 4000);
+  };
+
+  const handleDeleteStage = async (id: number) => {
+    showConfirm({
+      title: 'Delete Stage',
+      message: 'Are you sure you want to delete this approval stage?',
+      isDestructive: true,
+      onConfirm: async () => {
+        try {
+          const res = await fetch('/api/admin/approval-stages/delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id }),
+          });
+          const data = await res.json();
+          if (data.success) {
+            fetchApprovalStages();
+            setApprovalMsg({ type: 'success', text: 'Stage deleted!' });
+          } else {
+            setApprovalMsg({ type: 'error', text: data.error || 'Cannot delete' });
+          }
+        } catch { setApprovalMsg({ type: 'error', text: 'Network error' }); }
+        setTimeout(() => setApprovalMsg(null), 4000);
+      }
+    });
+  };
+
+  const handleSaveTemplate = async () => {
+    if (!tplFormName.trim()) return;
+    setIsSavingTemplate(true);
+    try {
+      const res = await fetch('/api/admin/approval-templates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: tplFormEditId,
+          template_name: tplFormName,
+          description: tplFormDesc,
+          is_default: tplFormIsDefault,
+          category_id: tplFormCategoryId,
+          stages: tplFormStageIds.map((sid, idx) => ({ stage_id: sid, stage_order: idx, is_required: true })),
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setApprovalMsg({ type: 'success', text: tplFormEditId ? 'Template updated!' : 'Template created!' });
+        setTplFormName(''); setTplFormDesc(''); setTplFormIsDefault(false); setTplFormCategoryId(null); setTplFormStageIds([]); setTplFormEditId(null);
+        fetchApprovalTemplates();
+      } else {
+        setApprovalMsg({ type: 'error', text: data.error || 'Failed' });
+      }
+    } catch { setApprovalMsg({ type: 'error', text: 'Network error' }); }
+    setIsSavingTemplate(false);
+    setTimeout(() => setApprovalMsg(null), 4000);
+  };
+
+  const handleDeleteTemplate = async (id: number) => {
+    showConfirm({
+      title: 'Delete Template',
+      message: 'Are you sure you want to delete this approval template?',
+      isDestructive: true,
+      onConfirm: async () => {
+        try {
+          const res = await fetch('/api/admin/approval-templates/delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id }),
+          });
+          const data = await res.json();
+          if (data.success) {
+            fetchApprovalTemplates();
+            setApprovalMsg({ type: 'success', text: 'Template deleted!' });
+          } else {
+            setApprovalMsg({ type: 'error', text: data.error || 'Cannot delete' });
+          }
+        } catch { setApprovalMsg({ type: 'error', text: 'Network error' }); }
+        setTimeout(() => setApprovalMsg(null), 4000);
+      }
+    });
+  };
+
+  const handleApproveReject = async (approvalId: number, listingId: number, action: 'approve' | 'reject', note?: string) => {
+    setIsProcessingApproval(approvalId);
+    try {
+      const userId = JSON.parse(localStorage.getItem('user') || '{}')?.id;
+      const res = await fetch('/api/admin/approve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          approval_id: approvalId,
+          listing_id: listingId,
+          action,
+          review_note: note || null,
+          reviewed_by: userId || null,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setApprovalMsg({ type: 'success', text: data.message });
+        fetchPendingApprovals();
+        fetchListings();
+        setRejectNoteId(null);
+        setRejectNote('');
+      } else {
+        setApprovalMsg({ type: 'error', text: data.error || 'Failed' });
+      }
+    } catch { setApprovalMsg({ type: 'error', text: 'Network error' }); }
+    setIsProcessingApproval(null);
+    setTimeout(() => setApprovalMsg(null), 4000);
   };
 
   const handleDeleteListing = (id: string) => {
@@ -987,7 +1179,7 @@ const AdminDashboard: React.FC = () => {
       </div>
 
       {/* Tabs Navigation */}
-      <div className="flex overflow-x-auto custom-scrollbar gap-2 mb-8 bg-slate-100 p-1.5 rounded-2xl w-full xl:w-max border border-slate-200/60 animate-in fade-in duration-300">
+      <div className="flex flex-wrap gap-2 mb-8 bg-slate-100 p-1.5 rounded-2xl w-full border border-slate-200/60 animate-in fade-in duration-300">
         {tabs.map(tab => (
           <button
             key={tab.id}
@@ -1206,9 +1398,19 @@ const AdminDashboard: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="flex items-center gap-1.5 text-green-500 text-xs font-bold">
-                        <span className="w-2 h-2 rounded-full bg-green-500"></span> Active
-                      </span>
+                      {(l.status === 'pending_approval') ? (
+                        <span className="flex items-center gap-1.5 text-amber-500 text-xs font-bold">
+                          <span className="w-2 h-2 rounded-full bg-amber-500"></span> Pending
+                        </span>
+                      ) : l.status === 'rejected' ? (
+                        <span className="flex items-center gap-1.5 text-red-500 text-xs font-bold" title={l.rejection_reason || ''}>
+                          <span className="w-2 h-2 rounded-full bg-red-500"></span> Rejected
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1.5 text-green-500 text-xs font-bold">
+                          <span className="w-2 h-2 rounded-full bg-green-500"></span> Active
+                        </span>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-right">
                       <button 
@@ -2383,6 +2585,452 @@ const AdminDashboard: React.FC = () => {
       {/* 6. SEO Settings Tab */}
       {activeTab === 'promotions' && (
         <PromotionsAdmin />
+      )}
+
+      {/* ── Approvals Tab ── */}
+      {activeTab === 'approvals' && (
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
+          {/* Approval Message */}
+          {approvalMsg && (
+            <div className={`mb-6 px-5 py-3 rounded-xl text-sm font-bold flex items-center gap-2 ${
+              approvalMsg.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200'
+            }`}>
+              <span className="material-icons text-sm">{approvalMsg.type === 'success' ? 'check_circle' : 'error'}</span>
+              {approvalMsg.text}
+            </div>
+          )}
+
+          {/* Sub-tab Navigation */}
+          <div className="flex gap-2 mb-6">
+            {[
+              { id: 'pending' as const, label: 'Pending Approvals', icon: 'pending_actions', count: pendingApprovals.length },
+              { id: 'stages' as const, label: 'Approval Stages', icon: 'linear_scale' },
+              { id: 'templates' as const, label: 'Approval Templates', icon: 'description' },
+            ].map(st => (
+              <button
+                key={st.id}
+                onClick={() => setApprovalSubTab(st.id)}
+                className={`flex items-center gap-2 px-5 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-200 ${
+                  approvalSubTab === st.id
+                    ? 'bg-primary text-white shadow-lg shadow-primary/20'
+                    : 'bg-white text-slate-500 border border-slate-200 hover:text-slate-800 hover:border-slate-300'
+                }`}
+              >
+                <span className="material-icons text-sm">{st.icon}</span>
+                {st.label}
+                {st.count !== undefined && st.count > 0 && (
+                  <span className="ml-1 px-2 py-0.5 bg-white/20 rounded-full text-[10px]">{st.count}</span>
+                )}
+              </button>
+            ))}
+          </div>
+
+          {/* ── PENDING APPROVALS SUB-TAB ── */}
+          {approvalSubTab === 'pending' && (
+            <div className="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm">
+              <div className="mb-6">
+                <h2 className="text-xl font-black">Pending Approvals</h2>
+                <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Review and approve or reject user-submitted ads</p>
+              </div>
+
+              {pendingApprovals.length === 0 ? (
+                <div className="text-center py-16">
+                  <span className="material-icons text-5xl text-slate-200 mb-4 block">task_alt</span>
+                  <p className="text-slate-400 font-bold">No pending approvals</p>
+                  <p className="text-slate-300 text-sm mt-1">All ads have been reviewed.</p>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {pendingApprovals.map((listing: any) => (
+                    <div key={listing.id} className="border border-slate-200 rounded-2xl overflow-hidden hover:shadow-md transition-shadow">
+                      {/* Listing Header */}
+                      <div className="flex items-center gap-4 p-5 bg-slate-50/50 border-b border-slate-100">
+                        <div className="w-14 h-14 rounded-xl bg-slate-100 overflow-hidden flex-shrink-0 border border-slate-200">
+                          {listing.image ? (
+                            <img src={listing.image} className="w-full h-full object-cover" alt="" />
+                          ) : (
+                            <span className="w-full h-full flex items-center justify-center material-icons text-slate-400">image</span>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-black text-slate-800 truncate">{listing.title}</h3>
+                          <div className="flex items-center gap-3 mt-1 text-xs text-slate-400">
+                            <span className="flex items-center gap-1"><span className="material-icons text-xs">person</span>{listing.poster?.name || 'Unknown'}</span>
+                            <span className="flex items-center gap-1"><span className="material-icons text-xs">location_on</span>{listing.location}</span>
+                            <span className="flex items-center gap-1"><span className="material-icons text-xs">sell</span>{listing.category}</span>
+                            <span className="font-bold text-primary">${Number(listing.price || 0).toLocaleString()}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Approval Stages */}
+                      <div className="p-5">
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-3">Approval Stages</p>
+                        <div className="space-y-3">
+                          {(listing.approval_stages || []).map((appr: any) => (
+                            <div 
+                              key={appr.id} 
+                              style={appr.status === 'approved' ? { backgroundColor: '#27AE6008', borderColor: '#27AE6030' } : undefined}
+                              className={`flex items-center gap-4 p-3 rounded-xl border ${
+                                appr.status === 'approved' ? '' :
+                                appr.status === 'rejected' ? 'bg-red-50/50 border-red-200' :
+                                'bg-amber-50/30 border-amber-200'
+                              }`}
+                            >
+                              <div 
+                                style={appr.status === 'approved' ? { backgroundColor: '#27AE6020', color: '#27AE60' } : undefined}
+                                className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                                  appr.status === 'approved' ? '' :
+                                  appr.status === 'rejected' ? 'bg-red-100 text-red-600' :
+                                  'bg-amber-100 text-amber-600'
+                                }`}
+                              >
+                                <span className="material-icons text-sm">
+                                  {appr.status === 'approved' ? 'check' : appr.status === 'rejected' ? 'close' : 'schedule'}
+                                </span>
+                              </div>
+                              <div className="flex-1">
+                                <p className="text-sm font-bold text-slate-700">{appr.stage?.stage_name || 'Stage'}</p>
+                                {appr.review_note && <p className="text-xs text-slate-400 mt-0.5">{appr.review_note}</p>}
+                                {appr.reviewer && <p className="text-xs text-slate-300 mt-0.5">Reviewed by {appr.reviewer.name}</p>}
+                              </div>
+                              <div className="flex items-center gap-2">
+                                {appr.status === 'pending' && (
+                                  <>
+                                    {rejectNoteId === appr.id ? (
+                                      <div className="flex items-center gap-2">
+                                        <input
+                                          type="text"
+                                          value={rejectNote}
+                                          onChange={e => setRejectNote(e.target.value)}
+                                          placeholder="Rejection reason..."
+                                          className="px-3 py-1.5 border border-slate-200 rounded-lg text-xs w-48"
+                                        />
+                                        <button
+                                          onClick={() => handleApproveReject(appr.id, listing.id, 'reject', rejectNote)}
+                                          disabled={isProcessingApproval === appr.id}
+                                          className="px-3 py-1.5 bg-red-500 text-white rounded-lg text-xs font-bold hover:bg-red-600 transition-colors disabled:opacity-50"
+                                        >
+                                          Confirm
+                                        </button>
+                                        <button
+                                          onClick={() => { setRejectNoteId(null); setRejectNote(''); }}
+                                          className="px-2 py-1.5 text-slate-400 hover:text-slate-600 text-xs"
+                                        >
+                                          Cancel
+                                        </button>
+                                      </div>
+                                    ) : (
+                                      <>
+                                        <button
+                                          onClick={() => handleApproveReject(appr.id, listing.id, 'approve')}
+                                          disabled={isProcessingApproval === appr.id}
+                                          style={{ backgroundColor: '#27AE60' }}
+                                          className="flex items-center gap-1 px-4 py-2 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:opacity-90 transition-all shadow-sm disabled:opacity-50"
+                                        >
+                                          {isProcessingApproval === appr.id ? (
+                                            <span className="material-icons text-sm animate-spin">sync</span>
+                                          ) : (
+                                            <span className="material-icons text-sm">check</span>
+                                          )}
+                                          Approve
+                                        </button>
+                                        <button
+                                          onClick={() => setRejectNoteId(appr.id)}
+                                          disabled={isProcessingApproval === appr.id}
+                                          className="flex items-center gap-1 px-4 py-2 bg-red-50 text-red-500 border border-red-200 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-red-500 hover:text-white transition-colors disabled:opacity-50"
+                                        >
+                                          <span className="material-icons text-sm">close</span>
+                                          Reject
+                                        </button>
+                                      </>
+                                    )}
+                                  </>
+                                )}
+                                {appr.status !== 'pending' && (
+                                  <span 
+                                    style={{ backgroundColor: '#27AE6020', color: '#27AE60' }}
+                                    className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest`}
+                                  >
+                                    {appr.status}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── STAGES SUB-TAB ── */}
+          {approvalSubTab === 'stages' && (
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+              {/* Stage Form */}
+              <div className="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm">
+                <h2 className="text-xl font-black mb-1">{stageFormEditId ? 'Edit Stage' : 'Create Stage'}</h2>
+                <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mb-6">Define steps in the approval pipeline</p>
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1 block">Stage Name *</label>
+                    <input
+                      type="text"
+                      value={stageFormName}
+                      onChange={e => setStageFormName(e.target.value)}
+                      placeholder="e.g. Content Review"
+                      className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1 block">Description</label>
+                    <input
+                      type="text"
+                      value={stageFormDesc}
+                      onChange={e => setStageFormDesc(e.target.value)}
+                      placeholder="Optional description..."
+                      className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1 block">Sort Order</label>
+                    <input
+                      type="number"
+                      value={stageFormOrder}
+                      onChange={e => setStageFormOrder(parseInt(e.target.value) || 0)}
+                      className="w-32 px-4 py-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                    />
+                  </div>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={handleSaveStage}
+                      disabled={isSavingStage || !stageFormName.trim()}
+                      className="flex items-center gap-2 bg-primary hover:bg-primary-hover text-white px-6 py-3 rounded-xl font-bold transition-all shadow-lg shadow-primary/20 text-sm disabled:opacity-50"
+                    >
+                      {isSavingStage ? <span className="material-icons text-sm animate-spin">sync</span> : <span className="material-icons text-sm">save</span>}
+                      {stageFormEditId ? 'Update Stage' : 'Create Stage'}
+                    </button>
+                    {stageFormEditId && (
+                      <button
+                        onClick={() => { setStageFormEditId(null); setStageFormName(''); setStageFormDesc(''); setStageFormOrder(0); }}
+                        className="px-5 py-3 text-sm text-slate-500 hover:text-slate-700 font-bold transition-colors"
+                      >
+                        Cancel Edit
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Stage List */}
+              <div className="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm">
+                <h2 className="text-xl font-black mb-1">Existing Stages</h2>
+                <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mb-6">{approvalStages.length} stage{approvalStages.length !== 1 ? 's' : ''} defined</p>
+                {approvalStages.length === 0 ? (
+                  <div className="text-center py-10">
+                    <span className="material-icons text-4xl text-slate-200 mb-2 block">linear_scale</span>
+                    <p className="text-slate-400 text-sm">No stages created yet</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {approvalStages.map((stage: any) => (
+                      <div key={stage.id} className="flex items-center gap-4 p-4 rounded-xl border border-slate-200 hover:border-slate-300 transition-colors">
+                        <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
+                          <span className="material-icons text-sm">checklist</span>
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-bold text-sm text-slate-800">{stage.stage_name}</p>
+                          {stage.description && <p className="text-xs text-slate-400 mt-0.5">{stage.description}</p>}
+                          <p className="text-[10px] text-slate-300 mt-1">Order: {stage.stage_order}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => { setStageFormEditId(stage.id); setStageFormName(stage.stage_name); setStageFormDesc(stage.description || ''); setStageFormOrder(stage.stage_order || 0); }}
+                            className="w-8 h-8 rounded-lg bg-slate-100 text-slate-400 hover:bg-primary hover:text-white flex items-center justify-center transition-colors"
+                            title="Edit"
+                          >
+                            <span className="material-icons text-sm">edit</span>
+                          </button>
+                          <button
+                            onClick={() => handleDeleteStage(stage.id)}
+                            className="w-8 h-8 rounded-lg bg-red-50 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center transition-colors"
+                            title="Delete"
+                          >
+                            <span className="material-icons text-sm">delete</span>
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ── TEMPLATES SUB-TAB ── */}
+          {approvalSubTab === 'templates' && (
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+              {/* Template Form */}
+              <div className="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm">
+                <h2 className="text-xl font-black mb-1">{tplFormEditId ? 'Edit Template' : 'Create Template'}</h2>
+                <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mb-6">Bundle stages into reusable templates</p>
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1 block">Template Name *</label>
+                    <input
+                      type="text"
+                      value={tplFormName}
+                      onChange={e => setTplFormName(e.target.value)}
+                      placeholder="e.g. Standard Review"
+                      className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1 block">Description</label>
+                    <input
+                      type="text"
+                      value={tplFormDesc}
+                      onChange={e => setTplFormDesc(e.target.value)}
+                      placeholder="Optional description..."
+                      className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                    />
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      id="tpl-default"
+                      checked={tplFormIsDefault}
+                      onChange={e => setTplFormIsDefault(e.target.checked)}
+                      className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary cursor-pointer"
+                    />
+                    <label htmlFor="tpl-default" className="text-sm font-bold text-slate-700 cursor-pointer">Set as Default Template</label>
+                  </div>
+                  <p className="text-[10px] text-slate-400">The default template applies to all categories that don't have a specific template assigned.</p>
+
+                  {/* Stage Selection */}
+                  <div>
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 block">Assign Stages (in order)</label>
+                    {approvalStages.length === 0 ? (
+                      <p className="text-xs text-slate-400 italic">No stages created yet. Go to the Stages tab to create some first.</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {approvalStages.map((stage: any) => (
+                          <label key={stage.id} className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${
+                            tplFormStageIds.includes(stage.id) ? 'border-primary bg-primary/5' : 'border-slate-200 hover:border-slate-300'
+                          }`}>
+                            <input
+                              type="checkbox"
+                              checked={tplFormStageIds.includes(stage.id)}
+                              onChange={e => {
+                                if (e.target.checked) {
+                                  setTplFormStageIds([...tplFormStageIds, stage.id]);
+                                } else {
+                                  setTplFormStageIds(tplFormStageIds.filter(id => id !== stage.id));
+                                }
+                              }}
+                              className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary cursor-pointer"
+                            />
+                            <div>
+                              <p className="text-sm font-bold text-slate-700">{stage.stage_name}</p>
+                              {stage.description && <p className="text-xs text-slate-400">{stage.description}</p>}
+                            </div>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      onClick={handleSaveTemplate}
+                      disabled={isSavingTemplate || !tplFormName.trim() || tplFormStageIds.length === 0}
+                      className="flex items-center gap-2 bg-primary hover:bg-primary-hover text-white px-6 py-3 rounded-xl font-bold transition-all shadow-lg shadow-primary/20 text-sm disabled:opacity-50"
+                    >
+                      {isSavingTemplate ? <span className="material-icons text-sm animate-spin">sync</span> : <span className="material-icons text-sm">save</span>}
+                      {tplFormEditId ? 'Update Template' : 'Create Template'}
+                    </button>
+                    {tplFormEditId && (
+                      <button
+                        onClick={() => { setTplFormEditId(null); setTplFormName(''); setTplFormDesc(''); setTplFormIsDefault(false); setTplFormCategoryId(null); setTplFormStageIds([]); }}
+                        className="px-5 py-3 text-sm text-slate-500 hover:text-slate-700 font-bold transition-colors"
+                      >
+                        Cancel Edit
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Template List */}
+              <div className="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm">
+                <h2 className="text-xl font-black mb-1">Existing Templates</h2>
+                <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mb-6">{approvalTemplates.length} template{approvalTemplates.length !== 1 ? 's' : ''} defined</p>
+                {approvalTemplates.length === 0 ? (
+                  <div className="text-center py-10">
+                    <span className="material-icons text-4xl text-slate-200 mb-2 block">description</span>
+                    <p className="text-slate-400 text-sm">No templates created yet</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {approvalTemplates.map((tpl: any) => (
+                      <div key={tpl.id} className="p-5 rounded-xl border border-slate-200 hover:border-slate-300 transition-colors">
+                        <div className="flex items-start justify-between mb-3">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <p className="font-black text-slate-800">{tpl.template_name}</p>
+                              {tpl.is_default && (
+                                <span className="px-2 py-0.5 bg-primary/10 text-primary rounded-full text-[10px] font-black uppercase tracking-widest">Default</span>
+                              )}
+                            </div>
+                            {tpl.description && <p className="text-xs text-slate-400 mt-1">{tpl.description}</p>}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => {
+                                setTplFormEditId(tpl.id);
+                                setTplFormName(tpl.template_name);
+                                setTplFormDesc(tpl.description || '');
+                                setTplFormIsDefault(tpl.is_default || false);
+                                setTplFormCategoryId(tpl.category_id);
+                                setTplFormStageIds((tpl.stages || []).map((s: any) => s.stage_id));
+                              }}
+                              className="w-8 h-8 rounded-lg bg-slate-100 text-slate-400 hover:bg-primary hover:text-white flex items-center justify-center transition-colors"
+                              title="Edit"
+                            >
+                              <span className="material-icons text-sm">edit</span>
+                            </button>
+                            <button
+                              onClick={() => handleDeleteTemplate(tpl.id)}
+                              className="w-8 h-8 rounded-lg bg-red-50 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center transition-colors"
+                              title="Delete"
+                            >
+                              <span className="material-icons text-sm">delete</span>
+                            </button>
+                          </div>
+                        </div>
+                        {/* Stages assigned */}
+                        <div className="flex flex-wrap gap-2">
+                          {(tpl.stages || []).map((ts: any, idx: number) => (
+                            <span key={ts.id || idx} className="flex items-center gap-1 px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-[10px] font-bold uppercase tracking-widest">
+                              <span className="material-icons text-xs">checklist</span>
+                              {ts.stage?.stage_name || `Stage #${ts.stage_id}`}
+                            </span>
+                          ))}
+                          {(!tpl.stages || tpl.stages.length === 0) && (
+                            <span className="text-xs text-slate-300 italic">No stages assigned</span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
       )}
 
       {activeTab === 'seo' && (

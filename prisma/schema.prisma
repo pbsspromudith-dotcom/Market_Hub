@@ -130,9 +130,12 @@ model listings {
   parent_id            Int?
   latitude             Decimal?
   longitude            Decimal?
+  status               String?   @default("active")
+  rejection_reason     String?
 
   @@index([parent_id])
   @@index([user_id])
+  @@index([status])
 }
 
 model main_menu_master {
@@ -224,4 +227,48 @@ model promotion_pricing {
   created_at     DateTime? @default(now())
 
   @@unique([promotion_type, duration_days])
+}
+
+model approval_stages {
+  id          Int      @id @default(autoincrement())
+  stage_name  String
+  description String?
+  stage_order Int?     @default(0)
+  is_active   Boolean? @default(true)
+  created_at  DateTime @default(now())
+}
+
+model approval_templates {
+  id            Int       @id @default(autoincrement())
+  template_name String
+  description   String?
+  is_default    Boolean?  @default(false)
+  category_id   Int?
+  is_active     Boolean?  @default(true)
+  created_at    DateTime? @default(now())
+}
+
+model approval_template_stages {
+  id          Int      @id @default(autoincrement())
+  template_id Int
+  stage_id    Int
+  stage_order Int?     @default(0)
+  is_required Boolean? @default(true)
+
+  @@index([template_id])
+}
+
+model listing_approvals {
+  id          Int       @id @default(autoincrement())
+  listing_id  Int
+  template_id Int
+  stage_id    Int
+  status      String?   @default("pending")
+  reviewed_by Int?
+  review_note String?
+  reviewed_at DateTime?
+  created_at  DateTime  @default(now())
+
+  @@index([listing_id])
+  @@index([status])
 }
