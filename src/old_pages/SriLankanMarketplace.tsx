@@ -12,7 +12,7 @@ const SriLankanMarketplace: React.FC = () => {
         </div>
         <div className="w-full px-4 sm:px-6 lg:px-10 relative z-10 text-center">
           <span className="inline-block py-1.5 px-4 rounded-full bg-white/10 text-white/90 text-[10px] font-black uppercase tracking-[0.2em] mb-6">
-            Community Classifieds
+            Community Ads
           </span>
           <h1 className="text-4xl md:text-6xl font-black mb-6 leading-tight">
             Sri Lankan Marketplace<br />Canada

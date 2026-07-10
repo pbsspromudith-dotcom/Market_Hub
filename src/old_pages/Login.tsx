@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import logoImg from "../../public/logo.png";
 import { trackUserRegistration } from "../analytics";
 
 interface LoginProps {
@@ -264,7 +263,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
             <div className="mb-6 flex justify-center">
               <Link href="/">
                 <img
-                  src={logoImg.src}
+                  src="/logo.png"
                   alt="HitAds Logo"
                   className="h-24 object-contain transition-transform hover:scale-105"
                 />
@@ -362,7 +361,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           <div className="mb-6 flex justify-center -ml-12">
             <Link href="/">
               <img
-                src={logoImg.src}
+                src="/logo.png"
                 alt="HitAds Logo"
                 className="h-24 object-contain transition-transform hover:scale-105"
               />

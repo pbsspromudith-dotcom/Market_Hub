@@ -43,7 +43,7 @@ const MarketTrends: React.FC = () => {
               analytics
             </span>
             <p className="text-sm font-medium leading-relaxed opacity-90">
-              Online classifieds change throughout the year. Certain products
+              Online ads change throughout the year. Certain products
               become more popular during specific seasons, economic conditions,
               and local demand cycles.
             </p>
@@ -56,7 +56,7 @@ const MarketTrends: React.FC = () => {
       title: "Vehicle Market Trends",
       shortTitle: "Vehicle Trends",
       description:
-        "Vehicles remain one of the most active categories in Canadian classifieds.",
+        "Vehicles remain one of the most active categories in Canadian ads.",
       icon: "directions_car",
       color: "bg-emerald-50 text-emerald-600",
       content: (

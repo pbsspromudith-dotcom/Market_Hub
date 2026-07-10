@@ -603,7 +603,7 @@ const BuyingGuides: React.FC = () => {
           </h1>
           <p className="text-lg md:text-xl text-primary-soft font-medium max-w-2xl mx-auto">
             Our goal is to help Canadians make safer, smarter, and more informed
-            buying decisions when using online classifieds.
+            buying decisions when using online ads.
           </p>
           <div className="pt-4">
             <span className="bg-white/10 backdrop-blur-md px-6 py-2 rounded-full text-xs font-black uppercase tracking-[0.2em] border border-white/20">
@@ -748,7 +748,7 @@ const BuyingGuides: React.FC = () => {
                   </h4>
                   <p className="text-slate-400 text-sm leading-relaxed">
                     Local Canadian marketplace with a wide range of categories,
-                    free classified listings, and easy communication tools for a
+                    free listings, and easy communication tools for a
                     growing business community.
                   </p>
                 </div>

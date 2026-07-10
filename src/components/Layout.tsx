@@ -4,9 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { CURRENT_USER } from "../constants";
-import logoImg from "../../assets/logo.png";
-import footerLogoImg from "../../assets/footer_logo.png";
-import footerImg from "../assets/Footer.jpeg";
+
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -147,7 +145,7 @@ const Layout: React.FC<LayoutProps> = ({
             <div className="flex-1 shrink-0 flex items-center justify-start">
               <Link href="/" className="flex items-center gap-1">
                 <img
-                  src={logoImg.src}
+                  src="/logo.png"
                   alt="HitAds Logo"
                   fetchPriority="high"
                   className="h-14 md:h-20 w-auto object-contain transition-transform hover:scale-105"
@@ -989,7 +987,7 @@ const Layout: React.FC<LayoutProps> = ({
                   Contact
                 </Link>
                 <img
-                  src={footerLogoImg.src}
+                  src="/footer_logo.png"
                   alt="HitAds Footer Logo"
                   className="h-8 md:h-10 w-auto object-contain opacity-80 hover:opacity-100 transition-opacity"
                 />

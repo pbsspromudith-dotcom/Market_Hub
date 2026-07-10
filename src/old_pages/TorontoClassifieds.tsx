@@ -24,13 +24,13 @@ const TorontoClassifieds: React.FC = () => {
         </div>
         <div className="w-full px-4 sm:px-6 lg:px-10 relative z-10 text-center">
           <span className="inline-block py-1.5 px-4 rounded-full bg-white/10 text-white/90 text-[10px] font-black uppercase tracking-[0.2em] mb-6 backdrop-blur-sm">
-            Toronto's #1 Classifieds Platform
+            Toronto's #1 Ads Platform
           </span>
           <h1 className="text-4xl md:text-6xl font-black mb-6 leading-tight">
-            Toronto Classified Ads &<br />Local Marketplace
+            Toronto Ads &<br />Local Marketplace
           </h1>
           <p className="text-lg md:text-xl text-white/80 max-w-3xl mx-auto mb-10 font-medium leading-relaxed">
-            Search thousands of local classified listings in Toronto, Ontario. Post free advertisements for jobs, cars, real estate, services, and items for sale on HitAds.ca — Canada's modern classifieds platform.
+            Search thousands of local listings in Toronto, Ontario. Post free advertisements for jobs, cars, real estate, services, and items for sale on HitAds.ca — Canada's modern ads platform.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/search" className="bg-white text-primary font-black px-10 py-5 rounded-2xl hover:bg-slate-50 transition-all shadow-xl text-sm uppercase tracking-widest">
@@ -46,16 +46,16 @@ const TorontoClassifieds: React.FC = () => {
       <main className="w-full px-4 sm:px-6 lg:px-10 py-16 md:py-24">
         {/* About Section */}
         <section className="max-w-4xl mx-auto mb-20">
-          <h2 className="text-3xl font-black text-slate-900 mb-6">Why Toronto Chooses HitAds.ca for Classifieds</h2>
+          <h2 className="text-3xl font-black text-slate-900 mb-6">Why Toronto Chooses HitAds.ca</h2>
           <div className="prose prose-lg text-slate-600 leading-relaxed space-y-4">
             <p>
-              HitAds.ca is Toronto's premier online classifieds marketplace, connecting millions of local buyers and sellers across the Greater Toronto Area (GTA). Whether you're searching for a used car in Scarborough, a rental apartment in downtown Toronto, or professional services in North York, HitAds.ca makes it easy to find exactly what you need — completely free.
+              HitAds.ca is Toronto's premier online ads marketplace, connecting millions of local buyers and sellers across the Greater Toronto Area (GTA). Whether you're searching for a used car in Scarborough, a rental apartment in downtown Toronto, or professional services in North York, HitAds.ca makes it easy to find exactly what you need — completely free.
             </p>
             <p>
               Our platform brings together Canada's most diverse communities, offering a safe and trusted environment for everyday commerce. From Brampton to Mississauga, Markham to Etobicoke, HitAds.ca serves the entire GTA with thousands of active listings updated daily. Unlike other platforms that charge listing fees, HitAds.ca remains completely free for individuals and small businesses.
             </p>
             <p>
-              As Toronto's classifieds landscape evolves, HitAds.ca continues to lead with innovative features including verified user profiles, instant messaging between buyers and sellers, and advanced search filters that help you narrow down results by category, price range, location, and condition. Our mobile-optimized experience ensures you can browse, buy, and sell from anywhere across Ontario.
+              As Toronto's ads landscape evolves, HitAds.ca continues to lead with innovative features including verified user profiles, instant messaging between buyers and sellers, and advanced search filters that help you narrow down results by category, price range, location, and condition. Our mobile-optimized experience ensures you can browse, buy, and sell from anywhere across Ontario.
             </p>
           </div>
         </section>
@@ -128,7 +128,7 @@ const TorontoClassifieds: React.FC = () => {
 
         {/* Local Benefits */}
         <section className="max-w-4xl mx-auto mb-20">
-          <h2 className="text-3xl font-black text-slate-900 mb-6">Benefits of Using Toronto Classifieds on HitAds.ca</h2>
+          <h2 className="text-3xl font-black text-slate-900 mb-6">Benefits of Using Toronto Ads on HitAds.ca</h2>
           <div className="space-y-4 text-slate-600 leading-relaxed">
             <p>
               Toronto is Canada's largest city and the economic hub of Ontario, with over 6 million residents in the GTA alone. This massive population creates a thriving marketplace for buying, selling, and trading goods and services. HitAds.ca taps into this vast network, giving you access to an audience of millions right in your neighborhood.
@@ -147,7 +147,7 @@ const TorontoClassifieds: React.FC = () => {
 
         {/* Safety */}
         <section className="bg-primary/5 rounded-3xl p-10 md:p-16 max-w-4xl mx-auto">
-          <h2 className="text-2xl font-black text-slate-900 mb-6">Safety Tips for Toronto Classified Users</h2>
+          <h2 className="text-2xl font-black text-slate-900 mb-6">Safety Tips for Toronto Users</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {[
               'Meet in public places like coffee shops or police station exchange zones',

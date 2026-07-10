@@ -1,6 +1,5 @@
 import nodemailer from 'nodemailer';
 import { supabase } from './supabase';
-import path from 'path';
 
 export async function sendEmail(to: string, subject: string, html: string) {
   // Fetch SMTP settings from the database
@@ -37,7 +36,7 @@ export async function sendEmail(to: string, subject: string, html: string) {
   const fromName = settings.smtp_from_name || 'Market Hub';
   const fromEmail = settings.smtp_from_email || settings.smtp_username;
 
-  const logoPath = path.join(process.cwd(), 'logos', 'Full Logo (2 Color).png');
+
 
   const mailOptions = {
     from: `"${fromName}" <${fromEmail}>`,
@@ -86,7 +85,7 @@ export function getThemedEmailHtml(title: string, contentHtml: string) {
                 <tr>
                   <td align="center" style="padding: 0 40px 40px 40px; background-color: #ffffff;">
                     <p style="margin: 0 0 6px 0; font-size: 11px; line-height: 1.5; color: #5B616A; font-weight: 800; text-transform: uppercase; tracking-wider;">
-                      HitAds.ca classifieds
+                      HitAds.ca
                     </p>
                     <p style="margin: 0; font-size: 11px; line-height: 1.5; color: #5B616A;">
                       © ${new Date().getFullYear()} HitAds.ca. All rights reserved.

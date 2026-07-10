@@ -3163,7 +3163,7 @@ const AdminDashboard: React.FC = () => {
                     {[
                       { key: 'home', label: 'Homepage' },
                       { key: 'search', label: 'Search Results Page' },
-                      { key: 'toronto-classifieds', label: 'Toronto Classifieds (/toronto-classifieds)' },
+                      { key: 'toronto-classifieds', label: 'Toronto Ads (/toronto-classifieds)' },
                       { key: 'buy-and-sell-toronto', label: 'Buy & Sell Toronto (/buy-and-sell-toronto)' },
                       { key: 'local-services-toronto', label: 'Local Services Toronto (/local-services-toronto)' },
                       { key: 'jobs-toronto', label: 'Jobs Toronto (/jobs-toronto)' },

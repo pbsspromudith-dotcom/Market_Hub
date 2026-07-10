@@ -598,7 +598,7 @@ const SafetyTips: React.FC = () => {
                   <span className="material-icons">gpp_maybe</span>
                 </div>
                 <p className="text-xs text-slate-400 max-w-3xl mx-auto leading-loose uppercase tracking-widest">
-                  HitAds.ca is an online classifieds platform and does not
+                  HitAds.ca is an online ads platform and does not
                   guarantee listings, users, buyers, sellers, products,
                   services, or transactions. Users are responsible for
                   conducting their own due diligence.
