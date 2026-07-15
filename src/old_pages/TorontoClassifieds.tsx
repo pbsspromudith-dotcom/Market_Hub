@@ -131,7 +131,7 @@ const TorontoClassifieds: React.FC = () => {
           <h2 className="text-3xl font-black text-slate-900 mb-6">Benefits of Using Toronto Ads on HitAds.ca</h2>
           <div className="space-y-4 text-slate-600 leading-relaxed">
             <p>
-              Toronto is Canada's largest city and the economic hub of Ontario, with over 6 million residents in the GTA alone. This massive population creates a thriving marketplace for buying, selling, and trading goods and services. HitAds.ca taps into this vast network, giving you access to an audience of millions right in your neighborhood.
+              Toronto is Canada's largest city and the economic hub of Ontario, with over 6 million residents in the GTA alone. This massive population creates a thriving marketplace for buying, selling, and trading goods and services. HitAds.ca taps into this vast network, giving you access to an audience of millions right in your neighbourhood.
             </p>
             <p>
               <strong>For Sellers:</strong> Reach thousands of potential buyers across the GTA without spending a dime on listing fees. Our platform supports multiple photos, detailed descriptions, and direct messaging — everything you need to sell quickly and get the best price for your items.

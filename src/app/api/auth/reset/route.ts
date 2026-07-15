@@ -15,26 +15,52 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, message: 'Password must be at least 6 characters.' }, { status: 400 });
     }
 
-    // Find user with valid, non-expired token
-    const { data: user } = await supabase
+    // Find user with reset token
+    console.log('[DEBUG Reset] Submitted token:', token);
+    const { data: user, error: queryError } = await supabase
       .from('users')
       .select('*')
       .eq('reset_token', token.trim())
-      .gt('reset_token_expiry', new Date().toISOString())
       .maybeSingle();
 
+    if (queryError) {
+      console.error('[DEBUG Reset] Supabase query error:', queryError);
+    }
+
+    console.log('[DEBUG Reset] Found user:', user ? user.email : 'NONE');
+
     if (!user) {
+      return NextResponse.json({ success: false, message: 'Invalid or expired password reset token.' }, { status: 400 });
+    }
+
+    // Verify token expiry timezone-safely in JS
+    const expiryStr = user.reset_token_expiry;
+    console.log('[DEBUG Reset] Stored expiry string:', expiryStr);
+    if (!expiryStr) {
+      return NextResponse.json({ success: false, message: 'Invalid or expired password reset token.' }, { status: 400 });
+    }
+
+    const expiryIso = expiryStr.endsWith('Z') ? expiryStr : `${expiryStr}Z`;
+    const expiryTime = new Date(expiryIso).getTime();
+    const currentTime = Date.now();
+
+    console.log('[DEBUG Reset] Current time:', currentTime, 'Expiry time:', expiryTime);
+    console.log('[DEBUG Reset] Is expired?', expiryTime < currentTime);
+
+    if (isNaN(expiryTime) || expiryTime < currentTime) {
       return NextResponse.json({ success: false, message: 'Invalid or expired password reset token.' }, { status: 400 });
     }
 
     // Hash the new password
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    // Update password and clear token
+    // Update password, mark as verified, and clear token
     const { error: updateError } = await supabase
       .from('users')
       .update({
         password: hashedPassword,
+        is_verified: true,
+        verification_token: null,
         reset_token: null,
         reset_token_expiry: null,
       })

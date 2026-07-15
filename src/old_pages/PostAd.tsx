@@ -149,7 +149,7 @@ const getTitlePlaceholder = (category: string) => {
     return "e.g. Commercial Grade Printing Press / Industrial Forklift";
   }
   if (catLower.startsWith("community")) {
-    return "e.g. Neighborhood Garage Sale this Saturday / Lost Golden Retriever";
+    return "e.g. Neighbourhood Garage Sale this Saturday / Lost Golden Retriever";
   }
   if (catLower.startsWith("pets")) {
     return "e.g. Friendly 8-Week-Old Golden Retriever Puppies";

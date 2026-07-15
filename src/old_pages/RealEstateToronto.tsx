@@ -31,13 +31,13 @@ const RealEstateToronto: React.FC = () => {
           <h2 className="text-3xl font-black text-slate-900 mb-6">Toronto Real Estate on HitAds.ca</h2>
           <div className="space-y-4 text-slate-600 leading-relaxed">
             <p>
-              Toronto's real estate market is one of the most dynamic in Canada, with opportunities ranging from luxury downtown condominiums to family homes in suburban neighborhoods like Scarborough, North York, and Etobicoke. HitAds.ca brings together property listings from independent sellers, landlords, and real estate professionals — all in one convenient platform.
+              Toronto's real estate market is one of the most dynamic in Canada, with opportunities ranging from luxury downtown condominiums to family homes in suburban neighbourhoods like Scarborough, North York, and Etobicoke. HitAds.ca brings together property listings from independent sellers, landlords, and real estate professionals — all in one convenient platform.
             </p>
             <p>
-              Whether you're a first-time homebuyer looking for an affordable condo in Mississauga, a family searching for a spacious house in Brampton, or a student seeking a room rental near the University of Toronto, HitAds.ca has thousands of listings to explore. Our advanced filters let you search by property type, number of bedrooms, price range, and specific neighborhoods across the Greater Toronto Area.
+              Whether you're a first-time homebuyer looking for an affordable condo in Mississauga, a family searching for a spacious house in Brampton, or a student seeking a room rental near the University of Toronto, HitAds.ca has thousands of listings to explore. Our advanced filters let you search by property type, number of bedrooms, price range, and specific neighbourhoods across the Greater Toronto Area.
             </p>
             <p>
-              For landlords and property owners, HitAds.ca provides a free platform to advertise your properties to thousands of potential tenants and buyers. Create detailed listings with floor plans, multiple photos, and neighborhood descriptions to attract quality inquiries from serious prospects.
+              For landlords and property owners, HitAds.ca provides a free platform to advertise your properties to thousands of potential tenants and buyers. Create detailed listings with floor plans, multiple photos, and neighbourhood descriptions to attract quality inquiries from serious prospects.
             </p>
             <p>
               The GTA real estate landscape includes everything from high-rise condominiums along the Yonge-University corridor to charming townhouses in Oakville, commercial properties in Vaughan's business parks, and vacation rentals in Niagara-on-the-Lake. Whatever your real estate needs, HitAds.ca connects you with local opportunities.
@@ -67,7 +67,7 @@ const RealEstateToronto: React.FC = () => {
         </section>
 
         <section className="max-w-4xl mx-auto mb-20">
-          <h2 className="text-3xl font-black text-slate-900 mb-6">Popular Toronto Neighborhoods</h2>
+          <h2 className="text-3xl font-black text-slate-900 mb-6">Popular Toronto Neighbourhoods</h2>
           <div className="space-y-4 text-slate-600 leading-relaxed">
             <p>
               <strong>Downtown Toronto:</strong> The heart of the city features luxury condos, vibrant nightlife, and proximity to the Financial District. Ideal for young professionals and urban dwellers who want walkability and transit access.
@@ -89,7 +89,7 @@ const RealEstateToronto: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {[
               'Get pre-approved for a mortgage before house hunting',
-              'Research neighborhood transit, schools, and amenities',
+              'Research neighbourhood transit, schools, and amenities',
               'Visit properties during different times of day',
               'Understand Ontario tenant rights and landlord obligations',
               'Compare similar listings to ensure fair market pricing',

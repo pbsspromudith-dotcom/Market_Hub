@@ -44,7 +44,7 @@ const BuyAndSellToronto: React.FC = () => {
               HitAds.ca is the go-to platform for buying and selling in Toronto and across the Greater Toronto Area. With thousands of new listings posted daily, you'll find an incredible selection of pre-owned and brand-new items — from cutting-edge electronics and designer fashion to household furniture and sporting goods.
             </p>
             <p>
-              Our marketplace connects you directly with local sellers in your neighborhood, eliminating shipping costs and delivery delays. Browse items in Scarborough, Mississauga, Brampton, North York, Etobicoke, and every corner of the GTA. Meet locally, inspect items in person, and complete transactions safely.
+              Our marketplace connects you directly with local sellers in your neighbourhood, eliminating shipping costs and delivery delays. Browse items in Scarborough, Mississauga, Brampton, North York, Etobicoke, and every corner of the GTA. Meet locally, inspect items in person, and complete transactions safely.
             </p>
             <p>
               Whether you're decluttering your home, upgrading your tech setup, or hunting for bargains, HitAds.ca makes the entire process simple and secure. Create detailed listings with up to 10 photos, set your price, and start receiving inquiries from interested buyers within minutes.

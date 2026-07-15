@@ -264,7 +264,7 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn, initialCategories = [], initial
                 onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                 className="w-full pl-14 pr-4 py-5 bg-transparent border-none focus:ring-0 text-sm font-bold text-slate-700"
                 type="text"
-                placeholder="City or location..."
+                placeholder="City, Province or Postal Code..."
                 autoComplete="off"
               />
 

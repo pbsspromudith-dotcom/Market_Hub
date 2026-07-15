@@ -37,7 +37,7 @@ const LocalServicesToronto: React.FC = () => {
               Toronto's service economy is booming, with thousands of independent professionals and small businesses offering everything from home renovation and landscaping to photography, tutoring, legal consulting, and immigration services. HitAds.ca makes it easy to compare providers, read about their services, and contact them directly — all for free.
             </p>
             <p>
-              Our platform serves every neighborhood across the GTA including downtown Toronto, Scarborough, North York, Etobicoke, Mississauga, Brampton, Vaughan, Richmond Hill, Markham, and Oshawa. Find professionals near you and support local businesses in your community.
+              Our platform serves every neighbourhood across the GTA including downtown Toronto, Scarborough, North York, Etobicoke, Mississauga, Brampton, Vaughan, Richmond Hill, Markham, and Oshawa. Find professionals near you and support local businesses in your community.
             </p>
           </div>
         </section>

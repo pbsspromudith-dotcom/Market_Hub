@@ -181,7 +181,7 @@ const Layout: React.FC<LayoutProps> = ({
                       type="text"
                       value={globalLocation}
                       onChange={(e) => setGlobalLocation(e.target.value)}
-                      placeholder="Any Location..."
+                      placeholder="City, Province or Postal Code..."
                       className="w-full bg-transparent border-none focus:ring-0 text-sm font-bold text-slate-800 placeholder:text-slate-400 placeholder:font-medium pl-12 pr-4 py-2.5 outline-none"
                     />
                   </div>

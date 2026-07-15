@@ -87,7 +87,7 @@ const SriLankanMarketplace: React.FC = () => {
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {[
-              'Find affordable basement or room rentals in Sri Lankan neighborhoods',
+              'Find affordable basement or room rentals in Sri Lankan neighbourhoods',
               'Search for entry-level jobs and cash-paid opportunities',
               'Connect with immigration consultants and legal services',
               'Buy used furniture and winter clothing affordably',

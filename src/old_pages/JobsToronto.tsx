@@ -85,7 +85,7 @@ const JobsToronto: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {[
               'Tailor your resume for each position you apply to',
-              'Research the company and neighborhood before interviews',
+              'Research the company and neighbourhood before interviews',
               'Network through community events and local organizations',
               'Consider contract roles as a stepping stone to permanent positions',
               'Check HitAds.ca daily — new jobs are posted every hour',
