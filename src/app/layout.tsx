@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   title: "HitAds.ca - Free Ads. Sell Fast. Buy Local. Canada-Wide.",
   description: "Buy and sell locally in Canada. Free ads for vehicles, real estate, jobs, services and more on HitAds.ca.",
   verification: {
-    google: "c-cidgyEcNErCFJpYOhfp_RQm8Cqm9Xn1uHpVmNkvVM",
+    google: "Wded4juWATB0pGbu0HrLHrUu7ujY55TlXEflNXejU7M",
   },
   icons: {
     icon: "/assets/HitAds.png",
@@ -28,6 +28,7 @@ export default function RootLayout({
       className="h-full antialiased"
     >
       <head>
+        <meta name="google-site-verification" content="Wded4juWATB0pGbu0HrLHrUu7ujY55TlXEflNXejU7M" />
         {/* Preconnect to Google Fonts */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
