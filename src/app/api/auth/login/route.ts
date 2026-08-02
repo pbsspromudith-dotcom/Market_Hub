@@ -3,13 +3,22 @@ import { supabase } from '@/lib/supabase';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
+import { verifyRecaptcha } from '@/lib/recaptcha';
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { email, password } = body;
+    const { email, password, captchaToken } = body;
 
     if (!email || !password) {
       return NextResponse.json({ success: false, message: 'Email and password required' }, { status: 400 });
+    }
+
+    if (captchaToken) {
+      const captchaRes = await verifyRecaptcha(captchaToken);
+      if (!captchaRes.success) {
+        return NextResponse.json({ success: false, message: captchaRes.message }, { status: 400 });
+      }
     }
 
     const { data: user, error } = await supabase

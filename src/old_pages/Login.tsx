@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { trackUserRegistration } from "../analytics";
+import ReCAPTCHA from "react-google-recaptcha";
 
 interface LoginProps {
   onLogin: () => void;
@@ -26,6 +27,8 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [devResetLink, setDevResetLink] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const recaptchaRef = React.useRef<ReCAPTCHA>(null);
   const initialMode =
     (searchParams?.get("mode") as any) || "login";
   const [authMode, setAuthMode] = useState<
@@ -121,7 +124,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ email, password }),
+          body: JSON.stringify({ email, password, captchaToken }),
         });
         if (!response.ok) {
           try {
@@ -132,6 +135,8 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
               `Server error ${response.status}: Please check if login is uploaded.`,
             );
           }
+          recaptchaRef.current?.reset();
+          setCaptchaToken(null);
           return;
         }
         const data = await response.json();
@@ -154,6 +159,8 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           setAuthMode("verify-pending");
         } else {
           setError(data.message || "Invalid email or password.");
+          recaptchaRef.current?.reset();
+          setCaptchaToken(null);
         }
       } else if (authMode === "register") {
         const response = await fetch("/api/auth/register", {
@@ -161,7 +168,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ name, email, password }),
+          body: JSON.stringify({ name, email, password, captchaToken }),
         });
         if (!response.ok) {
           try {
@@ -172,6 +179,8 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
               `Server error ${response.status}: Please check if register is uploaded.`,
             );
           }
+          recaptchaRef.current?.reset();
+          setCaptchaToken(null);
           return;
         }
         const data = await response.json();
@@ -184,6 +193,8 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           setAuthMode("verify-pending");
         } else {
           setError(data.message || "Failed to register.");
+          recaptchaRef.current?.reset();
+          setCaptchaToken(null);
         }
       } else if (authMode === "forgot") {
         const response = await fetch("/api/auth/forgot", {
@@ -191,7 +202,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ email }),
+          body: JSON.stringify({ email, captchaToken }),
         });
         if (!response.ok) {
           try {
@@ -202,6 +213,8 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
               `Server error ${response.status}: Please check if forgot is uploaded.`,
             );
           }
+          recaptchaRef.current?.reset();
+          setCaptchaToken(null);
           return;
         }
         const data = await response.json();
@@ -214,8 +227,12 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
             setDevResetLink(data.resetLink);
           }
           setEmail("");
+          recaptchaRef.current?.reset();
+          setCaptchaToken(null);
         } else {
           setError(data.message || "Failed to send reset link.");
+          recaptchaRef.current?.reset();
+          setCaptchaToken(null);
         }
       } else if (authMode === "reset") {
         const response = await fetch("/api/auth/reset", {
@@ -524,6 +541,17 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 >
                   Keep me logged in
                 </label>
+              </div>
+            )}
+
+            {authMode !== "reset" && (
+              <div className="flex justify-center my-4 overflow-hidden rounded-xl">
+                <ReCAPTCHA
+                  ref={recaptchaRef}
+                  sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || "6LfBW3ItAAAAAKGQxUXZX1OXG8LXEJ7BpzIqveJ7"}
+                  onChange={(token) => setCaptchaToken(token)}
+                  onExpired={() => setCaptchaToken(null)}
+                />
               </div>
             )}
 

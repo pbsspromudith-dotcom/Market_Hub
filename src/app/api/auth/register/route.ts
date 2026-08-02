@@ -3,14 +3,22 @@ import { supabase } from '@/lib/supabase';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { sendEmail, getThemedEmailHtml } from '@/lib/email';
+import { verifyRecaptcha } from '@/lib/recaptcha';
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { name, email, password } = body;
+    const { name, email, password, captchaToken } = body;
 
     if (!name || !email || !password) {
       return NextResponse.json({ success: false, message: 'Name, email and password required' }, { status: 400 });
+    }
+
+    if (captchaToken) {
+      const captchaRes = await verifyRecaptcha(captchaToken);
+      if (!captchaRes.success) {
+        return NextResponse.json({ success: false, message: captchaRes.message }, { status: 400 });
+      }
     }
 
     // Check if user already exists

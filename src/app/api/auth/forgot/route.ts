@@ -2,14 +2,22 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import crypto from 'crypto';
 import { sendEmail, getThemedEmailHtml } from '@/lib/email';
+import { verifyRecaptcha } from '@/lib/recaptcha';
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { email } = body;
+    const { email, captchaToken } = body;
 
     if (!email || !email.trim()) {
       return NextResponse.json({ success: false, message: 'Email address is required.' }, { status: 400 });
+    }
+
+    if (captchaToken) {
+      const captchaRes = await verifyRecaptcha(captchaToken);
+      if (!captchaRes.success) {
+        return NextResponse.json({ success: false, message: captchaRes.message }, { status: 400 });
+      }
     }
 
     const { data: user } = await supabase
