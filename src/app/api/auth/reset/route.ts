@@ -34,14 +34,25 @@ export async function POST(req: Request) {
     }
 
     // Verify token expiry timezone-safely in JS
-    const expiryStr = user.reset_token_expiry;
-    console.log('[DEBUG Reset] Stored expiry string:', expiryStr);
-    if (!expiryStr) {
+    let expiryTime: number;
+    const rawExpiry = user.reset_token_expiry;
+
+    if (!rawExpiry) {
       return NextResponse.json({ success: false, message: 'Invalid or expired password reset token.' }, { status: 400 });
     }
 
-    const expiryIso = expiryStr.endsWith('Z') ? expiryStr : `${expiryStr}Z`;
-    const expiryTime = new Date(expiryIso).getTime();
+    if (rawExpiry instanceof Date) {
+      expiryTime = rawExpiry.getTime();
+    } else {
+      const expiryStr = String(rawExpiry).trim();
+      if (!expiryStr || expiryStr === 'null' || expiryStr === 'undefined') {
+        return NextResponse.json({ success: false, message: 'Invalid or expired password reset token.' }, { status: 400 });
+      }
+      const normalizedIso = expiryStr.includes('T') ? expiryStr : expiryStr.replace(' ', 'T');
+      const expiryIso = normalizedIso.endsWith('Z') ? normalizedIso : `${normalizedIso}Z`;
+      expiryTime = new Date(expiryIso).getTime();
+    }
+
     const currentTime = Date.now();
 
     console.log('[DEBUG Reset] Current time:', currentTime, 'Expiry time:', expiryTime);

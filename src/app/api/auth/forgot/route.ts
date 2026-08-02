@@ -15,7 +15,7 @@ export async function POST(req: Request) {
     const { data: user } = await supabase
       .from('users')
       .select('*')
-      .eq('email', email.trim())
+      .ilike('email', email.trim())
       .maybeSingle();
 
     if (!user) {
@@ -74,7 +74,7 @@ export async function POST(req: Request) {
     );
     
     try {
-      await sendEmail(user.email, 'Market Hub - Password Reset', emailHtml);
+      await sendEmail(user.email, 'HitAds.ca - Password Reset', emailHtml);
     } catch (err: any) {
       console.error('Failed to send reset email:', err);
       // Even if email fails, we shouldn't necessarily crash, but we should inform the user

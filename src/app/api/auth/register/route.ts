@@ -83,7 +83,7 @@ export async function POST(req: Request) {
     );
     
     try {
-      await sendEmail(userWithoutPassword.email, 'Market Hub - Verify Your Email', emailHtml);
+      await sendEmail(userWithoutPassword.email, 'HitAds.ca - Verify Your Email', emailHtml);
     } catch (err: any) {
       console.error('Failed to send verification email:', err);
     }

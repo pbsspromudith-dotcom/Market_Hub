@@ -33,7 +33,7 @@ export async function sendEmail(to: string, subject: string, html: string) {
     },
   });
 
-  const fromName = settings.smtp_from_name || 'Market Hub';
+  const fromName = settings.smtp_from_name || 'HitAds.ca';
   const fromEmail = settings.smtp_from_email || settings.smtp_username;
 
 

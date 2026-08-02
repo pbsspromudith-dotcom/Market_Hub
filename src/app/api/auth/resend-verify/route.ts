@@ -74,7 +74,7 @@ export async function POST(req: Request) {
     );
     
     try {
-      await sendEmail(user.email, 'Market Hub - Verify Your Email', emailHtml);
+      await sendEmail(user.email, 'HitAds.ca - Verify Your Email', emailHtml);
     } catch (err: any) {
       console.error('Failed to send verification email:', err);
       return NextResponse.json({ success: false, message: 'Failed to send email. Check SMTP settings.' }, { status: 500 });
