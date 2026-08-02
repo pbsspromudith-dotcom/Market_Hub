@@ -91,7 +91,7 @@ const ItemDetails: React.FC = () => {
       });
       const data = await response.json();
       if (data.success) {
-        setSentStatus('Message sent successfully!');
+        setSentStatus('Message sent! The seller will get back to you soon.');
         setMessage('');
         trackContactClick(String(id) || '0', 'message');
       } else {
@@ -134,9 +134,9 @@ const ItemDetails: React.FC = () => {
               </div>
             </div>
             <div className="flex flex-wrap gap-6 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">
-              <span className="flex items-center gap-1.5"><span className="material-icons text-sm text-primary">location_on</span> {listing.location}</span>
-              <span className="flex items-center gap-1.5"><span className="material-icons text-sm text-primary">schedule</span> Posted {listing.created_at ? new Date(listing.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : listing.time}</span>
-              <span className="flex items-center gap-1.5"><span className="material-icons text-sm text-primary">visibility</span> {listing.views || 0} Views</span>
+              <span className="flex items-center gap-1.5"><span className="material-icons text-sm text-slate-gray">location_on</span> {listing.location}</span>
+              <span className="flex items-center gap-1.5"><span className="material-icons text-sm text-slate-gray">schedule</span> Posted {listing.created_at ? new Date(listing.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : listing.time}</span>
+              <span className="flex items-center gap-1.5"><span className="material-icons text-sm text-slate-gray">visibility</span> {listing.views || 0} Views</span>
             </div>
           </div>
 
@@ -341,7 +341,7 @@ const ItemDetails: React.FC = () => {
                   ></textarea>
                   
                   {sentStatus && (
-                    <div className={`text-xs font-bold mb-4 p-3 rounded-lg ${sentStatus.includes('successfully') ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
+                    <div className={`text-xs font-bold mb-4 p-3 rounded-lg ${sentStatus.includes('sent!') ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
                       {sentStatus}
                     </div>
                   )}
@@ -349,7 +349,7 @@ const ItemDetails: React.FC = () => {
                   <button 
                     onClick={handleSendMessage}
                     disabled={sending}
-                    className="w-full bg-primary text-white font-black py-4 rounded-xl hover:bg-primary-hover transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20 disabled:opacity-50"
+                    className="w-full bg-secondary text-white font-black py-4 rounded-xl hover:bg-secondary-hover transition-all flex items-center justify-center gap-2 shadow-lg shadow-secondary/20 disabled:opacity-50"
                   >
                     <span className="material-icons">{sending ? 'sync' : 'send'}</span> 
                     {sending ? 'Sending...' : 'Send Message'}

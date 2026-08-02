@@ -801,7 +801,7 @@ const PostAd: React.FC = () => {
       const data = await response.json();
       if (data.success) {
         if (isEditMode) {
-          showAlert("Ad updated successfully!", "success");
+          showAlert("All saved! Your ad has been updated.", "success");
           navigate.push("/item/" + editId);
           return;
         }
@@ -815,7 +815,7 @@ const PostAd: React.FC = () => {
         // Check if listing needs approval
         if (data.needs_approval || data.status === 'pending_approval') {
           showAlert(
-            "Your ad has been submitted for review. It will be visible once approved by an admin.",
+            "Ad submitted! We'll review it and let you know once it's live.",
             "info"
           );
           navigate.push("/profile");
@@ -849,7 +849,7 @@ const PostAd: React.FC = () => {
             setIsPayModalOpen(true);
           } else {
             showAlert(
-              "Ad was published successfully, but we could not initialize the promotion payment: " +
+              "Your ad is live, but we couldn't start the promotion payment: " +
                 (preloadData.message || "Unknown error"),
               "error"
             );
@@ -872,7 +872,7 @@ const PostAd: React.FC = () => {
   const handlePaymentSuccess = (receiptId: string) => {
     setIsPayModalOpen(false);
     showAlert(
-      "Payment approved! Your ad has been published and successfully promoted.",
+      "You're all set! Your ad is live and promoted.",
       "success"
     );
     navigate.push("/item/" + createdListingId);

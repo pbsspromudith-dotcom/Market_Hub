@@ -73,7 +73,7 @@ export async function POST(req: Request) {
           const emailHtml = getThemedEmailHtml(
             'Ad Rejected',
             `
-              <h1 style="margin: 0 0 20px 0; font-size: 22px; font-weight: 800; color: #D72638; text-align: center; font-family: system-ui, sans-serif;">Ad Rejection Notice</h1>
+              <h1 style="margin: 0 0 20px 0; font-size: 22px; font-weight: 800; color: #FD3D28; text-align: center; font-family: system-ui, sans-serif;">Ad Rejection Notice</h1>
               <p style="margin: 0 0 15px 0; font-size: 15px; line-height: 1.6; color: #111111;">Hello ${userName},</p>
               <p style="margin: 0 0 15px 0; font-size: 15px; line-height: 1.6; color: #5B616A;">
                 We regret to inform you that your ad submission <strong>"${listing.title}"</strong> did not pass our review stage and could not be published.
@@ -86,7 +86,7 @@ export async function POST(req: Request) {
                 You can review, edit, and resubmit your ad anytime through your user profile dashboard.
               </p>
               <div style="text-align: center; margin-bottom: 25px;">
-                <a href="${baseUrl}/profile" style="display: inline-block; padding: 13px 28px; background-color: #2F80ED; color: #ffffff; text-decoration: none; border-radius: 10px; font-weight: 700; font-size: 15px; box-shadow: 0 4px 12px rgba(47, 128, 237, 0.2);">Manage My Ads</a>
+                <a href="${baseUrl}/profile" style="display: inline-block; padding: 13px 28px; background-color: #1774F5; color: #ffffff; text-decoration: none; border-radius: 10px; font-weight: 700; font-size: 15px; box-shadow: 0 4px 12px rgba(23, 116, 245, 0.2);">Manage My Ads</a>
               </div>
             `
           );
@@ -160,7 +160,7 @@ export async function POST(req: Request) {
                 Great news! Your ad submission <strong>"${listing.title}"</strong> has been fully reviewed and approved by our moderation team. It is now live on the site.
               </p>
               <div style="text-align: center; margin-bottom: 30px; margin-top: 25px;">
-                <a href="${baseUrl}/item/${listing_id}" style="display: inline-block; padding: 13px 28px; background-color: #2F80ED; color: #ffffff; text-decoration: none; border-radius: 10px; font-weight: 700; font-size: 15px; box-shadow: 0 4px 12px rgba(47, 128, 237, 0.2);">View Live Ad</a>
+                <a href="${baseUrl}/item/${listing_id}" style="display: inline-block; padding: 13px 28px; background-color: #1774F5; color: #ffffff; text-decoration: none; border-radius: 10px; font-weight: 700; font-size: 15px; box-shadow: 0 4px 12px rgba(23, 116, 245, 0.2);">View Live Ad</a>
               </div>
               <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #5B616A; text-align: center;">
                 Thank you for posting on HitAds.ca!

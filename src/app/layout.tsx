@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Manrope } from "next/font/google";
 import "./globals.css";
 import ClientApp from "@/components/ClientApp";
 import Script from "next/script";
 
-const inter = Inter({ subsets: ["latin"], display: "swap" });
+const inter = Inter({ subsets: ["latin"], display: "swap", variable: "--font-inter" });
+const manrope = Manrope({ subsets: ["latin"], display: "swap", variable: "--font-manrope" });
 
 export const metadata: Metadata = {
   title: "HitAds.ca - Free Ads. Sell Fast. Buy Local. Canada-Wide.",
@@ -39,7 +40,7 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/icon?family=Material+Icons&display=swap" 
         />
       </head>
-      <body className={`min-h-full flex flex-col bg-background-light text-slate-900 ${inter.className}`}>
+      <body className={`min-h-full flex flex-col bg-background-light text-slate-900 ${inter.variable} ${manrope.variable} ${inter.className}`}>
         {/* Google Tag Manager (noscript) */}
         <noscript>
           <iframe

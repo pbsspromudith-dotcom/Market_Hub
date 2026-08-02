@@ -249,7 +249,7 @@ const UserProfile: React.FC = () => {
 
   const handlePaymentSuccess = (receiptId: string) => {
     setIsPayModalOpen(false);
-    showAlert('Payment approved and promotions applied successfully! Receipt ID: ' + receiptId, 'success');
+    showAlert('Payment complete! Your promotions are now active. Receipt: ' + receiptId, 'success');
     
     // Update local listings state
     setUserListings(userListings.map(l => 
@@ -280,7 +280,7 @@ const UserProfile: React.FC = () => {
       const data = await response.json();
       if (data.success) {
         setUserListings(userListings.filter(l => l.id !== listingToDelete));
-        showAlert("Ad deleted successfully.", "success");
+        showAlert("Ad removed! It's no longer visible.", "success");
       } else {
         showAlert(data.message || "Failed to delete ad.", "error");
       }
@@ -309,7 +309,7 @@ const UserProfile: React.FC = () => {
       });
       const data = await response.json();
       if (data.success) {
-        showAlert("Reply sent successfully!", "success");
+        showAlert("Reply sent! They'll see it right away.", "success");
         setReplyText("");
         // Optimistically reload messages
         fetch(`/api/messages/read_user?user_id=${user.id}`)

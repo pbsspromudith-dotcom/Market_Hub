@@ -238,7 +238,7 @@ export async function POST(req: Request) {
             </table>
 
             <div style="text-align: center; margin-bottom: 25px; margin-top: 25px;">
-              <a href="${baseUrl}/dashboard" style="display: inline-block; padding: 13px 28px; background-color: #2F80ED; color: #ffffff; text-decoration: none; border-radius: 10px; font-weight: 700; font-size: 15px; box-shadow: 0 4px 12px rgba(47, 128, 237, 0.2);">Open Admin Dashboard</a>
+              <a href="${baseUrl}/dashboard" style="display: inline-block; padding: 13px 28px; background-color: #1774F5; color: #ffffff; text-decoration: none; border-radius: 10px; font-weight: 700; font-size: 15px; box-shadow: 0 4px 12px rgba(23, 116, 245, 0.2);">Open Admin Dashboard</a>
             </div>
           `
         );

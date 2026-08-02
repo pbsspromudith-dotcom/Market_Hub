@@ -222,7 +222,7 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn, initialCategories = [], initial
           <span className="inline-block py-1.5 px-4 rounded-full bg-primary-soft/20 text-primary text-[10px] font-black uppercase tracking-[0.2em] mb-6">
             Global Standards. Local Trading.
           </span>
-          <h1 className="text-4xl md:text-7xl font-black mb-6 tracking-tight text-slate-900 leading-[1.1]">
+          <h1 className="type-hero mb-6 tracking-tight text-slate-900">
             {heroText.title1}
             <br />
             <span className="text-primary-light">{heroText.title2}</span>
@@ -344,7 +344,7 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn, initialCategories = [], initial
         <section className="mb-32">
           <div className="flex justify-between items-end mb-10">
             <div>
-              <h2 className="text-3xl font-black mb-2 text-slate-900">
+              <h2 className="type-section font-black mb-2 text-slate-900">
                 Explore Categories
               </h2>
               <p className="text-slate-500 font-medium">
@@ -382,7 +382,7 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn, initialCategories = [], initial
           <div className="flex-grow">
             <div className="flex justify-between items-end mb-10">
               <div>
-                <h2 className="text-3xl font-black mb-2">Recently Added</h2>
+                <h2 className="type-section font-black mb-2">Recently Added</h2>
                 <p className="text-slate-500 font-medium">
                   New items posted in your area
                 </p>
@@ -417,7 +417,7 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn, initialCategories = [], initial
                 <Link href={`/item/${item.id}`}
                   key={item.id}
                   onClick={() => window.scrollTo(0, 0)}
-                  className="group bg-white rounded-[2.5rem] border border-slate-100 overflow-hidden hover:shadow-2xl transition-all"
+                  className={`group rounded-[2.5rem] border border-slate-100 overflow-hidden hover:shadow-2xl transition-all ${item.is_featured ? 'bg-accent-beige' : 'bg-white'}`}
                 >
                   <div className="aspect-[4/3] relative flex items-center justify-center bg-slate-100">
                     <img
@@ -438,13 +438,13 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn, initialCategories = [], initial
                       </span>
                     </button>
                     {item.is_featured ? (
-                      <div className="absolute top-5 left-5 bg-primary-light text-white text-[10px] font-black px-3 py-1.5 rounded-xl shadow-lg">
+                      <div className="absolute top-5 left-5 bg-accent-gold text-charcoal text-[10px] font-black px-3 py-1.5 rounded-xl shadow-lg">
                         FEATURED
                       </div>
                     ) : null}
                   </div>
                   <div className="p-8">
-                    <div className="text-primary font-black text-2xl mb-2">
+                    <div className="text-slate-900 font-black text-2xl mb-2">
                       {formatPrice(item.price, item.price_type)}
                     </div>
                     <h3 className="font-bold text-slate-800 line-clamp-2 min-h-[3rem] text-lg group-hover:text-primary-light transition-colors mb-4">
@@ -452,13 +452,13 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn, initialCategories = [], initial
                     </h3>
                     <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase tracking-widest pt-4 mt-auto border-t border-slate-50">
                       <span className="flex items-center gap-1">
-                        <span className="material-icons text-[12px] text-primary">
+                        <span className="material-icons text-[12px] text-slate-gray">
                           schedule
                         </span>{" "}
                         {item.created_at ? new Date(item.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : (item.time || "Recently")}
                       </span>
                       <span className="flex items-center gap-1">
-                        <span className="material-icons text-[12px] text-primary">
+                        <span className="material-icons text-[12px] text-slate-gray">
                           location_on
                         </span>{" "}
                         {item.location}
@@ -541,7 +541,7 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn, initialCategories = [], initial
               { label: "Trust Score", value: "4.95" },
             ].map((stat) => (
               <div key={stat.label}>
-                <div className="text-4xl font-black text-primary mb-2">
+                <div className="text-4xl font-black text-secondary mb-2">
                   {stat.value}
                 </div>
                 <div className="text-[10px] font-black text-primary-neutral uppercase tracking-widest">

@@ -60,7 +60,7 @@ export function getThemedEmailHtml(title: string, contentHtml: string) {
       </head>
       <body style="margin: 0; padding: 0; background-color: #F7F7F7; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;">
         <!-- Brand Red Top Accent bar -->
-        <div style="height: 4px; background-color: #D72638; line-height: 4px; font-size: 1px;">&nbsp;</div>
+        <div style="height: 4px; background-color: #FD3D28; line-height: 4px; font-size: 1px;">&nbsp;</div>
         
         <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #F7F7F7; padding: 40px 10px;">
           <tr>

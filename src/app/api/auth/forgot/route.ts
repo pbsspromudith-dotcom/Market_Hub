@@ -63,7 +63,7 @@ export async function POST(req: Request) {
           Please click the button below to set a new password. This link will expire in 1 hour:
         </p>
         <div style="text-align: center; margin-bottom: 30px;">
-          <a href="${resetLink}" style="display: inline-block; padding: 14px 32px; background-color: #2F80ED; color: #ffffff; text-decoration: none; border-radius: 12px; font-weight: bold; font-size: 15px; box-shadow: 0 4px 12px rgba(47, 128, 237, 0.25);">Reset Password</a>
+          <a href="${resetLink}" style="display: inline-block; padding: 14px 32px; background-color: #1774F5; color: #ffffff; text-decoration: none; border-radius: 12px; font-weight: bold; font-size: 15px; box-shadow: 0 4px 12px rgba(23, 116, 245, 0.25);">Reset Password</a>
         </div>
         <div style="border-top: 1px solid #F1F1F1; padding-top: 20px; margin-top: 30px;">
           <p style="margin: 0; font-size: 13px; line-height: 1.5; color: #5B616A; text-align: center; font-style: italic;">

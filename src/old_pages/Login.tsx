@@ -51,7 +51,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     }
     const verified = params.get("verified");
     if (verified === "true") {
-      setSuccessMsg("🎉 Email verified successfully! You can now sign in.");
+      setSuccessMsg("🎉 Email verified! You're all set to sign in.");
       setAuthMode("login");
     } else if (verified === "already") {
       setSuccessMsg("Your email is already verified. Please sign in.");
@@ -239,7 +239,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         const data = await response.json();
 
         if (data.success) {
-          setSuccessMsg("Password updated successfully! You can now sign in.");
+          setSuccessMsg("Password updated! You can now sign in with your new password.");
           setAuthMode("login");
           setPassword("");
           setResetToken("");
