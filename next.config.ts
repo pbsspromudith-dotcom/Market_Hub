@@ -6,7 +6,7 @@ const nextConfig: NextConfig = {
     cpus: 2,
     workerThreads: false,
   },
-  // allowedDevOrigins: ["192.168.1.100"], // Only needed for local network testing in dev
+  allowedDevOrigins: ["192.168.1.100"],
 };
 
 export default nextConfig;
