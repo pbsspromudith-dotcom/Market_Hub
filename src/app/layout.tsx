@@ -71,6 +71,13 @@ export default function RootLayout({
           gtag('js', new Date());
           gtag('config', 'AW-18199746339');`}
         </Script>
+        {/* Google AdSense */}
+        <Script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3441444514820988"
+          crossOrigin="anonymous"
+          strategy="afterInteractive"
+        />
       </body>
     </html>
   );
