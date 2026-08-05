@@ -147,6 +147,8 @@ const Layout: React.FC<LayoutProps> = ({
                 <img
                   src="/logo.png"
                   alt="HitAds Logo"
+                  width="240"
+                  height="80"
                   fetchPriority="high"
                   className="h-14 md:h-20 w-auto object-contain transition-transform hover:scale-105"
                 />
@@ -574,6 +576,7 @@ const Layout: React.FC<LayoutProps> = ({
                 href={socialLinks.facebook || "#"}
                 target="_blank"
                 rel="noopener noreferrer"
+                aria-label="Visit HitAds on Facebook"
                 className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 hover:text-primary hover:border-primary transition-all"
               >
                 <span className="material-icons text-lg">facebook</span>
@@ -582,6 +585,7 @@ const Layout: React.FC<LayoutProps> = ({
                 href={socialLinks.x || "#"}
                 target="_blank"
                 rel="noopener noreferrer"
+                aria-label="Visit HitAds on X"
                 className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 hover:text-primary hover:border-primary transition-all font-black text-xs"
               >
                 X
@@ -590,6 +594,7 @@ const Layout: React.FC<LayoutProps> = ({
                 href={socialLinks.instagram || "#"}
                 target="_blank"
                 rel="noopener noreferrer"
+                aria-label="Visit HitAds on Instagram"
                 className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 hover:text-primary hover:border-primary transition-all"
               >
                 <span className="material-icons text-lg">tag</span>

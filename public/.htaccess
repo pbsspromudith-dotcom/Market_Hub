@@ -1,3 +1,8 @@
+# Allow public access to static media & assets
+<FilesMatch "\.(png|jpe?g|svg|webp|gif|ico|txt|css|js)$">
+  Require all granted
+</FilesMatch>
+
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /
@@ -13,3 +18,4 @@
   # Route everything else to index.html (SPA fallback)
   RewriteRule . /index.html [L]
 </IfModule>
+

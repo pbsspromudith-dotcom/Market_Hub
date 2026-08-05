@@ -3,6 +3,7 @@ import { Inter, Manrope } from "next/font/google";
 import "./globals.css";
 import ClientApp from "@/components/ClientApp";
 import Script from "next/script";
+import MaterialIconsLoader from "@/components/MaterialIconsLoader";
 
 const inter = Inter({ subsets: ["latin"], display: "swap", variable: "--font-inter" });
 const manrope = Manrope({ subsets: ["latin"], display: "swap", variable: "--font-manrope" });
@@ -34,11 +35,8 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
 
-        {/* Material Icons */}
-        <link 
-          rel="stylesheet" 
-          href="https://fonts.googleapis.com/icon?family=Material+Icons&display=swap" 
-        />
+        {/* Material Icons Non-Render-Blocking */}
+        <MaterialIconsLoader />
       </head>
       <body className={`min-h-full flex flex-col bg-background-light text-slate-900 ${inter.variable} ${manrope.variable} ${inter.className}`}>
         {/* Google Tag Manager (noscript) */}

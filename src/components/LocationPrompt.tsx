@@ -79,7 +79,7 @@ const LocationPrompt: React.FC = () => {
           </button>
           <button 
             onClick={handleDeny}
-            className="w-full bg-slate-50 hover:bg-slate-100 text-slate-500 font-bold py-4 rounded-2xl transition-all"
+            className="w-full bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold py-4 rounded-2xl transition-all"
           >
             Not Right Now
           </button>
