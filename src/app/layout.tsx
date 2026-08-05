@@ -3,6 +3,7 @@ import { Inter, Manrope } from "next/font/google";
 import "./globals.css";
 import ClientApp from "@/components/ClientApp";
 import Script from "next/script";
+import ThirdPartyScripts from "@/components/ThirdPartyScripts";
 
 const inter = Inter({ subsets: ["latin"], display: "swap", variable: "--font-inter" });
 const manrope = Manrope({ subsets: ["latin"], display: "swap", variable: "--font-manrope" });
@@ -34,10 +35,10 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
 
-        {/* Material Icons */}
+        {/* Material Icons - font-display: swap for fast LCP */}
         <link 
           rel="stylesheet" 
-          href="https://fonts.googleapis.com/icon?family=Material+Icons&display=block" 
+          href="https://fonts.googleapis.com/icon?family=Material+Icons&display=swap" 
         />
       </head>
       <body className={`min-h-full flex flex-col bg-background-light text-slate-900 ${inter.variable} ${manrope.variable} ${inter.className}`}>
@@ -55,29 +56,8 @@ export default function RootLayout({
           {children}
         </ClientApp>
 
-        {/* Google Tag Manager - Lazy Loaded */}
-        <Script id="gtm" strategy="lazyOnload">
-          {`(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-          new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-          j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-          'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-          })(window,document,'script','dataLayer','GTM-P9WWQ4H7');`}
-        </Script>
-        {/* Google Ads gtag - Lazy Loaded */}
-        <Script src="https://www.googletagmanager.com/gtag/js?id=AW-18199746339" strategy="lazyOnload" />
-        <Script id="gtag-init" strategy="lazyOnload">
-          {`window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
-          gtag('js', new Date());
-          gtag('config', 'AW-18199746339');`}
-        </Script>
-        {/* Google AdSense - Lazy Loaded */}
-        <Script
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3441444514820988"
-          crossOrigin="anonymous"
-          strategy="lazyOnload"
-        />
+        {/* Optimized Third Party Marketing & Ad Scripts */}
+        <ThirdPartyScripts />
       </body>
     </html>
   );
