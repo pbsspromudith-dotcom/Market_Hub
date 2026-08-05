@@ -34,11 +34,21 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
 
-        {/* Material Icons */}
+        {/* Material Icons - Non-render-blocking */}
         <link 
           rel="stylesheet" 
           href="https://fonts.googleapis.com/icon?family=Material+Icons&display=swap" 
+          media="print"
+          onLoad={(e) => {
+            (e.currentTarget as HTMLLinkElement).media = 'all';
+          }}
         />
+        <noscript>
+          <link 
+            rel="stylesheet" 
+            href="https://fonts.googleapis.com/icon?family=Material+Icons&display=swap" 
+          />
+        </noscript>
       </head>
       <body className={`min-h-full flex flex-col bg-background-light text-slate-900 ${inter.variable} ${manrope.variable} ${inter.className}`}>
         {/* Google Tag Manager (noscript) */}

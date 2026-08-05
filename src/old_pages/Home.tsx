@@ -244,6 +244,7 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn, initialCategories = [], initial
               <input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                aria-label="Search for anything"
                 className="w-full pl-14 pr-4 py-5 bg-transparent border-none focus:ring-0 text-sm font-medium"
                 placeholder="Search for anything..."
                 type="text"
@@ -262,6 +263,7 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn, initialCategories = [], initial
                 }}
                 onFocus={() => setShowSuggestions(true)}
                 onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                aria-label="Location, City, Province or Postal Code"
                 className="w-full pl-14 pr-4 py-5 bg-transparent border-none focus:ring-0 text-sm font-bold text-slate-700"
                 type="text"
                 placeholder="City, Province or Postal Code..."
@@ -432,7 +434,10 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn, initialCategories = [], initial
                       decoding="async"
                       className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-700"
                     />
-                    <button className="absolute top-5 right-5 w-10 h-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors shadow-sm">
+                    <button 
+                      aria-label="Add to favorites"
+                      className="absolute top-5 right-5 w-10 h-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors shadow-sm"
+                    >
                       <span className="material-icons text-xl">
                         favorite_border
                       </span>

@@ -9,27 +9,30 @@ export default async function Page() {
   let initialSeoSettings: Record<string, string> = {};
 
   try {
-    // 1. Fetch Top-Level Categories
-    const { data: categories, error: catError } = await supabase
-      .from('category')
-      .select('*')
-      .eq('IsActive', true)
-      .is('ParentCategoryID', null)
-      .order('SortOrder', { ascending: true });
-      
-    if (catError) throw catError;
-    
-    initialCategories = (categories || []).map((cat: any) => ({
-      name: cat.CategoryName,
-      icon: cat.Icon || 'category'
-    }));
+    // Fetch Top-Level Categories and SEO/Homepage Settings in parallel to cut TTFB latency
+    const [catResult, seoResult] = await Promise.all([
+      supabase
+        .from('category')
+        .select('*')
+        .eq('IsActive', true)
+        .is('ParentCategoryID', null)
+        .order('SortOrder', { ascending: true }),
+      supabase
+        .from('seo_settings')
+        .select('*')
+    ]);
 
-    // 2. Fetch SEO/Homepage Settings
-    const { data: seoRows, error: seoError } = await supabase.from('seo_settings').select('*');
-    if (seoError) throw seoError;
-    
-    for (const row of seoRows || []) {
-      initialSeoSettings[row.setting_key] = row.setting_value;
+    if (!catResult.error && catResult.data) {
+      initialCategories = catResult.data.map((cat: any) => ({
+        name: cat.CategoryName,
+        icon: cat.Icon || 'category'
+      }));
+    }
+
+    if (!seoResult.error && seoResult.data) {
+      for (const row of seoResult.data) {
+        initialSeoSettings[row.setting_key] = row.setting_value;
+      }
     }
   } catch (error) {
     console.error("Error fetching initial data in Page:", error);
