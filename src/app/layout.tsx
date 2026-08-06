@@ -35,16 +35,6 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
 
-        {/* Material Icons - High Priority Preload & Swap */}
-        <link 
-          rel="preload" 
-          href="https://fonts.googleapis.com/icon?family=Material+Icons&display=swap" 
-          as="style" 
-        />
-        <link 
-          rel="stylesheet" 
-          href="https://fonts.googleapis.com/icon?family=Material+Icons&display=swap" 
-        />
       </head>
       <body className={`min-h-full flex flex-col bg-background-light text-slate-900 ${inter.variable} ${manrope.variable} ${inter.className}`}>
         {/* Google Tag Manager (noscript) */}

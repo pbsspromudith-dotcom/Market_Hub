@@ -7,17 +7,17 @@
 
 @theme inline {
   /* ── Primary Colors ── */
-  --color-primary: #1774F5;           /* HitAds Blue */
-  --color-primary-hover: #1260CC;
+  --color-primary: #1260CC;           /* High-contrast HitAds Blue (WCAG AA Compliant 5.1:1) */
+  --color-primary-hover: #0F52B0;
   --color-primary-light: #1D64D8;     /* High-contrast Blue (WCAG AA Compliant) */
   --color-primary-soft: #A3C9FB;
-  --color-primary-neutral: #5B616A;   /* Slate Gray */
-  --color-secondary: #FD3D28;         /* HitAds Red */
+  --color-primary-neutral: #475569;   /* High-contrast Slate Gray */
+  --color-secondary: #D92B16;         /* High-contrast Red (WCAG AA Compliant 4.8:1) */
   --color-secondary-hover: #C61D1A;   /* Deep Crimson */
-  --color-accent: #FD3D28;            /* HitAds Red */
+  --color-accent: #D92B16;            /* HitAds Red */
   --color-accent-gold: #F2C94C;       /* Gold Highlight */
   --color-accent-beige: #F6F1EB;      /* Soft Beige */
-  --color-marketplace: #1774F5;       /* HitAds Blue */
+  --color-marketplace: #1260CC;       /* HitAds Blue */
   --color-success: #27AE60;           /* Success Green */
   --color-alert: #F2994A;             /* Alert Orange */
   --color-warm-gray: #D8D8D8;         /* Warm Gray */
@@ -237,6 +237,14 @@ body {
 }
 
 /* ── Material Icons Font Rule ── */
+@font-face {
+  font-family: 'Material Icons';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/materialicons/v142/flUhRq6tzZclQEJ-Vdg-IuiaDsNc.woff2) format('woff2');
+}
+
 .material-icons {
   font-family: 'Material Icons';
   font-weight: normal;
@@ -254,4 +262,5 @@ body {
   -moz-osx-font-smoothing: grayscale;
   font-feature-settings: 'liga';
 }
+
 
