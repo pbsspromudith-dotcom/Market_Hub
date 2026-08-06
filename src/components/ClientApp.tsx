@@ -2,10 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import Layout from './Layout';
-import LocationPrompt from './LocationPrompt';
-import ChatBot from './ChatBot';
+import dynamic from 'next/dynamic';
 import { UIProvider } from './UIProvider';
 import { usePathname } from 'next/navigation';
+
+const LocationPrompt = dynamic(() => import('./LocationPrompt'), { ssr: false });
+const ChatBot = dynamic(() => import('./ChatBot'), { ssr: false });
 
 export default function ClientApp({ children }: { children: React.ReactNode }) {
   const checkAuth = () => {

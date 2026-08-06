@@ -35,7 +35,12 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
 
-        {/* Material Icons - font-display: swap for fast LCP */}
+        {/* Material Icons - High Priority Preload & Swap */}
+        <link 
+          rel="preload" 
+          href="https://fonts.googleapis.com/icon?family=Material+Icons&display=swap" 
+          as="style" 
+        />
         <link 
           rel="stylesheet" 
           href="https://fonts.googleapis.com/icon?family=Material+Icons&display=swap" 
