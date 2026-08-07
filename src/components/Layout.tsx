@@ -145,7 +145,7 @@ const Layout: React.FC<LayoutProps> = ({
             <div className="flex-1 shrink-0 flex items-center justify-start">
               <Link href="/" className="flex items-center gap-1">
                 <img
-                  src="/logo.png"
+                  src="/logo.png?v=2"
                   alt="HitAds Logo"
                   width="240"
                   height="80"
@@ -992,7 +992,7 @@ const Layout: React.FC<LayoutProps> = ({
                   Contact
                 </Link>
                 <img
-                  src="/footer_logo.png"
+                  src="/footer_logo.png?v=2"
                   alt="HitAds Footer Logo"
                   className="h-8 md:h-10 w-auto object-contain opacity-80 hover:opacity-100 transition-opacity"
                 />

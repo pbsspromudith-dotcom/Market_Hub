@@ -58,7 +58,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin }) => {
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <div className="mb-6 flex justify-center">
-            <img src="/logo.png" alt="HitAds Admin Logo" className="h-24 object-contain brightness-0 invert drop-shadow-md opacity-90" />
+            <img src="/logo.png?v=2" alt="HitAds Admin Logo" className="h-24 object-contain brightness-0 invert drop-shadow-md opacity-90" />
           </div>
           <h2 className="text-3xl font-black text-white tracking-tight">Admin Portal</h2>
           <p className="mt-2 text-sm text-slate-400 font-medium">

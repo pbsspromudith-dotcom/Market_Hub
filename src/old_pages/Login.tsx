@@ -280,7 +280,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
             <div className="mb-6 flex justify-center">
               <Link href="/">
                 <img
-                  src="/logo.png"
+                  src="/logo.png?v=2"
                   alt="HitAds Logo"
                   className="h-24 object-contain transition-transform hover:scale-105"
                 />
@@ -378,7 +378,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           <div className="mb-6 flex justify-center -ml-12">
             <Link href="/">
               <img
-                src="/logo.png"
+                src="/logo.png?v=2"
                 alt="HitAds Logo"
                 className="h-24 object-contain transition-transform hover:scale-105"
               />

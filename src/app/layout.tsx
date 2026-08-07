@@ -15,7 +15,7 @@ export const metadata: Metadata = {
     google: "Wded4juWATB0pGbu0HrLHrUu7ujY55TlXEflNXejU7M",
   },
   icons: {
-    icon: "/assets/HitAds.png",
+    icon: "/assets/HitAds.png?v=2",
   },
 };
 

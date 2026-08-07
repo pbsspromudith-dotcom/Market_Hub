@@ -70,7 +70,7 @@ export function getThemedEmailHtml(title: string, contentHtml: string) {
                 <!-- Branded Header -->
                 <tr>
                   <td align="center" style="padding: 25px 40px; border-bottom: 1px solid #F1F5F9; background-color: #ffffff;">
-                    <img src="https://hitads.ca/logo.png" alt="HitAds.ca" style="height: 42px; display: block; outline: none; border: none; text-decoration: none;" />
+                    <img src="https://hitads.ca/logo.png?v=2" alt="HitAds.ca" style="height: 42px; display: block; outline: none; border: none; text-decoration: none;" />
                   </td>
                 </tr>
 
