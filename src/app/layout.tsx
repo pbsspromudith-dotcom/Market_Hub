@@ -15,7 +15,12 @@ export const metadata: Metadata = {
     google: "Wded4juWATB0pGbu0HrLHrUu7ujY55TlXEflNXejU7M",
   },
   icons: {
-    icon: "/assets/HitAds.png?v=2",
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.png', type: 'image/png' },
+    ],
+    shortcut: '/favicon.png',
+    apple: '/favicon.png',
   },
 };
 
@@ -31,10 +36,13 @@ export default function RootLayout({
     >
       <head>
         <meta name="google-site-verification" content="Wded4juWATB0pGbu0HrLHrUu7ujY55TlXEflNXejU7M" />
+        {/* Favicon links for Google Search crawler and modern browsers */}
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        <link rel="icon" href="/favicon.png" type="image/png" sizes="any" />
+        <link rel="apple-touch-icon" href="/favicon.png" />
         {/* Preconnect to Google Fonts */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-
       </head>
       <body className={`min-h-full flex flex-col bg-background-light text-slate-900 ${inter.variable} ${manrope.variable} ${inter.className}`}>
         {/* Google Tag Manager (noscript) */}
