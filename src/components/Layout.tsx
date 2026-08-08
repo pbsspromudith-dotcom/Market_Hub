@@ -569,7 +569,7 @@ const Layout: React.FC<LayoutProps> = ({
       <main className="flex-grow">{children}</main>
 
       {!isLoginPage && (
-        <footer className="relative mt-10 md:mt-24 pt-12 md:pt-24 pb-8 md:pb-12 bg-white border-t border-slate-100 overflow-hidden">
+        <footer className="relative mt-10 md:mt-24 pt-12 md:pt-24 pb-8 md:pb-12 bg-slate-100/60 border-t border-slate-200 overflow-hidden">
           <div className="relative z-10 w-full px-4 sm:px-6 lg:px-10">
             <div className="flex gap-4 mb-8 md:mb-12">
               <a

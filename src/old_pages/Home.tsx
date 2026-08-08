@@ -4,6 +4,57 @@ import React, { useEffect, useState } from "react";
 import Link from 'next/link';
 import { formatPrice } from "../constants";
 import { calculateDistance } from "../utils";
+import { 
+  Home as HomeIcon, 
+  Building2, 
+  Car, 
+  Briefcase, 
+  Wrench, 
+  Calendar, 
+  Users, 
+  ShoppingBag, 
+  Store, 
+  Megaphone,
+  Folder
+} from "lucide-react";
+
+const OFFICIAL_CATEGORY_SYSTEM = [
+  { name: "Marketplace", iconKey: "marketplace" },
+  { name: "Real Estate", iconKey: "real estate" },
+  { name: "Automotive", iconKey: "automotive" },
+  { name: "Jobs", iconKey: "jobs" },
+  { name: "Services", iconKey: "services" },
+  { name: "Events", iconKey: "events" },
+  { name: "Community", iconKey: "community" },
+  { name: "Buy & Sell", iconKey: "buy & sell" },
+  { name: "Businesses", iconKey: "businesses" },
+  { name: "Promotions", iconKey: "promotions" },
+];
+
+const CATEGORY_ICON_MAP: Record<string, { icon: React.ElementType; textColor: string; badgeBg: string }> = {
+  "marketplace": { icon: HomeIcon, textColor: "text-[#FD3D28]", badgeBg: "bg-[#FD3D28]/10" },
+  "real estate": { icon: Building2, textColor: "text-[#1774F5]", badgeBg: "bg-[#1774F5]/10" },
+  "automotive": { icon: Car, textColor: "text-[#F2994A]", badgeBg: "bg-[#F2994A]/10" },
+  "vehicles": { icon: Car, textColor: "text-[#F2994A]", badgeBg: "bg-[#F2994A]/10" },
+  "jobs": { icon: Briefcase, textColor: "text-[#27AE60]", badgeBg: "bg-[#27AE60]/10" },
+  "services": { icon: Wrench, textColor: "text-[#5B616A]", badgeBg: "bg-[#5B616A]/10" },
+  "events": { icon: Calendar, textColor: "text-[#F2C94C]", badgeBg: "bg-[#F2C94C]/15" },
+  "community": { icon: Users, textColor: "text-[#FD3D28]", badgeBg: "bg-[#FD3D28]/10" },
+  "buy & sell": { icon: ShoppingBag, textColor: "text-[#1774F5]", badgeBg: "bg-[#1774F5]/10" },
+  "buy and sell": { icon: ShoppingBag, textColor: "text-[#1774F5]", badgeBg: "bg-[#1774F5]/10" },
+  "businesses": { icon: Store, textColor: "text-[#F2994A]", badgeBg: "bg-[#F2994A]/10" },
+  "business": { icon: Store, textColor: "text-[#F2994A]", badgeBg: "bg-[#F2994A]/10" },
+  "promotions": { icon: Megaphone, textColor: "text-[#FD3D28]", badgeBg: "bg-[#FD3D28]/10" },
+};
+
+const getCategoryIconConfig = (name: string) => {
+  const key = name.toLowerCase().trim();
+  if (CATEGORY_ICON_MAP[key]) return CATEGORY_ICON_MAP[key];
+  for (const k of Object.keys(CATEGORY_ICON_MAP)) {
+    if (key.includes(k) || k.includes(key)) return CATEGORY_ICON_MAP[k];
+  }
+  return { icon: Folder, textColor: "text-slate-500", badgeBg: "bg-slate-100" };
+};
 
 interface HomeProps {
   isLoggedIn: boolean;
@@ -359,23 +410,32 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn, initialCategories = [], initial
               All Categories
             </Link>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6">
-            {categories.map((cat) => (
-              <Link
-                key={cat.name} href={`/search?cat=${encodeURIComponent(cat.name)}`}
-                onClick={() => window.scrollTo(0, 0)}
-                className="bg-white p-8 rounded-3xl border border-slate-100 text-center hover:border-primary hover:shadow-xl hover:-translate-y-1 transition-all group"
-              >
-                <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:bg-primary-soft/10 transition-all">
-                  <span className="material-icons text-3xl text-primary-neutral group-hover:text-primary">
-                    {cat.icon}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-5 gap-6">
+            {(categories && categories.length >= 10 ? categories : OFFICIAL_CATEGORY_SYSTEM).map((cat) => {
+              const catName = cat.name;
+              const config = getCategoryIconConfig(catName);
+              const IconComponent = config.icon;
+
+              return (
+                <Link
+                  key={catName} 
+                  href={`/search?cat=${encodeURIComponent(catName)}`}
+                  onClick={() => window.scrollTo(0, 0)}
+                  className="bg-white p-6 rounded-3xl border border-slate-200/80 text-center hover:border-primary hover:shadow-xl hover:-translate-y-1 transition-all group flex flex-col items-center justify-center"
+                >
+                  <div className={`w-14 h-14 ${config.badgeBg} rounded-[12px] flex items-center justify-center mb-4 group-hover:scale-110 transition-all`}>
+                    <IconComponent
+                      size={24}
+                      strokeWidth={2}
+                      className={config.textColor}
+                    />
+                  </div>
+                  <span className="text-xs font-black text-slate-800 uppercase tracking-wider">
+                    {catName}
                   </span>
-                </div>
-                <span className="text-xs font-black text-slate-700 uppercase tracking-widest">
-                  {cat.name}
-                </span>
-              </Link>
-            ))}
+                </Link>
+              );
+            })}
           </div>
         </section>
 
