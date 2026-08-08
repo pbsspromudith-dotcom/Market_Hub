@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     canonical: "https://hitads.ca",
   },
   verification: {
-    google: "Wded4juWATB0pGbu0HrLHrUu7ujY55TlXEflNXejU7M",
+    google: ["Wded4juWATB0pGbu0HrLHrUu7ujY55TlXEflNXejU7M", "c-cidgyEcNErCFJpYOhfp_RQm8Cqm9Xn1uHpVmNkvVM"],
   },
   icons: {
     icon: [
@@ -41,6 +41,7 @@ export default function RootLayout({
     >
       <head>
         <meta name="google-site-verification" content="Wded4juWATB0pGbu0HrLHrUu7ujY55TlXEflNXejU7M" />
+        <meta name="google-site-verification" content="c-cidgyEcNErCFJpYOhfp_RQm8Cqm9Xn1uHpVmNkvVM" />
         {/* Favicon links for Google Search crawler and modern browsers */}
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
