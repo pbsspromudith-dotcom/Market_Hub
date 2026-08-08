@@ -719,6 +719,37 @@ const PostAd: React.FC = () => {
     return [...options].sort((a, b) => Number(a.duration_days) - Number(b.duration_days));
   };
 
+  const isVehicleSpecCategory = (path: any[], catString: string) => {
+    const names: string[] = [];
+    if (Array.isArray(path)) {
+      for (const node of path) {
+        if (node?.CategoryName) names.push(String(node.CategoryName).trim());
+      }
+    }
+    if (names.length === 0 && typeof catString === "string") {
+      names.push(...catString.split(" > ").map(s => s.trim()));
+    }
+
+    if (names.length === 0) return false;
+    if (names[0].toLowerCase() !== "vehicles") return false;
+
+    const subCat = names[1] ? names[1].toUpperCase() : "";
+    if (!subCat) return false;
+
+    // Strictly allowed 7 vehicle subcategories:
+    const ALLOWED = [
+      "CARS & TRUCKS",
+      "SUVS",
+      "PICKUP TRUCKS",
+      "VANS",
+      "COMMERCIAL VEHICLES",
+      "MOTORCYCLES",
+      "CLASSIC CARS"
+    ];
+
+    return ALLOWED.includes(subCat);
+  };
+
   const calculatePrice = (promoType: string, duration: number, fallbackPrice: number) => {
     const options = promotionPricing.filter(p => p.promotion_type === promoType);
     if (options.length > 0) {
@@ -741,8 +772,8 @@ const PostAd: React.FC = () => {
         if (val) attrDetails.push(`${key}: ${val}`);
       }
 
-      // Add vehicle characteristics if posting under Vehicles category
-      const isVehicleCategory = category.startsWith("Vehicles") || category.includes("Vehicles") || category.includes("Cars") || category.includes("Automotive") || category.includes("Trucks") || category.includes("Motorcycles") || category.includes("Boats") || category.includes("RV");
+      // Add vehicle characteristics if posting under allowed Vehicle categories
+      const isVehicleCategory = isVehicleSpecCategory(categoryPath, category);
       
       if (isVehicleCategory) {
         if (carVIN) attrDetails.push(`VIN: ${carVIN.toUpperCase().trim()}`);
@@ -1164,8 +1195,8 @@ const PostAd: React.FC = () => {
                   </div>
                 )}
 
-                {/* Vehicle Specifications & Characteristics Section */}
-                {(category.startsWith("Vehicles") || category.includes("Vehicles") || category.includes("Cars") || category.includes("Automotive") || category.includes("Trucks") || category.includes("Motorcycles") || category.includes("Boats") || category.includes("RV")) && (
+                {/* Vehicle Specifications & Characteristics Section — strictly scoped to selected vehicle categories */}
+                {isVehicleSpecCategory(categoryPath, category) && (
                   <div className="bg-gradient-to-br from-blue-50/80 to-slate-50 p-6 sm:p-8 rounded-2xl border border-blue-100/80 shadow-xs space-y-6">
                     <div className="flex items-center gap-3 pb-3 border-b border-blue-100">
                       <div className="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center shadow-md shadow-primary/20">
@@ -1542,7 +1573,7 @@ const PostAd: React.FC = () => {
                         }
                       })}
                     </div>
-                    {!templateConfig.hideCarFeatures && category.startsWith("Vehicles") && (Array.isArray(templateConfig.carFeaturesList) ? templateConfig.carFeaturesList.length > 0 : CAR_FEATURES_LIST.length > 0) && (
+                    {!templateConfig.hideCarFeatures && isVehicleSpecCategory(categoryPath, category) && (Array.isArray(templateConfig.carFeaturesList) ? templateConfig.carFeaturesList.length > 0 : CAR_FEATURES_LIST.length > 0) && (
                       <div className="pt-4 mt-2 border-t border-primary/10">
                         <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">
                           Features
