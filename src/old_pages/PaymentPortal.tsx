@@ -59,7 +59,7 @@ const PaymentPortal: React.FC = () => {
         body: JSON.stringify({
           user_id: user.id,
           listing_id: '9999', // Dummy listing ID for testing
-          is_highlighted: true, // Triggers $4.99 price
+          custom_amount: 0.01, // Triggers $0.01 test price
         }),
       });
       const data = await res.json();
@@ -257,7 +257,7 @@ const PaymentPortal: React.FC = () => {
               ) : (
                 <span className="material-icons text-base">shopping_cart</span>
               )}
-              Test Checkout ($4.99)
+              Test Checkout ($0.01)
             </button>
           </div>
         </div>

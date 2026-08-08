@@ -50,21 +50,26 @@ export async function POST(req: Request) {
       return fallbackPrice;
     };
 
-    if (is_top_ad) { 
-      total += calculatePrice('top_ad', top_ad_duration, 9.99); 
-      selectedPromotions.push(`top_ad:${top_ad_duration}`); 
-    }
-    if (is_highlighted) { 
-      total += calculatePrice('highlighted', highlighted_duration, 4.99); 
-      selectedPromotions.push(`highlighted:${highlighted_duration}`); 
-    }
-    if (is_urgent) { 
-      total += calculatePrice('urgent', urgent_duration, 5.99); 
-      selectedPromotions.push(`urgent:${urgent_duration}`); 
-    }
-    if (is_home_gallery) { 
-      total += calculatePrice('home_gallery', home_gallery_duration, 14.99); 
-      selectedPromotions.push(`home_gallery:${home_gallery_duration}`); 
+    if (typeof body.custom_amount === 'number' && body.custom_amount > 0) {
+      total = Number(body.custom_amount);
+      selectedPromotions.push('test_checkout');
+    } else {
+      if (is_top_ad) { 
+        total += calculatePrice('top_ad', top_ad_duration, 9.99); 
+        selectedPromotions.push(`top_ad:${top_ad_duration}`); 
+      }
+      if (is_highlighted) { 
+        total += calculatePrice('highlighted', highlighted_duration, 4.99); 
+        selectedPromotions.push(`highlighted:${highlighted_duration}`); 
+      }
+      if (is_urgent) { 
+        total += calculatePrice('urgent', urgent_duration, 5.99); 
+        selectedPromotions.push(`urgent:${urgent_duration}`); 
+      }
+      if (is_home_gallery) { 
+        total += calculatePrice('home_gallery', home_gallery_duration, 14.99); 
+        selectedPromotions.push(`home_gallery:${home_gallery_duration}`); 
+      }
     }
 
     if (total === 0) {
