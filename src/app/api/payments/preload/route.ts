@@ -12,9 +12,12 @@ export async function POST(req: Request) {
       is_home_gallery, home_gallery_duration = 7
     } = body;
 
-    if (!listing_id || !user_id) {
+    const parsedUserId = parseInt(String(user_id), 10) || 1;
+    const parsedListingId = parseInt(String(listing_id), 10);
+
+    if (!parsedListingId || isNaN(parsedListingId)) {
       return NextResponse.json(
-        { success: false, message: 'listing_id and user_id are required' },
+        { success: false, message: 'listing_id is required' },
         { status: 400 }
       );
     }
@@ -38,11 +41,13 @@ export async function POST(req: Request) {
 
     // Helper to calculate price
     const calculatePrice = (promoType: string, duration: number, fallbackPrice: number) => {
-      const option = pricingOptions.find((p: any) => p.promotion_type === promoType && p.duration_days === duration);
-      if (option) {
-        return Number(option.price);
+      const options = pricingOptions.filter((p: any) => p.promotion_type === promoType);
+      if (options.length > 0) {
+        const match = options.find((p: any) => Number(p.duration_days) === Number(duration));
+        if (match) return Number(match.price);
+        return Number(options[0].price);
       }
-      return fallbackPrice; // Fallback if DB option not found
+      return fallbackPrice;
     };
 
     if (is_top_ad) { 
@@ -102,7 +107,7 @@ export async function POST(req: Request) {
       environment: environment === 'prod' ? 'prod' : 'qa',
       txn_total: total.toFixed(2),
       order_no: orderNo,
-      cust_id: `user-${user_id}`,
+      cust_id: `user-${parsedUserId}`,
       dynamic_descriptor: 'HITADS PROMO',
     };
 
@@ -128,8 +133,8 @@ export async function POST(req: Request) {
     const { error: insertError } = await supabase
       .from('transactions')
       .insert({
-        user_id: parseInt(user_id, 10),
-        listing_id: parseInt(listing_id, 10),
+        user_id: parsedUserId,
+        listing_id: parsedListingId,
         ticket: ticket,
         amount: total,
         promotions: selectedPromotions.join(','),

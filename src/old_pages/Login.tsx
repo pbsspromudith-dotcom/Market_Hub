@@ -544,7 +544,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
               </div>
             )}
 
-            {authMode !== "reset" && (
+            {authMode !== "reset" && process.env.NODE_ENV === "production" && (
               <div className="flex justify-center my-4 overflow-hidden rounded-xl">
                 <ReCAPTCHA
                   ref={recaptchaRef}

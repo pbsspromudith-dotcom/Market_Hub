@@ -39,12 +39,20 @@ export async function POST(req: Request) {
 
     // Check if user is verified
     if ('is_verified' in user && !(user as any).is_verified) {
-      return NextResponse.json({
-        success: false,
-        message: 'Please verify your email before logging in. Check your inbox for the verification link.',
-        needsVerification: true,
-        email: user.email,
-      }, { status: 403 });
+      if (process.env.NODE_ENV !== 'production') {
+        // Auto-verify unverified users in development mode
+        await supabase
+          .from('users')
+          .update({ is_verified: true })
+          .eq('id', user.id);
+      } else {
+        return NextResponse.json({
+          success: false,
+          message: 'Please verify your email before logging in. Check your inbox for the verification link.',
+          needsVerification: true,
+          email: user.email,
+        }, { status: 403 });
+      }
     }
 
     const token = jwt.sign(

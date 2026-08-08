@@ -43,7 +43,7 @@ export async function POST(req: Request) {
         email,
         password: hashedPassword,
         role: 'user',
-        is_verified: false,
+        is_verified: process.env.NODE_ENV !== 'production',
         verification_token: crypto.randomBytes(32).toString('hex'),
       })
       .select()

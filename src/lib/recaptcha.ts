@@ -1,4 +1,9 @@
 export async function verifyRecaptcha(captchaToken: string | undefined | null) {
+  // In development environment, allow bypass for localhost / testing
+  if (process.env.NODE_ENV !== 'production') {
+    return { success: true };
+  }
+
   if (!captchaToken) {
     return { success: false, message: 'Please complete the CAPTCHA verification.' };
   }

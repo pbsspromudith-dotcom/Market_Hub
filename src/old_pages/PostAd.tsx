@@ -237,6 +237,7 @@ const PostAd: React.FC = () => {
   const [payAmount, setPayAmount] = useState(0);
   const [payEnvironment, setPayEnvironment] = useState("qa");
   const [createdListingId, setCreatedListingId] = useState<number | null>(null);
+  const [createdNeedsApproval, setCreatedNeedsApproval] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
@@ -326,6 +327,27 @@ const PostAd: React.FC = () => {
       .then((data) => {
         if (data.success && Array.isArray(data.data)) {
           setPromotionPricing(data.data);
+
+          // Auto-sync initial duration selections to match active packages set in Admin
+          setPromotionData((prev) => {
+            const getValidDuration = (type: string, currentDuration: number) => {
+              const opts = data.data.filter((p: any) => p.promotion_type === type);
+              if (opts.length > 0) {
+                const match = opts.find((p: any) => Number(p.duration_days) === Number(currentDuration));
+                if (match) return Number(match.duration_days);
+                return Number(opts[0].duration_days);
+              }
+              return currentDuration;
+            };
+
+            return {
+              ...prev,
+              top_ad_duration: getValidDuration('top_ad', prev.top_ad_duration),
+              highlighted_duration: getValidDuration('highlighted', prev.highlighted_duration),
+              urgent_duration: getValidDuration('urgent', prev.urgent_duration),
+              home_gallery_duration: getValidDuration('home_gallery', prev.home_gallery_duration),
+            };
+          });
         }
       })
       .catch(console.error);
@@ -679,12 +701,17 @@ const PostAd: React.FC = () => {
     if (options.length === 0) {
       return [{ duration_days: 7, price: defaultPrice }];
     }
-    return options;
+    return [...options].sort((a, b) => Number(a.duration_days) - Number(b.duration_days));
   };
 
   const calculatePrice = (promoType: string, duration: number, fallbackPrice: number) => {
-    const option = promotionPricing.find(p => p.promotion_type === promoType && p.duration_days === duration);
-    return option ? Number(option.price) : fallbackPrice;
+    const options = promotionPricing.filter(p => p.promotion_type === promoType);
+    if (options.length > 0) {
+      const match = options.find(p => Number(p.duration_days) === Number(duration));
+      if (match) return Number(match.price);
+      return Number(options[0].price);
+    }
+    return fallbackPrice;
   };
 
   const handlePublish = async () => {
@@ -812,22 +839,15 @@ const PostAd: React.FC = () => {
           location || "Unknown",
         );
 
-        // Check if listing needs approval
-        if (data.needs_approval || data.status === 'pending_approval') {
-          showAlert(
-            "Ad submitted! We'll review it and let you know once it's live.",
-            "info"
-          );
-          navigate.push("/profile");
-          return;
-        }
-
         // Check if any promotions are selected
         const hasPromotions =
           promotionData.is_top_ad ||
           promotionData.is_highlighted ||
           promotionData.is_urgent ||
           promotionData.is_home_gallery;
+
+        const isPending = !!(data.needs_approval || data.status === 'pending_approval');
+        setCreatedNeedsApproval(isPending);
 
         if (hasPromotions) {
           setCreatedListingId(data.id);
@@ -849,12 +869,22 @@ const PostAd: React.FC = () => {
             setIsPayModalOpen(true);
           } else {
             showAlert(
-              "Your ad is live, but we couldn't start the promotion payment: " +
+              "Your ad was created, but we couldn't start the promotion payment: " +
                 (preloadData.message || "Unknown error"),
               "error"
             );
-            navigate.push("/item/" + data.id);
+            if (isPending) {
+              navigate.push("/profile");
+            } else {
+              navigate.push("/item/" + data.id);
+            }
           }
+        } else if (isPending) {
+          showAlert(
+            "Ad submitted! We'll review it and let you know once it's live.",
+            "info"
+          );
+          navigate.push("/profile");
         } else {
           navigate.push("/item/" + data.id);
         }
@@ -871,20 +901,36 @@ const PostAd: React.FC = () => {
 
   const handlePaymentSuccess = (receiptId: string) => {
     setIsPayModalOpen(false);
-    showAlert(
-      "You're all set! Your ad is live and promoted.",
-      "success"
-    );
-    navigate.push("/item/" + createdListingId);
+    if (createdNeedsApproval) {
+      showAlert(
+        "You're all set! Payment was successful and your ad has been submitted for review.",
+        "success"
+      );
+      navigate.push("/profile");
+    } else {
+      showAlert(
+        "You're all set! Your payment was successful and your ad is promoted.",
+        "success"
+      );
+      navigate.push("/item/" + createdListingId);
+    }
   };
 
   const handlePaymentCancel = () => {
     setIsPayModalOpen(false);
-    showAlert(
-      "Payment was not completed. Your ad is published, but promotions were not applied. You can promote it anytime from your profile.",
-      "info"
-    );
-    navigate.push("/item/" + createdListingId);
+    if (createdNeedsApproval) {
+      showAlert(
+        "Payment was not completed. Your ad has been submitted for review, but promotions were not applied.",
+        "info"
+      );
+      navigate.push("/profile");
+    } else {
+      showAlert(
+        "Payment was not completed. Your ad is created, but promotions were not applied. You can promote it anytime from your profile.",
+        "info"
+      );
+      navigate.push("/item/" + createdListingId);
+    }
   };
 
   return (
@@ -1915,7 +1961,8 @@ const PostAd: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-6">
 
                   {/* Top Ad Card */}
-                  <label
+                  <div
+                    onClick={() => setPromotionData(prev => ({ ...prev, is_top_ad: !prev.is_top_ad }))}
                     className={`relative flex flex-col p-6 rounded-2xl cursor-pointer transition-all duration-200 group border-2 ${
                       promotionData.is_top_ad
                         ? "border-blue-500 bg-blue-50/50 shadow-lg shadow-blue-500/10"
@@ -1931,7 +1978,7 @@ const PostAd: React.FC = () => {
 
                     <div className="flex items-start gap-4">
                       {/* Checkbox */}
-                      <div className="pt-0.5 shrink-0">
+                      <div className="pt-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>
                         <input
                           type="checkbox"
                           checked={promotionData.is_top_ad}
@@ -1961,17 +2008,17 @@ const PostAd: React.FC = () => {
                             value={promotionData.top_ad_duration}
                             onChange={(e) => setPromotionData({...promotionData, top_ad_duration: Number(e.target.value)})}
                             onClick={(e) => e.stopPropagation()}
-                            className="text-[10px] font-bold text-slate-600 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-md focus:ring-0 focus:border-blue-500 cursor-pointer"
+                            className="text-[10px] font-bold text-slate-600 bg-white border border-slate-200 px-2 py-0.5 rounded-md focus:ring-2 focus:border-blue-500 cursor-pointer shadow-xs"
                           >
                             {getPromotionOptions('top_ad', 9.99).map(opt => (
                               <option key={opt.duration_days} value={opt.duration_days}>
-                                {opt.duration_days} Days
+                                {opt.duration_days} Days (${Number(opt.price).toFixed(2)})
                               </option>
                             ))}
                           </select>
                         </div>
                         <p className="text-xs text-slate-500 font-medium leading-relaxed mb-3">
-                          Keep your listing at the top of category search results for 7 days.
+                          Keep your listing at the top of category search results for {promotionData.top_ad_duration} days.
                         </p>
                         <div className="flex flex-wrap gap-x-4 gap-y-1">
                           <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600">
@@ -1986,10 +2033,11 @@ const PostAd: React.FC = () => {
                         </div>
                       </div>
                     </div>
-                  </label>
+                  </div>
 
                   {/* Highlighted Card */}
-                  <label
+                  <div
+                    onClick={() => setPromotionData(prev => ({ ...prev, is_highlighted: !prev.is_highlighted }))}
                     className={`relative flex flex-col p-6 rounded-2xl cursor-pointer transition-all duration-200 group border-2 ${
                       promotionData.is_highlighted
                         ? "border-blue-500 bg-blue-50/50 shadow-lg shadow-blue-500/10"
@@ -1997,7 +2045,7 @@ const PostAd: React.FC = () => {
                     }`}
                   >
                     <div className="flex items-start gap-4">
-                      <div className="pt-0.5 shrink-0">
+                      <div className="pt-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>
                         <input
                           type="checkbox"
                           checked={promotionData.is_highlighted}
@@ -2025,11 +2073,11 @@ const PostAd: React.FC = () => {
                             value={promotionData.highlighted_duration}
                             onChange={(e) => setPromotionData({...promotionData, highlighted_duration: Number(e.target.value)})}
                             onClick={(e) => e.stopPropagation()}
-                            className="text-[10px] font-bold text-slate-600 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-md focus:ring-0 focus:border-blue-500 cursor-pointer"
+                            className="text-[10px] font-bold text-slate-600 bg-white border border-slate-200 px-2 py-0.5 rounded-md focus:ring-2 focus:border-blue-500 cursor-pointer shadow-xs"
                           >
                             {getPromotionOptions('highlighted', 4.99).map(opt => (
                               <option key={opt.duration_days} value={opt.duration_days}>
-                                {opt.duration_days} Days
+                                {opt.duration_days} Days (${Number(opt.price).toFixed(2)})
                               </option>
                             ))}
                           </select>
@@ -2050,10 +2098,11 @@ const PostAd: React.FC = () => {
                         </div>
                       </div>
                     </div>
-                  </label>
+                  </div>
 
                   {/* Urgent Card */}
-                  <label
+                  <div
+                    onClick={() => setPromotionData(prev => ({ ...prev, is_urgent: !prev.is_urgent }))}
                     className={`relative flex flex-col p-6 rounded-2xl cursor-pointer transition-all duration-200 group border-2 ${
                       promotionData.is_urgent
                         ? "border-blue-500 bg-blue-50/50 shadow-lg shadow-blue-500/10"
@@ -2061,7 +2110,7 @@ const PostAd: React.FC = () => {
                     }`}
                   >
                     <div className="flex items-start gap-4">
-                      <div className="pt-0.5 shrink-0">
+                      <div className="pt-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>
                         <input
                           type="checkbox"
                           checked={promotionData.is_urgent}
@@ -2089,11 +2138,11 @@ const PostAd: React.FC = () => {
                             value={promotionData.urgent_duration}
                             onChange={(e) => setPromotionData({...promotionData, urgent_duration: Number(e.target.value)})}
                             onClick={(e) => e.stopPropagation()}
-                            className="text-[10px] font-bold text-slate-600 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-md focus:ring-0 focus:border-blue-500 cursor-pointer"
+                            className="text-[10px] font-bold text-slate-600 bg-white border border-slate-200 px-2 py-0.5 rounded-md focus:ring-2 focus:border-blue-500 cursor-pointer shadow-xs"
                           >
                             {getPromotionOptions('urgent', 5.99).map(opt => (
                               <option key={opt.duration_days} value={opt.duration_days}>
-                                {opt.duration_days} Days
+                                {opt.duration_days} Days (${Number(opt.price).toFixed(2)})
                               </option>
                             ))}
                           </select>
@@ -2114,10 +2163,11 @@ const PostAd: React.FC = () => {
                         </div>
                       </div>
                     </div>
-                  </label>
+                  </div>
 
                   {/* Home Gallery Card */}
-                  <label
+                  <div
+                    onClick={() => setPromotionData(prev => ({ ...prev, is_home_gallery: !prev.is_home_gallery }))}
                     className={`relative flex flex-col p-6 rounded-2xl cursor-pointer transition-all duration-200 group border-2 ${
                       promotionData.is_home_gallery
                         ? "border-blue-500 bg-blue-50/50 shadow-lg shadow-blue-500/10"
@@ -2125,7 +2175,7 @@ const PostAd: React.FC = () => {
                     }`}
                   >
                     <div className="flex items-start gap-4">
-                      <div className="pt-0.5 shrink-0">
+                      <div className="pt-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>
                         <input
                           type="checkbox"
                           checked={promotionData.is_home_gallery}
@@ -2153,11 +2203,11 @@ const PostAd: React.FC = () => {
                             value={promotionData.home_gallery_duration}
                             onChange={(e) => setPromotionData({...promotionData, home_gallery_duration: Number(e.target.value)})}
                             onClick={(e) => e.stopPropagation()}
-                            className="text-[10px] font-bold text-slate-600 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-md focus:ring-0 focus:border-blue-500 cursor-pointer"
+                            className="text-[10px] font-bold text-slate-600 bg-white border border-slate-200 px-2 py-0.5 rounded-md focus:ring-2 focus:border-blue-500 cursor-pointer shadow-xs"
                           >
                             {getPromotionOptions('home_gallery', 14.99).map(opt => (
                               <option key={opt.duration_days} value={opt.duration_days}>
-                                {opt.duration_days} Days
+                                {opt.duration_days} Days (${Number(opt.price).toFixed(2)})
                               </option>
                             ))}
                           </select>
@@ -2178,7 +2228,7 @@ const PostAd: React.FC = () => {
                         </div>
                       </div>
                     </div>
-                  </label>
+                  </div>
                 </div>
 
                 {/* Promotion Summary */}
