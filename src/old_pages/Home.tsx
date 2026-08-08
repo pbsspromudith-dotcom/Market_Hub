@@ -535,28 +535,6 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn, initialCategories = [], initial
         </div>
       </main>
 
-      {/* Stats Section */}
-      <section className="bg-white py-24 border-y border-slate-100">
-        <div className="w-full px-4 sm:px-6 lg:px-10">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-12 text-center">
-            {[
-              { label: "Listings", value: "120K+" },
-              { label: "Community", value: "4M+" },
-              { label: "Locations", value: "1.2K+" },
-              { label: "Trust Score", value: "4.95" },
-            ].map((stat) => (
-              <div key={stat.label}>
-                <div className="text-4xl font-black text-secondary mb-2">
-                  {stat.value}
-                </div>
-                <div className="text-[10px] font-black text-primary-neutral uppercase tracking-widest">
-                  {stat.label}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
     </div>
   );
 };
