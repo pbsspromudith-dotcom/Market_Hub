@@ -5,9 +5,11 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import CardVerificationModal from '../components/CardVerificationModal';
 import MonerisPayModal from '../components/MonerisPayModal';
+import { useUI } from '../components/UIProvider';
 
 const PaymentPortal: React.FC = () => {
   const navigate = useRouter();
+  const { showAlert } = useUI();
   const [user, setUser] = useState<any>(null);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -66,10 +68,10 @@ const PaymentPortal: React.FC = () => {
         setCheckoutAmount(data.amount);
         setShowCheckoutModal(true);
       } else {
-        alert('Checkout Test Failed: ' + data.message);
+        showAlert('Checkout Test Failed: ' + data.message, 'error');
       }
     } catch (err: any) {
-      alert('Error initializing checkout test.');
+      showAlert('Error initializing checkout test.', 'error');
     } finally {
       setIsPreloading(false);
     }
@@ -264,7 +266,7 @@ const PaymentPortal: React.FC = () => {
       {showVerificationModal && (
         <CardVerificationModal
           onSuccess={(receiptId) => {
-            alert('Card successfully verified! Receipt: ' + receiptId);
+            showAlert('Card successfully verified! Receipt: ' + receiptId, 'success');
             setShowVerificationModal(false);
           }}
           onCancel={() => setShowVerificationModal(false)}
@@ -277,7 +279,7 @@ const PaymentPortal: React.FC = () => {
           amount={checkoutAmount}
           environment="qa"
           onSuccess={(receiptId) => {
-            alert('Test Checkout Successful! Receipt: ' + receiptId);
+            showAlert('Test Checkout Successful! Receipt: ' + receiptId, 'success');
             setShowCheckoutModal(false);
             window.location.reload();
           }}

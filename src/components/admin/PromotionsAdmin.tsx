@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { useUI } from '@/components/UIProvider';
 
 export default function PromotionsAdmin() {
+  const { showAlert, showConfirm } = useUI();
   const [promotions, setPromotions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState<number | null>(null);
@@ -40,14 +42,16 @@ export default function PromotionsAdmin() {
       });
       const data = await res.json();
       if (data.success) {
+        showAlert(isEditing ? 'Promotion package updated successfully!' : 'New promotion package added!', 'success');
         fetchPromotions();
         setIsEditing(null);
         setFormData({ promotion_type: 'top_ad', duration_days: 7, price: 9.99, is_active: true });
       } else {
-        alert(data.message);
+        showAlert(data.message || 'Failed to save promotion pricing', 'error');
       }
     } catch (err) {
       console.error(err);
+      showAlert('Error saving promotion pricing', 'error');
     }
   };
 
@@ -62,15 +66,27 @@ export default function PromotionsAdmin() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this promotion option?')) return;
-    try {
-      const res = await fetch(`/api/admin/promotions?id=${id}`, { method: 'DELETE' });
-      if (res.ok) {
-        fetchPromotions();
+    showConfirm({
+      title: 'Delete Package',
+      message: 'Are you sure you want to delete this promotion package? This cannot be undone.',
+      isDestructive: true,
+      confirmText: 'Delete Package',
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`/api/admin/promotions?id=${id}`, { method: 'DELETE' });
+          const data = await res.json();
+          if (res.ok && data.success) {
+            showAlert('Promotion package deleted successfully.', 'success');
+            fetchPromotions();
+          } else {
+            showAlert(data.message || 'Failed to delete package.', 'error');
+          }
+        } catch (err) {
+          console.error(err);
+          showAlert('Error deleting promotion package.', 'error');
+        }
       }
-    } catch (err) {
-      console.error(err);
-    }
+    });
   };
 
   if (loading) return <div>Loading...</div>;

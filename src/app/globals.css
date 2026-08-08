@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+@keyframes toastProgress {
+  from { width: 100%; }
+  to { width: 0%; }
+}
+
 /* ═══════════════════════════════════════════════
    HitAds Design System — Color Palette v3
    Official brand color system (04 — COLOR SYSTEM)
