@@ -278,11 +278,11 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         <div className="max-w-md w-full space-y-8">
           <div className="text-center">
             <div className="mb-6 flex justify-center">
-              <Link href="/">
+              <Link href="/" className="inline-block outline-none focus:outline-none select-none">
                 <img
                   src="/logo.png?v=2"
                   alt="HitAds Logo"
-                  className="h-24 object-contain transition-transform hover:scale-105"
+                  className="h-24 object-contain transition-transform hover:scale-105 select-none"
                 />
               </Link>
             </div>
@@ -375,12 +375,12 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     <div className="min-h-[calc(100vh-64px)] flex items-center justify-center bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
-          <div className="mb-6 flex justify-center -ml-12">
-            <Link href="/">
+          <div className="mb-6 flex justify-center">
+            <Link href="/" className="inline-block outline-none focus:outline-none select-none">
               <img
                 src="/logo.png?v=2"
                 alt="HitAds Logo"
-                className="h-24 object-contain transition-transform hover:scale-105"
+                className="h-24 object-contain transition-transform hover:scale-105 select-none"
               />
             </Link>
           </div>
@@ -544,7 +544,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
               </div>
             )}
 
-            {authMode !== "reset" && process.env.NODE_ENV === "production" && (
+            {authMode !== "reset" && (
               <div className="flex justify-center my-4 overflow-hidden rounded-xl">
                 <ReCAPTCHA
                   ref={recaptchaRef}

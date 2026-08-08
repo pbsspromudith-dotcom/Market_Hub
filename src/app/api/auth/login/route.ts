@@ -14,11 +14,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, message: 'Email and password required' }, { status: 400 });
     }
 
-    if (captchaToken) {
-      const captchaRes = await verifyRecaptcha(captchaToken);
-      if (!captchaRes.success) {
-        return NextResponse.json({ success: false, message: captchaRes.message }, { status: 400 });
-      }
+    const captchaRes = await verifyRecaptcha(captchaToken);
+    if (!captchaRes.success) {
+      return NextResponse.json({ success: false, message: captchaRes.message }, { status: 400 });
     }
 
     const { data: user, error } = await supabase

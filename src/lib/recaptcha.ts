@@ -1,11 +1,10 @@
 export async function verifyRecaptcha(captchaToken: string | undefined | null) {
-  // In development environment, allow bypass for localhost / testing
-  if (process.env.NODE_ENV !== 'production') {
-    return { success: true };
-  }
-
   if (!captchaToken) {
-    return { success: false, message: 'Please complete the CAPTCHA verification.' };
+    if (process.env.NODE_ENV === 'production') {
+      return { success: false, message: 'Please complete the CAPTCHA verification.' };
+    }
+    // Allow local dev bypass when no token passed
+    return { success: true };
   }
 
   const secretKey = process.env.RECAPTCHA_SECRET_KEY || '6LfBW3ItAAAAABUR6r6cJTYACUJsPmrJTkX5ZHEJ';

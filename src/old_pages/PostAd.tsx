@@ -371,14 +371,14 @@ const PostAd: React.FC = () => {
         setContactPhone("");
         setIncludeEmail(false);
         setIncludePhone(false);
+        setCarVIN("");
         setCarMake("");
         setCarModel("");
         setCarYear("");
+        setCarTrim("");
+        setCarMileage("");
         setCarTransmission("");
         setCarFuelType("");
-        setCarMileage("");
-        setCarVIN("");
-        setCarTrim("");
         setCarBodyType("");
         setCarDrivetrain("");
         setCarColor("");
@@ -625,6 +625,21 @@ const PostAd: React.FC = () => {
             setDynamicAttributesValues(attrVals);
             setCarFeatures(features);
             
+            // Set vehicle fields if present in parsed attributes
+            if (attrVals["VIN"]) setCarVIN(attrVals["VIN"]);
+            if (attrVals["Make"]) setCarMake(attrVals["Make"]);
+            if (attrVals["Model"]) setCarModel(attrVals["Model"]);
+            if (attrVals["Year"]) setCarYear(attrVals["Year"]);
+            if (attrVals["Trim"]) setCarTrim(attrVals["Trim"]);
+            if (attrVals["Kilometers"]) setCarMileage(attrVals["Kilometers"].replace(" km", ""));
+            if (attrVals["Transmission"]) setCarTransmission(attrVals["Transmission"]);
+            if (attrVals["Fuel Type"]) setCarFuelType(attrVals["Fuel Type"]);
+            if (attrVals["Body Type"]) setCarBodyType(attrVals["Body Type"]);
+            if (attrVals["Drivetrain"]) setCarDrivetrain(attrVals["Drivetrain"]);
+            if (attrVals["Color"]) setCarColor(attrVals["Color"]);
+            if (attrVals["Doors"]) setCarDoors(attrVals["Doors"]);
+            if (attrVals["Seating Capacity"]) setCarSeatingCapacity(attrVals["Seating Capacity"]);
+
             // Set condition specifically if it exists in parsed attributes
             if (attrVals["Condition"]) {
               setCondition(attrVals["Condition"]);
@@ -725,7 +740,27 @@ const PostAd: React.FC = () => {
       for (const [key, val] of Object.entries(dynamicAttributesValues)) {
         if (val) attrDetails.push(`${key}: ${val}`);
       }
-      if (carFeatures.length > 0 && !templateConfig.hideCarFeatures && category.startsWith("Vehicles")) {
+
+      // Add vehicle characteristics if posting under Vehicles category
+      const isVehicleCategory = category.startsWith("Vehicles") || category.includes("Vehicles") || category.includes("Cars") || category.includes("Automotive") || category.includes("Trucks") || category.includes("Motorcycles") || category.includes("Boats") || category.includes("RV");
+      
+      if (isVehicleCategory) {
+        if (carVIN) attrDetails.push(`VIN: ${carVIN.toUpperCase().trim()}`);
+        if (carMake) attrDetails.push(`Make: ${carMake}`);
+        if (carModel) attrDetails.push(`Model: ${carModel}`);
+        if (carYear) attrDetails.push(`Year: ${carYear}`);
+        if (carTrim) attrDetails.push(`Trim: ${carTrim}`);
+        if (carMileage) attrDetails.push(`Kilometers: ${carMileage} km`);
+        if (carTransmission) attrDetails.push(`Transmission: ${carTransmission}`);
+        if (carFuelType) attrDetails.push(`Fuel Type: ${carFuelType}`);
+        if (carBodyType) attrDetails.push(`Body Type: ${carBodyType}`);
+        if (carDrivetrain) attrDetails.push(`Drivetrain: ${carDrivetrain}`);
+        if (carColor) attrDetails.push(`Color: ${carColor}`);
+        if (carDoors) attrDetails.push(`Doors: ${carDoors}`);
+        if (carSeatingCapacity) attrDetails.push(`Seating Capacity: ${carSeatingCapacity}`);
+      }
+
+      if (carFeatures.length > 0 && !templateConfig.hideCarFeatures && isVehicleCategory) {
         attrDetails.push(`Features: ${carFeatures.join(", ")}`);
       }
       if (!templateConfig.hideBrandModel) {
@@ -1126,6 +1161,264 @@ const PostAd: React.FC = () => {
                       placeholder="Provide a detailed description of your item, service, or job..."
                       required
                     />
+                  </div>
+                )}
+
+                {/* Vehicle Specifications & Characteristics Section */}
+                {(category.startsWith("Vehicles") || category.includes("Vehicles") || category.includes("Cars") || category.includes("Automotive") || category.includes("Trucks") || category.includes("Motorcycles") || category.includes("Boats") || category.includes("RV")) && (
+                  <div className="bg-gradient-to-br from-blue-50/80 to-slate-50 p-6 sm:p-8 rounded-2xl border border-blue-100/80 shadow-xs space-y-6">
+                    <div className="flex items-center gap-3 pb-3 border-b border-blue-100">
+                      <div className="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center shadow-md shadow-primary/20">
+                        <span className="material-icons text-xl">directions_car</span>
+                      </div>
+                      <div>
+                        <h3 className="text-base font-black text-slate-900 tracking-tight">
+                          Vehicle Specifications & Characteristics
+                        </h3>
+                        <p className="text-xs text-slate-500 font-medium">
+                          Provide detailed vehicle specifications to build buyer trust and increase search visibility.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      {/* VIN Field */}
+                      <div className="col-span-1 md:col-span-2">
+                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 flex items-center justify-between">
+                          <span>Vehicle Identification Number (VIN)</span>
+                          <span className="text-slate-400 font-medium normal-case">17-character VIN</span>
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            maxLength={17}
+                            value={carVIN}
+                            onChange={(e) => setCarVIN(e.target.value.toUpperCase())}
+                            className="w-full pl-12 pr-4 py-3.5 bg-white border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-mono tracking-wider text-slate-800 uppercase placeholder:normal-case placeholder:tracking-normal placeholder:text-slate-400"
+                            placeholder="e.g. 2T1BURHE9FC123456"
+                          />
+                          <span className="material-icons absolute left-4 top-3.5 text-slate-400 text-lg">
+                            fingerprint
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-slate-400 mt-1 font-medium">
+                          Including a valid VIN gives buyers confidence and unlocks car history verification badges.
+                        </p>
+                      </div>
+
+                      {/* Make */}
+                      <div>
+                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">
+                          Make / Brand <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={carMake}
+                          onChange={(e) => setCarMake(e.target.value)}
+                          className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-bold text-slate-800"
+                          placeholder="e.g. Toyota, Honda, Ford, BMW..."
+                        />
+                      </div>
+
+                      {/* Model */}
+                      <div>
+                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">
+                          Model <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={carModel}
+                          onChange={(e) => setCarModel(e.target.value)}
+                          className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-bold text-slate-800"
+                          placeholder="e.g. Camry, Civic, F-150, RAV4..."
+                        />
+                      </div>
+
+                      {/* Year */}
+                      <div>
+                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">
+                          Model Year
+                        </label>
+                        <select
+                          value={carYear}
+                          onChange={(e) => setCarYear(e.target.value)}
+                          className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-bold text-slate-800 cursor-pointer"
+                        >
+                          <option value="">Select Year...</option>
+                          {Array.from({ length: 47 }, (_, i) => 2026 - i).map((y) => (
+                            <option key={y} value={y}>{y}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Trim / Edition */}
+                      <div>
+                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">
+                          Trim / Package
+                        </label>
+                        <input
+                          type="text"
+                          value={carTrim}
+                          onChange={(e) => setCarTrim(e.target.value)}
+                          className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium text-slate-800"
+                          placeholder="e.g. XLE, EX-L, Lariat, M Sport..."
+                        />
+                      </div>
+
+                      {/* Mileage / Kilometers */}
+                      <div>
+                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">
+                          Kilometers (km)
+                        </label>
+                        <input
+                          type="number"
+                          value={carMileage}
+                          onChange={(e) => setCarMileage(e.target.value)}
+                          className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-bold text-slate-800"
+                          placeholder="e.g. 45000"
+                        />
+                      </div>
+
+                      {/* Transmission */}
+                      <div>
+                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">
+                          Transmission
+                        </label>
+                        <select
+                          value={carTransmission}
+                          onChange={(e) => setCarTransmission(e.target.value)}
+                          className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium text-slate-800 cursor-pointer"
+                        >
+                          <option value="">Select Transmission...</option>
+                          <option value="Automatic">Automatic</option>
+                          <option value="Manual">Manual</option>
+                          <option value="CVT">CVT (Continuously Variable)</option>
+                          <option value="Dual-Clutch">Dual-Clutch (DCT)</option>
+                          <option value="Direct Drive">Direct Drive (EV)</option>
+                        </select>
+                      </div>
+
+                      {/* Fuel Type */}
+                      <div>
+                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">
+                          Fuel Type
+                        </label>
+                        <select
+                          value={carFuelType}
+                          onChange={(e) => setCarFuelType(e.target.value)}
+                          className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium text-slate-800 cursor-pointer"
+                        >
+                          <option value="">Select Fuel Type...</option>
+                          <option value="Gasoline">Gasoline</option>
+                          <option value="Hybrid">Hybrid</option>
+                          <option value="Electric">Electric (EV)</option>
+                          <option value="Plug-in Hybrid">Plug-in Hybrid (PHEV)</option>
+                          <option value="Diesel">Diesel</option>
+                        </select>
+                      </div>
+
+                      {/* Body Type */}
+                      <div>
+                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">
+                          Body Type
+                        </label>
+                        <select
+                          value={carBodyType}
+                          onChange={(e) => setCarBodyType(e.target.value)}
+                          className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium text-slate-800 cursor-pointer"
+                        >
+                          <option value="">Select Body Type...</option>
+                          <option value="Sedan">Sedan</option>
+                          <option value="SUV / Crossover">SUV / Crossover</option>
+                          <option value="Truck / Pickup">Truck / Pickup</option>
+                          <option value="Coupe">Coupe</option>
+                          <option value="Hatchback">Hatchback</option>
+                          <option value="Convertible">Convertible</option>
+                          <option value="Minivan / Van">Minivan / Van</option>
+                          <option value="Wagon">Wagon</option>
+                        </select>
+                      </div>
+
+                      {/* Drivetrain */}
+                      <div>
+                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">
+                          Drivetrain
+                        </label>
+                        <select
+                          value={carDrivetrain}
+                          onChange={(e) => setCarDrivetrain(e.target.value)}
+                          className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium text-slate-800 cursor-pointer"
+                        >
+                          <option value="">Select Drivetrain...</option>
+                          <option value="All-Wheel Drive (AWD)">All-Wheel Drive (AWD)</option>
+                          <option value="Four-Wheel Drive (4WD)">Four-Wheel Drive (4WD)</option>
+                          <option value="Front-Wheel Drive (FWD)">Front-Wheel Drive (FWD)</option>
+                          <option value="Rear-Wheel Drive (RWD)">Rear-Wheel Drive (RWD)</option>
+                        </select>
+                      </div>
+
+                      {/* Exterior Color */}
+                      <div>
+                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">
+                          Exterior Color
+                        </label>
+                        <select
+                          value={carColor}
+                          onChange={(e) => setCarColor(e.target.value)}
+                          className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium text-slate-800 cursor-pointer"
+                        >
+                          <option value="">Select Color...</option>
+                          <option value="Black">Black</option>
+                          <option value="White">White</option>
+                          <option value="Silver">Silver</option>
+                          <option value="Grey">Grey</option>
+                          <option value="Blue">Blue</option>
+                          <option value="Red">Red</option>
+                          <option value="Green">Green</option>
+                          <option value="Brown / Bronze">Brown / Bronze</option>
+                          <option value="Gold / Yellow">Gold / Yellow</option>
+                          <option value="Other">Other</option>
+                        </select>
+                      </div>
+
+                      {/* Doors */}
+                      <div>
+                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">
+                          Doors
+                        </label>
+                        <select
+                          value={carDoors}
+                          onChange={(e) => setCarDoors(e.target.value)}
+                          className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium text-slate-800 cursor-pointer"
+                        >
+                          <option value="">Select Doors...</option>
+                          <option value="2 Doors">2 Doors</option>
+                          <option value="3 Doors">3 Doors</option>
+                          <option value="4 Doors">4 Doors</option>
+                          <option value="5 Doors">5 Doors</option>
+                        </select>
+                      </div>
+
+                      {/* Seating Capacity */}
+                      <div>
+                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">
+                          Seating Capacity
+                        </label>
+                        <select
+                          value={carSeatingCapacity}
+                          onChange={(e) => setCarSeatingCapacity(e.target.value)}
+                          className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium text-slate-800 cursor-pointer"
+                        >
+                          <option value="">Select Seating...</option>
+                          <option value="2 Seats">2 Seats</option>
+                          <option value="4 Seats">4 Seats</option>
+                          <option value="5 Seats">5 Seats</option>
+                          <option value="6 Seats">6 Seats</option>
+                          <option value="7 Seats">7 Seats</option>
+                          <option value="8+ Seats">8+ Seats</option>
+                        </select>
+                      </div>
+                    </div>
                   </div>
                 )}
                 {dynamicAttributesList.length > 0 && (
