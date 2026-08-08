@@ -9,17 +9,22 @@ const inter = Inter({ subsets: ["latin"], display: "swap", variable: "--font-int
 const manrope = Manrope({ subsets: ["latin"], display: "swap", variable: "--font-manrope" });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://hitads.ca"),
   title: "HitAds.ca - Free Ads. Sell Fast. Buy Local. Canada-Wide.",
   description: "Buy and sell locally in Canada. Free ads for vehicles, real estate, jobs, services and more on HitAds.ca.",
+  alternates: {
+    canonical: "https://hitads.ca",
+  },
   verification: {
     google: "Wded4juWATB0pGbu0HrLHrUu7ujY55TlXEflNXejU7M",
   },
   icons: {
     icon: [
+      { url: '/favicon.ico', sizes: 'any' },
       { url: '/favicon.svg', type: 'image/svg+xml' },
       { url: '/favicon.png', type: 'image/png' },
     ],
-    shortcut: '/favicon.png',
+    shortcut: '/favicon.ico',
     apple: '/favicon.png',
   },
 };
@@ -37,8 +42,9 @@ export default function RootLayout({
       <head>
         <meta name="google-site-verification" content="Wded4juWATB0pGbu0HrLHrUu7ujY55TlXEflNXejU7M" />
         {/* Favicon links for Google Search crawler and modern browsers */}
+        <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-        <link rel="icon" href="/favicon.png" type="image/png" sizes="any" />
+        <link rel="icon" href="/favicon.png" type="image/png" />
         <link rel="apple-touch-icon" href="/favicon.png" />
         {/* Preconnect to Google Fonts */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
