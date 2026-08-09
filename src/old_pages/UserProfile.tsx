@@ -169,21 +169,32 @@ const UserProfile: React.FC = () => {
     return Number(opts[0]?.price || fallbackPrice);
   };
 
-  const getTotalPromotionCost = () => {
-    let total = 0;
+  const getPromotionSubtotal = () => {
+    let subtotal = 0;
     if (promotionData.is_top_ad) {
-      total += calculatePromoPrice('top_ad', promotionData.top_ad_duration, 9.99);
+      subtotal += calculatePromoPrice('top_ad', promotionData.top_ad_duration, 9.99);
     }
     if (promotionData.is_highlighted) {
-      total += calculatePromoPrice('highlighted', promotionData.highlighted_duration, 4.99);
+      subtotal += calculatePromoPrice('highlighted', promotionData.highlighted_duration, 4.99);
     }
     if (promotionData.is_urgent) {
-      total += calculatePromoPrice('urgent', promotionData.urgent_duration, 5.99);
+      subtotal += calculatePromoPrice('urgent', promotionData.urgent_duration, 5.99);
     }
     if (promotionData.is_home_gallery) {
-      total += calculatePromoPrice('home_gallery', promotionData.home_gallery_duration, 14.99);
+      subtotal += calculatePromoPrice('home_gallery', promotionData.home_gallery_duration, 14.99);
     }
-    return Math.round(total * 100) / 100;
+    return Math.round(subtotal * 100) / 100;
+  };
+
+  const getPromotionTax = () => {
+    const subtotal = getPromotionSubtotal();
+    return Math.round(subtotal * 0.13 * 100) / 100;
+  };
+
+  const getTotalPromotionCost = () => {
+    const subtotal = getPromotionSubtotal();
+    const tax = getPromotionTax();
+    return Math.round((subtotal + tax) * 100) / 100;
   };
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -487,16 +498,25 @@ const UserProfile: React.FC = () => {
               <p className="text-sm text-slate-500 font-medium">{user.email}</p>
               {user.phone && <p className="text-sm text-slate-500 font-medium">{user.phone}</p>}
             </div>
-            <button
-              onClick={() => {
-                setEditData({ name: user.name || '', phone: user.phone || '' });
-                setIsEditing(true);
-              }}
-              className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all self-start sm:self-auto"
-            >
-              <span className="material-icons text-sm">edit</span>
-              Edit Profile
-            </button>
+            <div className="flex flex-wrap gap-2.5 self-start sm:self-auto">
+              <Link
+                href="/payments"
+                className="bg-primary/10 hover:bg-primary/20 text-primary px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all"
+              >
+                <span className="material-icons text-sm">receipt_long</span>
+                Payment Receipts & Invoices
+              </Link>
+              <button
+                onClick={() => {
+                  setEditData({ name: user.name || '', phone: user.phone || '' });
+                  setIsEditing(true);
+                }}
+                className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all"
+              >
+                <span className="material-icons text-sm">edit</span>
+                Edit Profile
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -619,12 +639,18 @@ const UserProfile: React.FC = () => {
                   <div className="mb-3">
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ad Promotions</p>
                   </div>
-                  <div className="flex flex-wrap gap-2 mb-6">
+                  <div className="flex flex-wrap gap-2 mb-3">
                     <span className={`text-[10px] font-bold px-2 py-1 rounded border ${listing.is_top_ad ? 'bg-amber-100 text-amber-700 border-amber-200 shadow-sm' : 'bg-white text-slate-400 border-slate-200 grayscale opacity-60'}`}>Top Ad</span>
                     <span className={`text-[10px] font-bold px-2 py-1 rounded border ${listing.is_highlighted ? 'bg-yellow-100 text-yellow-700 border-yellow-200 shadow-sm' : 'bg-white text-slate-400 border-slate-200 grayscale opacity-60'}`}>Highlighted</span>
                     <span className={`text-[10px] font-bold px-2 py-1 rounded border ${listing.is_urgent ? 'bg-red-100 text-red-700 border-red-200 shadow-sm' : 'bg-white text-slate-400 border-slate-200 grayscale opacity-60'}`}>Urgent</span>
                     <span className={`text-[10px] font-bold px-2 py-1 rounded border ${listing.is_home_gallery ? 'bg-blue-100 text-blue-700 border-blue-200 shadow-sm' : 'bg-white text-slate-400 border-slate-200 grayscale opacity-60'}`}>Home Page</span>
                   </div>
+                  {listing.promotion_expires_at && (listing.is_top_ad || listing.is_highlighted || listing.is_urgent || listing.is_home_gallery) && (
+                    <p className="text-[10px] font-bold text-slate-500 mb-4 flex items-center gap-1">
+                      <span className="material-icons text-[12px] text-blue-600">schedule</span>
+                      Home/Ad Promotion Expiration: {new Date(listing.promotion_expires_at).toLocaleDateString('en-CA', { year: 'numeric', month: 'short', day: 'numeric' })}
+                    </p>
+                  )}
                   <button onClick={() => openPromoteModal(listing)} className="w-full bg-primary hover:bg-primary-hover text-white text-[11px] font-black uppercase tracking-widest py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-primary/25 mt-auto hover:-translate-y-0.5">
                     <span className="material-icons text-base">campaign</span>
                     Promote Ad
@@ -1012,7 +1038,24 @@ const UserProfile: React.FC = () => {
                 </div>
               </div>
 
-              <div className="pt-4 flex gap-3">
+              {getPromotionSubtotal() > 0 && (
+                <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3.5 space-y-2 text-xs">
+                  <div className="flex justify-between items-center text-slate-600 font-medium">
+                    <span>Subtotal</span>
+                    <span className="font-bold text-slate-800">${getPromotionSubtotal().toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-slate-600 font-medium">
+                    <span>Tax (13%)</span>
+                    <span className="font-bold text-slate-800">${getPromotionTax().toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-slate-900 font-black pt-2 border-t border-slate-200">
+                    <span>Total Amount</span>
+                    <span className="text-sm text-primary font-black">${getTotalPromotionCost().toFixed(2)}</span>
+                  </div>
+                </div>
+              )}
+
+              <div className="pt-2 flex gap-3">
                 <button
                   type="button"
                   onClick={() => setIsPromoteModalOpen(false)}

@@ -439,6 +439,77 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn, initialCategories = [], initial
           </div>
         </section>
 
+        {/* Home Page Featured Showcase Gallery */}
+        {(() => {
+          const homeGalleryItems = listings.filter((item: any) => item.is_home_gallery || item.is_home_page);
+          if (homeGalleryItems.length === 0) return null;
+
+          return (
+            <section className="mb-20 bg-gradient-to-br from-blue-900/5 via-indigo-900/5 to-slate-900/5 p-8 sm:p-10 rounded-[3rem] border border-blue-100/80 shadow-sm relative overflow-hidden">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-8">
+                <div>
+                  <span className="inline-flex items-center gap-1.5 py-1 px-3.5 rounded-full bg-blue-100 text-blue-800 text-[10px] font-black uppercase tracking-widest mb-2 shadow-xs">
+                    <span className="material-icons text-sm">home</span> Home Page Exclusives
+                  </span>
+                  <h2 className="type-section font-black text-slate-900">
+                    Home Page Showcase Gallery
+                  </h2>
+                  <p className="text-slate-500 font-medium text-sm">
+                    Premium featured listings displayed directly on the homepage
+                  </p>
+                </div>
+                <Link 
+                  href="/search"
+                  onClick={() => window.scrollTo(0, 0)}
+                  className="text-xs font-black text-blue-600 hover:text-blue-800 uppercase tracking-widest flex items-center gap-1 hover:underline"
+                >
+                  View All Listings <span className="material-icons text-sm">arrow_forward</span>
+                </Link>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {homeGalleryItems.map((item: any) => (
+                  <Link 
+                    key={item.id} 
+                    href={`/item/${item.id}`}
+                    onClick={() => window.scrollTo(0, 0)}
+                    className="group bg-white rounded-[2rem] border border-blue-200/80 overflow-hidden shadow-lg shadow-blue-500/5 hover:shadow-2xl hover:border-blue-500 transition-all duration-300 flex flex-col"
+                  >
+                    <div className="aspect-[16/10] relative bg-slate-100 overflow-hidden">
+                      <img
+                        src={item.image || "https://picsum.photos/seed/default/800/600"}
+                        alt={item.title}
+                        loading="lazy"
+                        className="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <span className="absolute top-4 left-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-[10px] font-black px-3 py-1.5 rounded-xl shadow-md uppercase tracking-wider flex items-center gap-1">
+                        <span className="material-icons text-xs">home</span> Home Page Showcase
+                      </span>
+                    </div>
+
+                    <div className="p-6 flex flex-col flex-grow">
+                      <div className="text-primary font-black text-xl mb-1">
+                        {formatPrice(item.price, item.price_type)}
+                      </div>
+                      <h3 className="font-bold text-slate-900 line-clamp-2 min-h-[2.5rem] text-base group-hover:text-blue-600 transition-colors mb-4">
+                        {item.title}
+                      </h3>
+
+                      <div className="mt-auto pt-3 border-t border-slate-100 flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                        <span className="flex items-center gap-1">
+                          <span className="material-icons text-xs">location_on</span>
+                          {item.location || 'Canada'}
+                        </span>
+                        <span className="text-blue-600 font-black">HOME PAGE PROMOTED</span>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          );
+        })()}
+
         {/* Recently Added */}
         <div className="flex flex-col lg:flex-row gap-16">
           <div className="flex-grow">

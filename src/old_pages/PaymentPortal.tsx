@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import CardVerificationModal from '../components/CardVerificationModal';
 import MonerisPayModal from '../components/MonerisPayModal';
+import InvoiceModal from '../components/InvoiceModal';
 import { useUI } from '../components/UIProvider';
 
 const PaymentPortal: React.FC = () => {
@@ -15,6 +16,7 @@ const PaymentPortal: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [showVerificationModal, setShowVerificationModal] = useState(false);
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
+  const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
   const [checkoutTicket, setCheckoutTicket] = useState('');
   const [checkoutAmount, setCheckoutAmount] = useState(0);
   const [isPreloading, setIsPreloading] = useState(false);
@@ -154,7 +156,8 @@ const PaymentPortal: React.FC = () => {
                     <th className="px-6 py-4 rounded-l-xl">Details</th>
                     <th className="px-6 py-4">Amount</th>
                     <th className="px-6 py-4">Status</th>
-                    <th className="px-6 py-4 rounded-r-xl">Date & Receipt</th>
+                    <th className="px-6 py-4">Date & Receipt</th>
+                    <th className="px-6 py-4 rounded-r-xl text-right">Invoice</th>
                   </tr>
                 </thead>
                 <tbody className="text-sm font-medium">
@@ -162,12 +165,12 @@ const PaymentPortal: React.FC = () => {
                     <tr key={tx.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
                       <td className="px-6 py-4">
                         <div>
-                          <p className="font-black text-slate-800">{tx.promotions_readable}</p>
+                          <p className="font-black text-slate-800">{tx.promotions_readable || 'Ad Promotion'}</p>
                           <p className="text-xs text-slate-500 font-medium">
                             Listing: {tx.listing_title ? (
                               <Link href={`/item/${tx.listing_id}`} className="text-primary hover:underline">{tx.listing_title}</Link>
                             ) : (
-                              <span className="text-slate-400 italic">Deleted listing</span>
+                              <span className="text-slate-400 italic">Listing #{tx.listing_id}</span>
                             )}
                           </p>
                         </div>
@@ -175,14 +178,14 @@ const PaymentPortal: React.FC = () => {
                       <td className="px-6 py-4 font-black text-slate-700">${parseFloat(tx.amount).toFixed(2)}</td>
                       <td className="px-6 py-4">
                         <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] uppercase font-black tracking-widest ${
-                          tx.status === 'approved' 
+                          tx.status === 'approved' || tx.status === 'completed'
                             ? 'bg-green-50 text-green-700' 
                             : tx.status === 'declined' 
                               ? 'bg-red-50 text-red-700' 
                               : 'bg-amber-50 text-amber-700'
                         }`}>
                           <span className={`w-1.5 h-1.5 rounded-full ${
-                            tx.status === 'approved' 
+                            tx.status === 'approved' || tx.status === 'completed'
                               ? 'bg-green-500' 
                               : tx.status === 'declined' 
                                 ? 'bg-red-500' 
@@ -196,6 +199,15 @@ const PaymentPortal: React.FC = () => {
                         {tx.receipt_id && (
                           <p className="text-[10px] text-slate-400 font-mono mt-0.5">Receipt: {tx.receipt_id}</p>
                         )}
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <button
+                          onClick={() => setSelectedInvoice(tx.invoice || null)}
+                          className="inline-flex items-center gap-1 text-[11px] font-bold text-primary bg-primary/5 hover:bg-primary/10 px-3 py-1.5 rounded-xl border border-primary/20 transition-all cursor-pointer shadow-xs"
+                        >
+                          <span className="material-icons text-xs">receipt</span>
+                          Invoice
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -284,6 +296,13 @@ const PaymentPortal: React.FC = () => {
             window.location.reload();
           }}
           onCancel={() => setShowCheckoutModal(false)}
+        />
+      )}
+
+      {selectedInvoice && (
+        <InvoiceModal
+          invoice={selectedInvoice}
+          onClose={() => setSelectedInvoice(null)}
         />
       )}
     </div>

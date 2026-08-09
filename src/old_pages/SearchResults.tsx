@@ -574,7 +574,11 @@ const SearchResults: React.FC = () => {
               >
                 <div className="w-full aspect-[4/3] flex-shrink-0 relative bg-slate-100 flex items-center justify-center overflow-hidden">
                   <img src={item.image || 'https://picsum.photos/seed/default/800/600'} alt={item.title} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                  {item.is_featured ? (
+                  {item.is_home_gallery ? (
+                    <div className="absolute top-3 left-3 bg-blue-600 text-white text-[10px] font-black px-2.5 py-0.5 rounded-md flex items-center gap-1 shadow-sm">
+                      <span className="material-icons text-xs">home</span> HOME PAGE
+                    </div>
+                  ) : item.is_featured ? (
                     <div className="absolute top-3 left-3 bg-primary text-white text-[10px] font-black px-2 py-0.5 rounded-md flex items-center gap-1 shadow-sm">
                       <span className="material-icons text-xs">star</span> FEATURED
                     </div>

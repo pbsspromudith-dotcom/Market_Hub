@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { sendEmail } from '@/lib/email';
+import { buildInvoiceData, generateInvoiceEmailHtml } from '@/lib/invoice';
 
 export async function POST(req: Request) {
   try {
@@ -25,7 +27,7 @@ export async function POST(req: Request) {
       // Check if already completed (idempotent)
       const { data: completed } = await supabase
         .from('transactions')
-        .select('receipt_id')
+        .select('*')
         .eq('ticket', ticket)
         .eq('status', 'completed')
         .maybeSingle();
@@ -108,7 +110,7 @@ export async function POST(req: Request) {
       expiresAt.setDate(expiresAt.getDate() + maxDurationDays);
       promoUpdate.promotion_expires_at = expiresAt.toISOString();
 
-      // 5. Use sequential queries to update both records
+      // 5. Update transaction record
       const { error: txError } = await supabase
         .from('transactions')
         .update({
@@ -129,9 +131,38 @@ export async function POST(req: Request) {
         
       if (listingError) throw listingError;
 
+      // 6. Fetch user & listing details to build official Invoice and send email
+      const { data: user } = await supabase
+        .from('users')
+        .select('id, name, email, phone')
+        .eq('id', transaction.user_id)
+        .maybeSingle();
+
+      const { data: listing } = await supabase
+        .from('listings')
+        .select('id, title')
+        .eq('id', transaction.listing_id)
+        .maybeSingle();
+
+      const invoiceData = buildInvoiceData({ ...transaction, status: 'completed', receipt_id: receiptId }, user, listing);
+
+      if (user?.email) {
+        try {
+          const emailHtml = generateInvoiceEmailHtml(invoiceData);
+          await sendEmail(
+            user.email,
+            `Official Invoice ${invoiceData.invoiceNo} - HitAds.ca Promotion Payment`,
+            emailHtml
+          );
+        } catch (emailErr) {
+          console.error('Failed to send invoice email:', emailErr);
+        }
+      }
+
       return NextResponse.json({
         success: true,
         receipt_id: receiptId,
+        invoice: invoiceData,
         promotions_activated: promotions,
         expires_at: expiresAt.toISOString(),
       });

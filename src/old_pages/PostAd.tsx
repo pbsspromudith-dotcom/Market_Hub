@@ -2595,17 +2595,32 @@ const PostAd: React.FC = () => {
                           <span className="font-bold text-slate-800">${calculatePrice('home_gallery', promotionData.home_gallery_duration, 14.99).toFixed(2)}</span>
                         </div>
                       )}
-                      <div className="border-t border-slate-200 pt-3 mt-3 flex justify-between items-center">
-                        <span className="text-sm font-black text-slate-900">Total</span>
-                        <span className="text-lg font-black text-blue-600">
-                          ${(
-                            (promotionData.is_top_ad ? calculatePrice('top_ad', promotionData.top_ad_duration, 9.99) : 0) +
-                            (promotionData.is_highlighted ? calculatePrice('highlighted', promotionData.highlighted_duration, 4.99) : 0) +
-                            (promotionData.is_urgent ? calculatePrice('urgent', promotionData.urgent_duration, 5.99) : 0) +
-                            (promotionData.is_home_gallery ? calculatePrice('home_gallery', promotionData.home_gallery_duration, 14.99) : 0)
-                          ).toFixed(2)}
-                        </span>
-                      </div>
+                      {(() => {
+                        const subtotal = (
+                          (promotionData.is_top_ad ? calculatePrice('top_ad', promotionData.top_ad_duration, 9.99) : 0) +
+                          (promotionData.is_highlighted ? calculatePrice('highlighted', promotionData.highlighted_duration, 4.99) : 0) +
+                          (promotionData.is_urgent ? calculatePrice('urgent', promotionData.urgent_duration, 5.99) : 0) +
+                          (promotionData.is_home_gallery ? calculatePrice('home_gallery', promotionData.home_gallery_duration, 14.99) : 0)
+                        );
+                        const tax = Math.round(subtotal * 0.13 * 100) / 100;
+                        const total = Math.round((subtotal + tax) * 100) / 100;
+                        return (
+                          <div className="border-t border-slate-200 pt-3 mt-3 space-y-2">
+                            <div className="flex justify-between items-center text-sm">
+                              <span className="text-slate-600 font-medium">Subtotal</span>
+                              <span className="font-bold text-slate-800">${subtotal.toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-sm">
+                              <span className="text-slate-600 font-medium">Tax (13%)</span>
+                              <span className="font-bold text-slate-800">${tax.toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-sm pt-2 border-t border-slate-200">
+                              <span className="text-sm font-black text-slate-900">Total</span>
+                              <span className="text-lg font-black text-blue-600">${total.toFixed(2)}</span>
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </div>
                   </div>
                 )}

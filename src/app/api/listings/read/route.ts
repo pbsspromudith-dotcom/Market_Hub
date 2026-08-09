@@ -81,6 +81,26 @@ export async function GET(req: Request) {
       };
     });
 
+    // Auto-update expired records in database asynchronously
+    const expiredIds = listingsList
+      .filter(row => row.promotion_expires_at && new Date(row.promotion_expires_at) < new Date() && (row.is_top_ad || row.is_highlighted || row.is_urgent || row.is_home_gallery))
+      .map(row => row.id);
+
+    if (expiredIds.length > 0) {
+      supabase
+        .from('listings')
+        .update({
+          is_top_ad: false,
+          is_highlighted: false,
+          is_urgent: false,
+          is_home_gallery: false,
+        })
+        .in('id', expiredIds)
+        .then(({ error }) => {
+          if (error) console.error('Error auto-clearing expired promotions in DB:', error);
+        });
+    }
+
     // Sort: Top ads first, then by newest
     mappedListings.sort((a, b) => {
       if (a.is_top_ad && !b.is_top_ad) return -1;

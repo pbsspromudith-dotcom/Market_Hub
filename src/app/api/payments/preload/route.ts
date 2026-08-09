@@ -36,7 +36,7 @@ export async function POST(req: Request) {
       price: Number(r.price),
     }));
 
-    let total = 0;
+    let subtotal = 0;
     const selectedPromotions: string[] = [];
 
     // Helper to calculate price
@@ -51,36 +51,37 @@ export async function POST(req: Request) {
     };
 
     if (typeof body.custom_amount === 'number' && body.custom_amount > 0) {
-      total = Number(body.custom_amount);
+      subtotal = Number(body.custom_amount);
       selectedPromotions.push('test_checkout');
     } else {
       if (is_top_ad) { 
-        total += calculatePrice('top_ad', top_ad_duration, 9.99); 
+        subtotal += calculatePrice('top_ad', top_ad_duration, 9.99); 
         selectedPromotions.push(`top_ad:${top_ad_duration}`); 
       }
       if (is_highlighted) { 
-        total += calculatePrice('highlighted', highlighted_duration, 4.99); 
+        subtotal += calculatePrice('highlighted', highlighted_duration, 4.99); 
         selectedPromotions.push(`highlighted:${highlighted_duration}`); 
       }
       if (is_urgent) { 
-        total += calculatePrice('urgent', urgent_duration, 5.99); 
+        subtotal += calculatePrice('urgent', urgent_duration, 5.99); 
         selectedPromotions.push(`urgent:${urgent_duration}`); 
       }
       if (is_home_gallery) { 
-        total += calculatePrice('home_gallery', home_gallery_duration, 14.99); 
+        subtotal += calculatePrice('home_gallery', home_gallery_duration, 14.99); 
         selectedPromotions.push(`home_gallery:${home_gallery_duration}`); 
       }
     }
 
-    if (total === 0) {
+    if (subtotal === 0) {
       return NextResponse.json(
         { success: false, message: 'No promotions selected' },
         { status: 400 }
       );
     }
 
-    // Round to 2 decimal places to avoid floating point issues
-    total = Math.round(total * 100) / 100;
+    // Apply 13% HST Tax
+    const tax = Math.round(subtotal * 0.13 * 100) / 100;
+    const total = Math.round((subtotal + tax) * 100) / 100;
 
     // 2. Generate unique order number
     const orderNo = `HITADS-${listing_id}-${Date.now()}`;
@@ -152,6 +153,8 @@ export async function POST(req: Request) {
     return NextResponse.json({
       success: true,
       ticket: ticket,
+      subtotal: subtotal,
+      tax: tax,
       amount: total,
       environment: environment,
       order_no: orderNo,
