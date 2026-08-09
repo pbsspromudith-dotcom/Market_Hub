@@ -254,16 +254,23 @@ const SearchResults: React.FC = () => {
 
     return true;
   }).sort((a, b) => {
-    // If we have a search query and the sort option is "Most Recent" (default), sort by relevance score first!
+    // 1. Top Ads ALWAYS come first in the category listings!
+    if (a.is_top_ad && !b.is_top_ad) return -1;
+    if (!a.is_top_ad && b.is_top_ad) return 1;
+
+    // 2. If we have a search query and the sort option is "Most Recent" (default), sort by relevance score
     if (searchQuery && sortOption === 'Most Recent') {
       if (b.relevanceScore !== a.relevanceScore) {
         return b.relevanceScore - a.relevanceScore;
       }
     }
-    // Fall back to standard sort options
+    // 3. Fall back to standard sort options
     if (sortOption === 'Price: Low to High') return Number(a.price) - Number(b.price);
     if (sortOption === 'Price: High to Low') return Number(b.price) - Number(a.price);
-    return b.id - a.id;
+
+    const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+    const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+    return dateB - dateA || b.id - a.id;
   });
 
   const totalPages = Math.max(1, Math.ceil(filteredListings.length / ITEMS_PER_PAGE));
@@ -570,16 +577,26 @@ const SearchResults: React.FC = () => {
               {paginatedListings.map((item) => (
               <Link href={`/item/${item.id}`} 
                 key={item.id} 
-                className={`group flex flex-col bg-white rounded-2xl border overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all ${item.is_featured ? 'border-primary/30 ring-1 ring-primary/10' : 'border-slate-200'}`}
+                className={`group flex flex-col bg-white rounded-2xl border overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all ${
+                  item.is_top_ad
+                    ? 'border-amber-400/80 ring-2 ring-amber-400/20 bg-amber-50/10'
+                    : item.is_featured 
+                      ? 'border-primary/30 ring-1 ring-primary/10' 
+                      : 'border-slate-200'
+                }`}
               >
                 <div className="w-full aspect-[4/3] flex-shrink-0 relative bg-slate-100 flex items-center justify-center overflow-hidden">
                   <img src={item.image || 'https://picsum.photos/seed/default/800/600'} alt={item.title} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                  {item.is_home_gallery ? (
-                    <div className="absolute top-3 left-3 bg-blue-600 text-white text-[10px] font-black px-2.5 py-0.5 rounded-md flex items-center gap-1 shadow-sm">
+                  {item.is_top_ad ? (
+                    <div className="absolute top-3 left-3 bg-amber-500 text-slate-900 text-[10px] font-black px-2.5 py-0.5 rounded-md flex items-center gap-1 shadow-sm uppercase tracking-wide">
+                      <span className="material-icons text-xs">arrow_upward</span> TOP AD
+                    </div>
+                  ) : item.is_home_gallery ? (
+                    <div className="absolute top-3 left-3 bg-blue-600 text-white text-[10px] font-black px-2.5 py-0.5 rounded-md flex items-center gap-1 shadow-sm uppercase tracking-wide">
                       <span className="material-icons text-xs">home</span> HOME PAGE
                     </div>
                   ) : item.is_featured ? (
-                    <div className="absolute top-3 left-3 bg-primary text-white text-[10px] font-black px-2 py-0.5 rounded-md flex items-center gap-1 shadow-sm">
+                    <div className="absolute top-3 left-3 bg-primary text-white text-[10px] font-black px-2 py-0.5 rounded-md flex items-center gap-1 shadow-sm uppercase tracking-wide">
                       <span className="material-icons text-xs">star</span> FEATURED
                     </div>
                   ) : null}
