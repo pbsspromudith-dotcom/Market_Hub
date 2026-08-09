@@ -217,7 +217,7 @@ const PaymentPortal: React.FC = () => {
                 { name: 'Top Ad', price: '$9.99', desc: 'Keeps ad at top of listings' },
                 { name: 'Highlighted', price: '$4.99', desc: 'Bright styled stand-out bg' },
                 { name: 'Urgent', price: '$5.99', desc: 'Urgent call-out ribbon tag' },
-                { name: 'Home Gallery', price: '$14.99', desc: 'Featured on home carousel' },
+                { name: 'Home Page', price: '$14.99', desc: 'Featured on home carousel' },
               ].map((pkg) => (
                 <li key={pkg.name} className="flex justify-between items-start border-b border-primary/10 pb-3 last:border-0 last:pb-0">
                   <div>

@@ -17,11 +17,16 @@ const UserProfile: React.FC = () => {
   const [editData, setEditData] = useState<any>({ name: '', phone: '' });
   const [isPromoteModalOpen, setIsPromoteModalOpen] = useState(false);
   const [selectedListing, setSelectedListing] = useState<any>(null);
+  const [promotionPricing, setPromotionPricing] = useState<any[]>([]);
   const [promotionData, setPromotionData] = useState({
     is_top_ad: false,
     is_highlighted: false,
     is_urgent: false,
-    is_home_gallery: false
+    is_home_gallery: false,
+    top_ad_duration: 7,
+    highlighted_duration: 7,
+    urgent_duration: 7,
+    home_gallery_duration: 7
   });
 
   // Moneris payment state
@@ -118,6 +123,69 @@ const UserProfile: React.FC = () => {
       .finally(() => setIsMessagesLoading(false));
   }, []);
 
+  useEffect(() => {
+    fetch('/api/promotions/pricing')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.data)) {
+          setPromotionPricing(data.data);
+          setPromotionData((prev) => {
+            const getValidDuration = (type: string, currentDuration: number) => {
+              const opts = data.data.filter((p: any) => p.promotion_type?.toLowerCase().replace(/\s+/g, '_') === type.toLowerCase().replace(/\s+/g, '_'));
+              if (opts.length > 0) {
+                const match = opts.find((p: any) => Number(p.duration_days) === Number(currentDuration));
+                if (match) return Number(match.duration_days);
+                return Number(opts[0].duration_days);
+              }
+              return currentDuration;
+            };
+
+            return {
+              ...prev,
+              top_ad_duration: getValidDuration('top_ad', prev.top_ad_duration),
+              highlighted_duration: getValidDuration('highlighted', prev.highlighted_duration),
+              urgent_duration: getValidDuration('urgent', prev.urgent_duration),
+              home_gallery_duration: getValidDuration('home_gallery', prev.home_gallery_duration),
+            };
+          });
+        }
+      })
+      .catch(console.error);
+  }, []);
+
+  const getPromotionOptions = (type: string, fallbackPrice: number) => {
+    const normType = type.toLowerCase().replace(/\s+/g, '_');
+    const opts = promotionPricing.filter(
+      (p: any) => p.promotion_type?.toLowerCase().replace(/\s+/g, '_') === normType
+    );
+    if (opts.length > 0) return opts;
+    return [{ duration_days: 7, price: fallbackPrice }];
+  };
+
+  const calculatePromoPrice = (type: string, duration: number, fallbackPrice: number) => {
+    const opts = getPromotionOptions(type, fallbackPrice);
+    const match = opts.find((p: any) => Number(p.duration_days) === Number(duration));
+    if (match) return Number(match.price);
+    return Number(opts[0]?.price || fallbackPrice);
+  };
+
+  const getTotalPromotionCost = () => {
+    let total = 0;
+    if (promotionData.is_top_ad) {
+      total += calculatePromoPrice('top_ad', promotionData.top_ad_duration, 9.99);
+    }
+    if (promotionData.is_highlighted) {
+      total += calculatePromoPrice('highlighted', promotionData.highlighted_duration, 4.99);
+    }
+    if (promotionData.is_urgent) {
+      total += calculatePromoPrice('urgent', promotionData.urgent_duration, 5.99);
+    }
+    if (promotionData.is_home_gallery) {
+      total += calculatePromoPrice('home_gallery', promotionData.home_gallery_duration, 14.99);
+    }
+    return Math.round(total * 100) / 100;
+  };
+
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -196,11 +264,21 @@ const UserProfile: React.FC = () => {
 
   const openPromoteModal = (listing: any) => {
     setSelectedListing(listing);
+    
+    const getDefaultDuration = (type: string, fallback: number) => {
+      const opts = getPromotionOptions(type, fallback);
+      return opts.length > 0 ? Number(opts[0].duration_days) : fallback;
+    };
+
     setPromotionData({
       is_top_ad: !!listing.is_top_ad,
       is_highlighted: !!listing.is_highlighted,
       is_urgent: !!listing.is_urgent,
-      is_home_gallery: !!listing.is_home_gallery
+      is_home_gallery: !!listing.is_home_gallery,
+      top_ad_duration: getDefaultDuration('top_ad', 7),
+      highlighted_duration: getDefaultDuration('highlighted', 7),
+      urgent_duration: getDefaultDuration('urgent', 7),
+      home_gallery_duration: getDefaultDuration('home_gallery', 7),
     });
     setIsPromoteModalOpen(true);
   };
@@ -208,12 +286,7 @@ const UserProfile: React.FC = () => {
   const handlePromoteSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Calculate total cost
-    let total = 0;
-    if (promotionData.is_top_ad) total += 9.99;
-    if (promotionData.is_highlighted) total += 4.99;
-    if (promotionData.is_urgent) total += 5.99;
-    if (promotionData.is_home_gallery) total += 14.99;
+    const total = getTotalPromotionCost();
 
     if (total === 0) {
       showAlert("Please select at least one promotion option.", "error");
@@ -550,7 +623,7 @@ const UserProfile: React.FC = () => {
                     <span className={`text-[10px] font-bold px-2 py-1 rounded border ${listing.is_top_ad ? 'bg-amber-100 text-amber-700 border-amber-200 shadow-sm' : 'bg-white text-slate-400 border-slate-200 grayscale opacity-60'}`}>Top Ad</span>
                     <span className={`text-[10px] font-bold px-2 py-1 rounded border ${listing.is_highlighted ? 'bg-yellow-100 text-yellow-700 border-yellow-200 shadow-sm' : 'bg-white text-slate-400 border-slate-200 grayscale opacity-60'}`}>Highlighted</span>
                     <span className={`text-[10px] font-bold px-2 py-1 rounded border ${listing.is_urgent ? 'bg-red-100 text-red-700 border-red-200 shadow-sm' : 'bg-white text-slate-400 border-slate-200 grayscale opacity-60'}`}>Urgent</span>
-                    <span className={`text-[10px] font-bold px-2 py-1 rounded border ${listing.is_home_gallery ? 'bg-blue-100 text-blue-700 border-blue-200 shadow-sm' : 'bg-white text-slate-400 border-slate-200 grayscale opacity-60'}`}>Home Gallery</span>
+                    <span className={`text-[10px] font-bold px-2 py-1 rounded border ${listing.is_home_gallery ? 'bg-blue-100 text-blue-700 border-blue-200 shadow-sm' : 'bg-white text-slate-400 border-slate-200 grayscale opacity-60'}`}>Home Page</span>
                   </div>
                   <button onClick={() => openPromoteModal(listing)} className="w-full bg-primary hover:bg-primary-hover text-white text-[11px] font-black uppercase tracking-widest py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-primary/25 mt-auto hover:-translate-y-0.5">
                     <span className="material-icons text-base">campaign</span>
@@ -795,89 +868,164 @@ const UserProfile: React.FC = () => {
               <p className="text-xs text-slate-500">Select promotions to make your ad stand out.</p>
             </div>
             <form onSubmit={handlePromoteSubmit} className="space-y-4">
-              <label className="flex items-center p-4 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors">
-                <input 
-                  type="checkbox" 
-                  checked={promotionData.is_top_ad} 
-                  onChange={e => setPromotionData({...promotionData, is_top_ad: e.target.checked})}
-                  className="w-5 h-5 text-primary rounded border-slate-300 focus:ring-primary"
-                />
-                <div className="ml-3 flex-1 flex justify-between items-center">
-                  <div>
-                    <p className="text-sm font-bold text-slate-800">Top Ad</p>
-                    <p className="text-[10px] text-slate-500">Appears at the very top of search results.</p>
+              {/* Top Ad */}
+              <div className={`p-4 border rounded-xl transition-colors ${promotionData.is_top_ad ? 'border-amber-300 bg-amber-50/40' : 'border-slate-200 hover:bg-slate-50'}`}>
+                <div className="flex items-center justify-between gap-3">
+                  <label className="flex items-center gap-3 cursor-pointer flex-1 min-w-0">
+                    <input 
+                      type="checkbox" 
+                      checked={promotionData.is_top_ad} 
+                      onChange={e => setPromotionData({...promotionData, is_top_ad: e.target.checked})}
+                      className="w-5 h-5 text-amber-600 rounded border-slate-300 focus:ring-amber-500 shrink-0 cursor-pointer"
+                    />
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+                        <span>Top Ad</span>
+                        <span className="text-[10px] font-black bg-amber-100 text-amber-800 px-2 py-0.5 rounded">
+                          ${calculatePromoPrice('top_ad', promotionData.top_ad_duration, 9.99).toFixed(2)}
+                        </span>
+                      </p>
+                      <p className="text-[10px] text-slate-500">Appears at the very top of search results.</p>
+                    </div>
+                  </label>
+                  <div className="shrink-0">
+                    <select 
+                      value={promotionData.top_ad_duration}
+                      onChange={e => setPromotionData({ ...promotionData, top_ad_duration: Number(e.target.value) })}
+                      className="text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none shadow-xs cursor-pointer"
+                    >
+                      {getPromotionOptions('top_ad', 9.99).map((opt: any) => (
+                        <option key={opt.duration_days} value={opt.duration_days}>
+                          {opt.duration_days} Days (${Number(opt.price).toFixed(2)})
+                        </option>
+                      ))}
+                    </select>
                   </div>
-                  <span className="text-xs font-black bg-amber-50 text-amber-700 px-2 py-1 rounded border border-amber-100 shrink-0">$9.99</span>
                 </div>
-              </label>
+              </div>
               
-              <label className="flex items-center p-4 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors">
-                <input 
-                  type="checkbox" 
-                  checked={promotionData.is_highlighted} 
-                  onChange={e => setPromotionData({...promotionData, is_highlighted: e.target.checked})}
-                  className="w-5 h-5 text-yellow-500 rounded border-slate-300 focus:ring-yellow-500"
-                />
-                <div className="ml-3 flex-1 flex justify-between items-center">
-                  <div>
-                    <p className="text-sm font-bold text-slate-800">Highlighted</p>
-                    <p className="text-[10px] text-slate-500">Ad stands out with a bright highlighted background.</p>
+              {/* Highlighted */}
+              <div className={`p-4 border rounded-xl transition-colors ${promotionData.is_highlighted ? 'border-yellow-300 bg-yellow-50/40' : 'border-slate-200 hover:bg-slate-50'}`}>
+                <div className="flex items-center justify-between gap-3">
+                  <label className="flex items-center gap-3 cursor-pointer flex-1 min-w-0">
+                    <input 
+                      type="checkbox" 
+                      checked={promotionData.is_highlighted} 
+                      onChange={e => setPromotionData({...promotionData, is_highlighted: e.target.checked})}
+                      className="w-5 h-5 text-yellow-500 rounded border-slate-300 focus:ring-yellow-500 shrink-0 cursor-pointer"
+                    />
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+                        <span>Highlighted</span>
+                        <span className="text-[10px] font-black bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded">
+                          ${calculatePromoPrice('highlighted', promotionData.highlighted_duration, 4.99).toFixed(2)}
+                        </span>
+                      </p>
+                      <p className="text-[10px] text-slate-500">Ad stands out with a bright highlighted background.</p>
+                    </div>
+                  </label>
+                  <div className="shrink-0">
+                    <select 
+                      value={promotionData.highlighted_duration}
+                      onChange={e => setPromotionData({ ...promotionData, highlighted_duration: Number(e.target.value) })}
+                      className="text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 outline-none shadow-xs cursor-pointer"
+                    >
+                      {getPromotionOptions('highlighted', 4.99).map((opt: any) => (
+                        <option key={opt.duration_days} value={opt.duration_days}>
+                          {opt.duration_days} Days (${Number(opt.price).toFixed(2)})
+                        </option>
+                      ))}
+                    </select>
                   </div>
-                  <span className="text-xs font-black bg-yellow-50 text-yellow-700 px-2 py-1 rounded border border-yellow-100 shrink-0">$4.99</span>
                 </div>
-              </label>
+              </div>
 
-              <label className="flex items-center p-4 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors">
-                <input 
-                  type="checkbox" 
-                  checked={promotionData.is_urgent} 
-                  onChange={e => setPromotionData({...promotionData, is_urgent: e.target.checked})}
-                  className="w-5 h-5 text-red-500 rounded border-slate-300 focus:ring-red-500"
-                />
-                <div className="ml-3 flex-1 flex justify-between items-center">
-                  <div>
-                    <p className="text-sm font-bold text-slate-800">Urgent</p>
-                    <p className="text-[10px] text-slate-500">Mark as urgent to sell faster.</p>
+              {/* Urgent */}
+              <div className={`p-4 border rounded-xl transition-colors ${promotionData.is_urgent ? 'border-red-300 bg-red-50/40' : 'border-slate-200 hover:bg-slate-50'}`}>
+                <div className="flex items-center justify-between gap-3">
+                  <label className="flex items-center gap-3 cursor-pointer flex-1 min-w-0">
+                    <input 
+                      type="checkbox" 
+                      checked={promotionData.is_urgent} 
+                      onChange={e => setPromotionData({...promotionData, is_urgent: e.target.checked})}
+                      className="w-5 h-5 text-red-500 rounded border-slate-300 focus:ring-red-500 shrink-0 cursor-pointer"
+                    />
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+                        <span>Urgent</span>
+                        <span className="text-[10px] font-black bg-red-100 text-red-800 px-2 py-0.5 rounded">
+                          ${calculatePromoPrice('urgent', promotionData.urgent_duration, 5.99).toFixed(2)}
+                        </span>
+                      </p>
+                      <p className="text-[10px] text-slate-500">Mark as urgent to sell faster.</p>
+                    </div>
+                  </label>
+                  <div className="shrink-0">
+                    <select 
+                      value={promotionData.urgent_duration}
+                      onChange={e => setPromotionData({ ...promotionData, urgent_duration: Number(e.target.value) })}
+                      className="text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none shadow-xs cursor-pointer"
+                    >
+                      {getPromotionOptions('urgent', 5.99).map((opt: any) => (
+                        <option key={opt.duration_days} value={opt.duration_days}>
+                          {opt.duration_days} Days (${Number(opt.price).toFixed(2)})
+                        </option>
+                      ))}
+                    </select>
                   </div>
-                  <span className="text-xs font-black bg-red-50 text-red-700 px-2 py-1 rounded border border-red-100 shrink-0">$5.99</span>
                 </div>
-              </label>
+              </div>
 
-              <label className="flex items-center p-4 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors">
-                <input 
-                  type="checkbox" 
-                  checked={promotionData.is_home_gallery} 
-                  onChange={e => setPromotionData({...promotionData, is_home_gallery: e.target.checked})}
-                  className="w-5 h-5 text-blue-500 rounded border-slate-300 focus:ring-blue-500"
-                />
-                <div className="ml-3 flex-1 flex justify-between items-center">
-                  <div>
-                    <p className="text-sm font-bold text-slate-800">Home Gallery</p>
-                    <p className="text-[10px] text-slate-500">Showcase your ad on the homepage gallery.</p>
+              {/* Home Gallery */}
+              <div className={`p-4 border rounded-xl transition-colors ${promotionData.is_home_gallery ? 'border-blue-300 bg-blue-50/40' : 'border-slate-200 hover:bg-slate-50'}`}>
+                <div className="flex items-center justify-between gap-3">
+                  <label className="flex items-center gap-3 cursor-pointer flex-1 min-w-0">
+                    <input 
+                      type="checkbox" 
+                      checked={promotionData.is_home_gallery} 
+                      onChange={e => setPromotionData({...promotionData, is_home_gallery: e.target.checked})}
+                      className="w-5 h-5 text-blue-500 rounded border-slate-300 focus:ring-blue-500 shrink-0 cursor-pointer"
+                    />
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+                        <span>Home Page</span>
+                        <span className="text-[10px] font-black bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
+                          ${calculatePromoPrice('home_gallery', promotionData.home_gallery_duration, 14.99).toFixed(2)}
+                        </span>
+                      </p>
+                      <p className="text-[10px] text-slate-500">Showcase your ad on the homepage gallery.</p>
+                    </div>
+                  </label>
+                  <div className="shrink-0">
+                    <select 
+                      value={promotionData.home_gallery_duration}
+                      onChange={e => setPromotionData({ ...promotionData, home_gallery_duration: Number(e.target.value) })}
+                      className="text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none shadow-xs cursor-pointer"
+                    >
+                      {getPromotionOptions('home_gallery', 14.99).map((opt: any) => (
+                        <option key={opt.duration_days} value={opt.duration_days}>
+                          {opt.duration_days} Days (${Number(opt.price).toFixed(2)})
+                        </option>
+                      ))}
+                    </select>
                   </div>
-                  <span className="text-xs font-black bg-blue-50 text-blue-700 px-2 py-1 rounded border border-blue-100 shrink-0">$14.99</span>
                 </div>
-              </label>
+              </div>
 
               <div className="pt-4 flex gap-3">
                 <button
                   type="button"
                   onClick={() => setIsPromoteModalOpen(false)}
-                  className="flex-1 px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-sm transition-colors"
+                  className="flex-1 px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-sm transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-3 bg-primary hover:bg-primary-hover text-white font-bold rounded-xl text-sm transition-colors shadow-lg shadow-primary/20 flex items-center justify-center gap-1.5"
+                  className="flex-1 px-4 py-3 bg-primary hover:bg-primary-hover text-white font-bold rounded-xl text-sm transition-colors shadow-lg shadow-primary/20 flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <span className="material-icons text-sm">payment</span>
-                  Proceed to Pay ${(
-                    (promotionData.is_top_ad ? 9.99 : 0) +
-                    (promotionData.is_highlighted ? 4.99 : 0) +
-                    (promotionData.is_urgent ? 5.99 : 0) +
-                    (promotionData.is_home_gallery ? 14.99 : 0)
-                  ).toFixed(2)}
+                  Proceed to Pay ${getTotalPromotionCost().toFixed(2)}
                 </button>
               </div>
             </form>

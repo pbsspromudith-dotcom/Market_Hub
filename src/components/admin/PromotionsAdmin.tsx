@@ -116,7 +116,7 @@ export default function PromotionsAdmin() {
                   <option value="top_ad">Top Ad</option>
                   <option value="highlighted">Highlighted</option>
                   <option value="urgent">Urgent</option>
-                  <option value="home_gallery">Home Gallery</option>
+                  <option value="home_gallery">Home Page</option>
                 </select>
               </div>
 
@@ -184,7 +184,7 @@ export default function PromotionsAdmin() {
                 {promotions.map((promo: any) => (
                   <tr key={promo.id} className="hover:bg-slate-50 transition-colors">
                     <td className="p-4 text-sm font-bold text-slate-800 capitalize">
-                      {promo.promotion_type.replace('_', ' ')}
+                      {promo.promotion_type === 'home_gallery' ? 'Home Page' : promo.promotion_type.replace('_', ' ')}
                     </td>
                     <td className="p-4 text-sm text-slate-600 font-medium">
                       {promo.duration_days} Days

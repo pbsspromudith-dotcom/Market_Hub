@@ -2519,7 +2519,7 @@ const PostAd: React.FC = () => {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap mb-1">
-                          <span className="text-sm font-black text-slate-900">Home Gallery</span>
+                          <span className="text-sm font-black text-slate-900">Home Page</span>
                           <span className="inline-flex items-center text-[11px] font-bold bg-gradient-to-r from-amber-100 to-orange-100 text-amber-700 px-2.5 py-0.5 rounded-lg">
                             ${calculatePrice('home_gallery', promotionData.home_gallery_duration, 14.99).toFixed(2)}
                           </span>
@@ -2590,7 +2590,7 @@ const PostAd: React.FC = () => {
                       {promotionData.is_home_gallery && (
                         <div className="flex justify-between items-center text-sm">
                           <span className="text-slate-600 font-medium flex items-center gap-2">
-                            <span className="text-base leading-none">&#127968;</span> Home Gallery <span className="text-xs text-slate-400">({promotionData.home_gallery_duration} days)</span>
+                            <span className="text-base leading-none">&#127968;</span> Home Page <span className="text-xs text-slate-400">({promotionData.home_gallery_duration} days)</span>
                           </span>
                           <span className="font-bold text-slate-800">${calculatePrice('home_gallery', promotionData.home_gallery_duration, 14.99).toFixed(2)}</span>
                         </div>

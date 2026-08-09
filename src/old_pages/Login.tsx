@@ -37,10 +37,20 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [pendingEmail, setPendingEmail] = useState("");
   const [resetToken, setResetToken] = useState("");
   const [resending, setResending] = useState(false);
+  const [isLocalhost, setIsLocalhost] = useState(false);
 
   useEffect(() => {
-    // legacy state sync removed
+    if (typeof window !== "undefined") {
+      const host = window.location.hostname;
+      if (host === "localhost" || host === "127.0.0.1" || host.startsWith("192.168.")) {
+        setIsLocalhost(true);
+      }
+    }
   }, []);
+
+  const recaptchaSiteKey = isLocalhost
+    ? "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"
+    : (process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || "6LfBW3ItAAAAAKGQxUXZX1OXG8LXEJ7BpzIqveJ7");
 
   // Handle ?verified=true or ?verified=already from verify redirect, or ?mode=reset&token=TOKEN
   useEffect(() => {
@@ -126,22 +136,9 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           },
           body: JSON.stringify({ email, password, captchaToken }),
         });
-        if (!response.ok) {
-          try {
-            const errData = await response.json();
-            setError(errData.message || `Server error ${response.status}`);
-          } catch {
-            setError(
-              `Server error ${response.status}: Please check if login is uploaded.`,
-            );
-          }
-          recaptchaRef.current?.reset();
-          setCaptchaToken(null);
-          return;
-        }
-        const data = await response.json();
+        const data = await response.json().catch(() => null);
 
-        if (data.success) {
+        if (response.ok && data?.success) {
           const userRole =
             data.user && data.user.role
               ? String(data.user.role).trim().toLowerCase()
@@ -151,14 +148,17 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
             "user",
             JSON.stringify({ ...data.user, isAdmin: isUserAdmin }),
           );
+          window.dispatchEvent(new Event("auth_updated"));
           onLogin();
           navigate.push("/");
-        } else if (data.needsVerification) {
+        } else if (data?.needsVerification) {
           // User exists but email not verified
           setPendingEmail(data.email || email);
           setAuthMode("verify-pending");
         } else {
-          setError(data.message || "Invalid email or password.");
+          setError(
+            data?.message || `Server error ${response.status}: Unable to log in.`
+          );
           recaptchaRef.current?.reset();
           setCaptchaToken(null);
         }
@@ -547,8 +547,9 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
             {authMode !== "reset" && (
               <div className="flex justify-center my-4 overflow-hidden rounded-xl">
                 <ReCAPTCHA
+                  key={isLocalhost ? "localhost" : "prod"}
                   ref={recaptchaRef}
-                  sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || "6LfBW3ItAAAAAKGQxUXZX1OXG8LXEJ7BpzIqveJ7"}
+                  sitekey={recaptchaSiteKey}
                   onChange={(token) => setCaptchaToken(token)}
                   onExpired={() => setCaptchaToken(null)}
                 />

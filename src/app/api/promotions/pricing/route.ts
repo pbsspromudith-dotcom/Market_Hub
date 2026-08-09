@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
+// GET active promotion pricing options
 export async function GET() {
   try {
     const { data: pricingOptions, error } = await supabase
