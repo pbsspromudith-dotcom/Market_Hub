@@ -1005,6 +1005,29 @@ const AdminDashboard: React.FC = () => {
     });
   };
 
+  const handleTogglePromotion = async (listingId: number, field: string, currentValue: boolean) => {
+    try {
+      const res = await fetch('/api/admin/listings/update_promotion', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          listing_id: listingId,
+          [field]: !currentValue,
+          duration_days: 30
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setListings((prev: any[]) => prev.map((l: any) => l.id === listingId ? { ...l, ...data.listing } : l));
+        showAlert('Promotion status updated successfully', 'success');
+      } else {
+        showAlert(data.message || 'Failed to update promotion', 'error');
+      }
+    } catch (err: any) {
+      showAlert('Error updating promotion: ' + err.message, 'error');
+    }
+  };
+
   const handleCreateOption = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newOptionValue.trim()) return;
@@ -1349,6 +1372,7 @@ const AdminDashboard: React.FC = () => {
                   <th className="px-6 py-4">Price</th>
                   <th className="px-6 py-4">Category</th>
                   <th className="px-6 py-4">Status</th>
+                  <th className="px-6 py-4">Promotions</th>
                   <th className="px-6 py-4 text-right rounded-r-xl">Actions</th>
                 </tr>
               </thead>
@@ -1411,6 +1435,43 @@ const AdminDashboard: React.FC = () => {
                           <span className="w-2 h-2 rounded-full bg-green-500"></span> Active
                         </span>
                       )}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <button
+                          onClick={() => handleTogglePromotion(l.id, 'is_home_gallery', !!l.is_home_gallery)}
+                          className={`px-2 py-1 rounded text-[10px] font-bold border transition-colors ${
+                            l.is_home_gallery
+                              ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                              : 'bg-slate-100 text-slate-400 border-slate-200 hover:border-blue-300 hover:text-blue-600'
+                          }`}
+                          title="Toggle Home Page Gallery Promotion"
+                        >
+                          Home Gallery
+                        </button>
+                        <button
+                          onClick={() => handleTogglePromotion(l.id, 'is_top_ad', !!l.is_top_ad)}
+                          className={`px-2 py-1 rounded text-[10px] font-bold border transition-colors ${
+                            l.is_top_ad
+                              ? 'bg-amber-500 text-white border-amber-500 shadow-sm'
+                              : 'bg-slate-100 text-slate-400 border-slate-200 hover:border-amber-300 hover:text-amber-600'
+                          }`}
+                          title="Toggle Top Ad Promotion"
+                        >
+                          Top Ad
+                        </button>
+                        <button
+                          onClick={() => handleTogglePromotion(l.id, 'is_featured', !!l.is_featured)}
+                          className={`px-2 py-1 rounded text-[10px] font-bold border transition-colors ${
+                            l.is_featured
+                              ? 'bg-purple-600 text-white border-purple-600 shadow-sm'
+                              : 'bg-slate-100 text-slate-400 border-slate-200 hover:border-purple-300 hover:text-purple-600'
+                          }`}
+                          title="Toggle Featured Ad Promotion"
+                        >
+                          Featured
+                        </button>
+                      </div>
                     </td>
                     <td className="px-6 py-4 text-right">
                       <button 

@@ -541,7 +541,16 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn, initialCategories = [], initial
                   
                   // Fallback to text search if no coordinates
                   if (locationSearch) {
-                    return item.location?.toLowerCase().includes(locationSearch.toLowerCase());
+                    const itemLoc = (item.location || "").toLowerCase().trim();
+                    const userLoc = (locationSearch || "").toLowerCase().trim();
+                    if (!itemLoc) return true;
+
+                    const userCity = userLoc.split(',')[0].trim();
+                    const itemCity = itemLoc.split(',')[0].trim();
+
+                    return itemLoc.includes(userLoc) || 
+                           userLoc.includes(itemLoc) || 
+                           (userCity && itemCity && (userCity.includes(itemCity) || itemCity.includes(userCity)));
                   }
                   return true;
                 })
