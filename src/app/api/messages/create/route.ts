@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { sendEmail, getThemedEmailHtml } from '@/lib/email';
 
 export async function POST(req: Request) {
   try {
@@ -85,9 +86,27 @@ export async function POST(req: Request) {
 
     if (insertError) throw insertError;
 
-    // We'll skip sending the real email here in local dev mode,
-    // just as we disabled emails for password reset previously.
-    const mailSent = false;
+    // Send email notification to receiver
+    let mailSent = false;
+    if (receiver_email) {
+      try {
+        const subject = `New Message regarding: ${listing_title}`;
+        const emailContent = `
+          <h2 style="margin-top: 0; color: #111111;">New Inquiry on Your Listing</h2>
+          <p>Hi <strong>${receiver_name || 'Seller'}</strong>,</p>
+          <p>You received a new message from <strong>${sender_name}</strong> for <strong>${listing_title}</strong>:</p>
+          <blockquote style="background: #f8fafc; border-left: 4px solid #FD3D28; padding: 12px 16px; margin: 16px 0; border-radius: 8px; color: #334155; font-style: italic;">
+            "${message.replace(/</g, '&lt;').replace(/>/g, '&gt;')}"
+          </blockquote>
+          <p style="margin-top: 20px;">Log in to your account dashboard on HitAds.ca to view and reply to this message.</p>
+        `;
+        const emailHtml = getThemedEmailHtml(subject, emailContent);
+        await sendEmail(receiver_email, subject, emailHtml);
+        mailSent = true;
+      } catch (emailErr) {
+        console.error('Failed to send message email notification:', emailErr);
+      }
+    }
 
     return NextResponse.json({
       success: true,
