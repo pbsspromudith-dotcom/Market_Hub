@@ -404,6 +404,8 @@ const AdminDashboard: React.FC = () => {
   const [seoForm, setSeoForm] = useState({ meta_title: '', meta_desc: '', keywords: '', focus_keyword: '', image_alt_text: '' });
   const [isSavingListingSeo, setIsSavingListingSeo] = useState(false);
   const [isGeneratingSeo, setIsGeneratingSeo] = useState(false);
+  const [isBatchProcessingSeo, setIsBatchProcessingSeo] = useState(false);
+  const [batchProgress, setBatchProgress] = useState({ current: 0, total: 0 });
   const [listingSeoMsg, setListingSeoMsg] = useState<{type: 'success' | 'error', text: string} | null>(null);
 
   useEffect(() => {
@@ -654,6 +656,45 @@ const AdminDashboard: React.FC = () => {
       setListingSeoMsg({ type: 'error', text: 'Failed to auto-generate SEO data.' });
     } finally {
       setIsGeneratingSeo(false);
+    }
+  };
+
+  const handleBatchProcessSeo = async () => {
+    if (seoListings.length === 0) return;
+    setIsBatchProcessingSeo(true);
+    setListingSeoMsg(null);
+    const totalItems = seoListings.length;
+    setBatchProgress({ current: 0, total: totalItems });
+
+    let processedCount = 0;
+    const batchSize = 5; // Chunked parallel batching
+
+    try {
+      for (let i = 0; i < seoListings.length; i += batchSize) {
+        const chunk = seoListings.slice(i, i + batchSize);
+        await Promise.all(
+          chunk.map(async (item: any) => {
+            const genRes = await fetch(`/api/listings/seo_generate?listing_id=${item.id}`);
+            const genData = await genRes.json();
+            if (genData.success && genData.generated) {
+              await fetch('/api/listings/seo_update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ listing_id: item.id, ...genData.generated }),
+              });
+            }
+          })
+        );
+        processedCount += chunk.length;
+        setBatchProgress({ current: Math.min(processedCount, totalItems), total: totalItems });
+      }
+      setListingSeoMsg({ type: 'success', text: `Batch processing complete! Successfully updated SEO metadata for ${totalItems} listings.` });
+      fetchListingSeo(seoPage);
+    } catch (err) {
+      setListingSeoMsg({ type: 'error', text: 'Error encountered during batch processing.' });
+    } finally {
+      setIsBatchProcessingSeo(false);
+      setTimeout(() => setListingSeoMsg(null), 6000);
     }
   };
 
@@ -2343,13 +2384,43 @@ const AdminDashboard: React.FC = () => {
                 <h2 className="text-2xl font-black text-slate-900">Listing SEO Manager</h2>
                 <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Manage meta titles, descriptions, keywords & image alt text per listing</p>
               </div>
-              <button
-                onClick={() => fetchListingSeo(1)}
-                className="self-start bg-slate-900 hover:bg-slate-800 text-white font-black py-3 px-6 rounded-xl transition-all text-xs uppercase tracking-widest flex items-center gap-2 shadow-md"
-              >
-                <span className="material-icons text-sm">refresh</span> Load Listings
-              </button>
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  onClick={handleBatchProcessSeo}
+                  disabled={isBatchProcessingSeo || seoListings.length === 0}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-black py-3 px-6 rounded-xl transition-all text-xs uppercase tracking-widest flex items-center gap-2 shadow-md disabled:opacity-50"
+                  title="Process SEO auto-generation in fast parallel batches"
+                >
+                  <span className="material-icons text-sm">{isBatchProcessingSeo ? 'sync' : 'bolt'}</span>
+                  {isBatchProcessingSeo ? `Batching (${batchProgress.current}/${batchProgress.total})` : 'Batch Auto-Generate (Page)'}
+                </button>
+                <button
+                  onClick={() => fetchListingSeo(1)}
+                  className="bg-slate-900 hover:bg-slate-800 text-white font-black py-3 px-6 rounded-xl transition-all text-xs uppercase tracking-widest flex items-center gap-2 shadow-md"
+                >
+                  <span className="material-icons text-sm">refresh</span> Refresh Listings
+                </button>
+              </div>
             </div>
+
+            {/* Batch Processing Progress Bar */}
+            {isBatchProcessingSeo && (
+              <div className="mb-6 p-4 bg-indigo-50 border border-indigo-100 rounded-2xl animate-in fade-in">
+                <div className="flex justify-between items-center text-xs font-bold text-indigo-700 mb-2">
+                  <span className="flex items-center gap-1.5">
+                    <span className="material-icons text-sm animate-spin">sync</span>
+                    Batch Processing SEO Metadata in Parallel Chunks...
+                  </span>
+                  <span>{batchProgress.current} / {batchProgress.total} listings ({batchProgress.total > 0 ? Math.round((batchProgress.current / batchProgress.total) * 100) : 0}%)</span>
+                </div>
+                <div className="w-full bg-indigo-200 rounded-full h-2 overflow-hidden">
+                  <div
+                    className="bg-indigo-600 h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${batchProgress.total > 0 ? (batchProgress.current / batchProgress.total) * 100 : 0}%` }}
+                  />
+                </div>
+              </div>
+            )}
 
             {/* Alert Messages */}
             {listingSeoMsg && (
