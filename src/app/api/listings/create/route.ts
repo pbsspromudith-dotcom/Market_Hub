@@ -20,6 +20,9 @@ export async function POST(req: Request) {
     // Determine if multi-city or single-city posting
     const locations: any[] = [];
     if (data.locations && Array.isArray(data.locations) && data.locations.length >= 1) {
+      if (data.locations.length > 5) {
+        return NextResponse.json({ success: false, error: 'Maximum 5 cities allowed for Multi-City posting' }, { status: 400 });
+      }
       for (const loc of data.locations) {
         locations.push({
           location: loc.location || 'Unknown',

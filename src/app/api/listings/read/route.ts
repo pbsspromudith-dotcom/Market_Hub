@@ -1,12 +1,14 @@
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { extractCityName } from '@/utils';
 
 export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
     const showAll = url.searchParams.get('show_all') === 'true'; // Admin flag
     const userId = url.searchParams.get('user_id'); // For user's own listings
+    const locationParam = url.searchParams.get('location') || url.searchParams.get('loc') || url.searchParams.get('city');
 
     let query = supabase
       .from('listings')
@@ -20,6 +22,14 @@ export async function GET(req: Request) {
       query = query.eq('user_id', parseInt(userId, 10));
     } else if (!showAll) {
       query = query.or('status.eq.active,status.is.null');
+    }
+
+    // Filter by location / city if provided
+    if (!showAll && !userId && locationParam) {
+      const city = extractCityName(locationParam);
+      if (city) {
+        query = query.ilike('location', `%${city}%`);
+      }
     }
 
     const { data: listingsList, error } = await query;

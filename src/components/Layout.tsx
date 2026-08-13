@@ -29,7 +29,10 @@ const Layout: React.FC<LayoutProps> = ({
   const navigate = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [globalSearch, setGlobalSearch] = useState("");
-  const [globalLocation, setGlobalLocation] = useState("");
+  const [globalLocation, setGlobalLocation] = useState(() => {
+    if (typeof window === "undefined") return "Toronto, ON";
+    return localStorage.getItem("user_location") || "Toronto, ON";
+  });
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
 
   interface Category {
@@ -99,6 +102,12 @@ const Layout: React.FC<LayoutProps> = ({
       .catch((err: any) =>
         console.error("Error loading social settings:", err),
       );
+    const handleLocationUpdate = () => {
+      const loc = localStorage.getItem("user_location");
+      if (loc) setGlobalLocation(loc);
+    };
+    window.addEventListener("location_updated", handleLocationUpdate);
+    return () => window.removeEventListener("location_updated", handleLocationUpdate);
   }, []);
 
   const CATEGORIES = categoriesTree.map((cat) => cat.CategoryName);
@@ -108,6 +117,10 @@ const Layout: React.FC<LayoutProps> = ({
 
   const handleGlobalSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    if (globalLocation.trim()) {
+      localStorage.setItem("user_location", globalLocation.trim());
+      window.dispatchEvent(new Event("location_updated"));
+    }
     let url = "/search?";
     if (globalSearch.trim())
       url += `q=${encodeURIComponent(globalSearch.trim())}&`;

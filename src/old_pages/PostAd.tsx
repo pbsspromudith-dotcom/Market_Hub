@@ -440,13 +440,24 @@ const PostAd: React.FC = () => {
   }, [citySearchQuery, showCitySuggestions]);
 
   const handleSelectCity = (place: any) => {
+    if (selectedCities.length >= 5) {
+      showAlert("You can select up to 5 cities maximum for Multi-City posting.", "warning");
+      setCitySearchQuery("");
+      setShowCitySuggestions(false);
+      return;
+    }
     const cleanAddr = getCleanAddressString(place);
     const pc = place.address?.postcode || "";
     const lat = place.lat ? parseFloat(place.lat) : null;
     const lon = place.lon ? parseFloat(place.lon) : null;
     // Avoid duplicates (case-insensitive)
     if (!selectedCities.some(c => c.location.toLowerCase() === cleanAddr.toLowerCase())) {
-      setSelectedCities(prev => [...prev, { location: cleanAddr, postalCode: pc, latitude: lat, longitude: lon }]);
+      setSelectedCities(prev => {
+        if (prev.length >= 5) return prev;
+        return [...prev, { location: cleanAddr, postalCode: pc, latitude: lat, longitude: lon }];
+      });
+    } else {
+      showAlert("This city has already been added.", "info");
     }
     setCitySearchQuery("");
     setShowCitySuggestions(false);
@@ -455,9 +466,20 @@ const PostAd: React.FC = () => {
   const handleAddCustomCity = (cityName: string) => {
     const cleanCity = cityName.trim();
     if (!cleanCity) return;
+    if (selectedCities.length >= 5) {
+      showAlert("You can select up to 5 cities maximum for Multi-City posting.", "warning");
+      setCitySearchQuery("");
+      setShowCitySuggestions(false);
+      return;
+    }
     // Avoid duplicates (case-insensitive)
     if (!selectedCities.some(c => c.location.toLowerCase() === cleanCity.toLowerCase())) {
-      setSelectedCities(prev => [...prev, { location: cleanCity, postalCode: "" }]);
+      setSelectedCities(prev => {
+        if (prev.length >= 5) return prev;
+        return [...prev, { location: cleanCity, postalCode: "" }];
+      });
+    } else {
+      showAlert("This city has already been added.", "info");
     }
     setCitySearchQuery("");
     setShowCitySuggestions(false);
@@ -869,6 +891,11 @@ const PostAd: React.FC = () => {
 
       // Multi-city or single city
       if (!isEditMode && postInMultipleCities && selectedCities.length > 0) {
+        if (selectedCities.length > 5) {
+          showAlert("Maximum 5 cities allowed for Multi-City posting.", "error");
+          setIsPublishing(false);
+          return;
+        }
         payload.locations = selectedCities.map(c => ({
           location: c.location,
           postal_code: c.postalCode,
@@ -1947,11 +1974,14 @@ const PostAd: React.FC = () => {
                         </span>
                         <input
                           value={citySearchQuery}
+                          disabled={selectedCities.length >= 5}
                           onChange={(e) => {
                             setCitySearchQuery(e.target.value);
                             setShowCitySuggestions(true);
                           }}
-                          onFocus={() => setShowCitySuggestions(true)}
+                          onFocus={() => {
+                            if (selectedCities.length < 5) setShowCitySuggestions(true);
+                          }}
                           onBlur={() =>
                             setTimeout(() => setShowCitySuggestions(false), 200)
                           }
@@ -1961,13 +1991,13 @@ const PostAd: React.FC = () => {
                               handleAddCustomCity(citySearchQuery);
                             }
                           }}
-                          className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm"
-                          placeholder="Search and add cities (e.g. Toronto, Vancouver, Montreal...)"
+                          className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                          placeholder={selectedCities.length >= 5 ? "Maximum 5 cities limit reached" : "Search and add cities (e.g. Toronto, Vancouver, Montreal...)"}
                           autoComplete="off"
                         />
 
                         {/* City Suggestions Dropdown */}
-                        {showCitySuggestions && citySearchQuery.length > 2 && (
+                        {showCitySuggestions && citySearchQuery.length > 2 && selectedCities.length < 5 && (
                           <div className="absolute top-14 left-0 w-full bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden">
                             {isSearchingCity ? (
                               <div className="p-4 text-xs font-bold text-slate-400 text-center flex items-center justify-center gap-2">
@@ -2023,19 +2053,28 @@ const PostAd: React.FC = () => {
                       </div>
                       <button
                         type="button"
+                        disabled={selectedCities.length >= 5 || !citySearchQuery.trim()}
                         onClick={() => handleAddCustomCity(citySearchQuery)}
-                        className="px-6 bg-primary hover:bg-primary-hover text-white rounded-xl font-bold text-sm transition-all"
+                        className="px-6 bg-primary hover:bg-primary-hover text-white rounded-xl font-bold text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         Add
                       </button>
                     </div>
+
+                    {/* Limit notification warning */}
+                    {selectedCities.length >= 5 && (
+                      <p className="text-xs font-bold text-amber-600 flex items-center gap-1">
+                        <span className="material-icons text-sm">warning</span>
+                        Maximum 5 cities limit reached for Multi-City posting.
+                      </p>
+                    )}
 
                     {/* Selected Cities Chips */}
                     {selectedCities.length > 0 ? (
                       <div>
                         <div className="flex items-center justify-between mb-3">
                           <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                            Selected Cities ({selectedCities.length})
+                            Selected Cities ({selectedCities.length} / 5 max)
                           </span>
                           <button
                             type="button"
@@ -2073,7 +2112,7 @@ const PostAd: React.FC = () => {
                       <div className="p-6 text-center bg-amber-50 rounded-xl border border-amber-200">
                         <span className="material-icons text-amber-500 text-2xl mb-2 block">add_location_alt</span>
                         <p className="text-xs font-bold text-amber-700">
-                          Search and add at least one city above to continue.
+                          Search and add at least one city above (up to 5 max) to continue.
                         </p>
                       </div>
                     )}
@@ -2082,7 +2121,7 @@ const PostAd: React.FC = () => {
                     <div className="flex items-start gap-3 p-4 bg-blue-50 rounded-xl border border-blue-200">
                       <span className="material-icons text-blue-500 text-lg mt-0.5">info</span>
                       <p className="text-xs text-blue-700 font-medium leading-relaxed">
-                        Your ad will be posted as a separate listing in each selected city, sharing the same details, images, and promotions. You can manage all copies from your profile.
+                        You can select up to 5 cities. Your ad will be posted as a separate listing in each selected city, sharing the same details, images, and promotions. You can manage all copies from your profile.
                       </p>
                     </div>
                   </div>

@@ -227,17 +227,10 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn, initialCategories = [], initial
     setShowSuggestions(false);
   };
 
-  useEffect(() => {
-    // Categories are now loaded server-side and passed via props
-
-    fetch("/api/status")
-      .then((res) => res.json())
-      .then((data) => setServerMessage(data.message))
-      .catch((err) =>
-        setServerMessage("Backend is not running: " + err.message),
-      );
-
-    fetch("/api/listings/read")
+  const loadListings = (loc?: string) => {
+    const activeLoc = loc !== undefined ? loc : (localStorage.getItem("user_location") || locationSearch || "Toronto, ON");
+    const endpoint = activeLoc ? `/api/listings/read?location=${encodeURIComponent(activeLoc)}` : "/api/listings/read";
+    fetch(endpoint)
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data)) {
@@ -249,12 +242,23 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn, initialCategories = [], initial
         }
       })
       .catch((err) => console.error("DB fetch error", err));
+  };
 
-    // SEO settings are now loaded server-side and passed via props
+  useEffect(() => {
+    fetch("/api/status")
+      .then((res) => res.json())
+      .then((data) => setServerMessage(data.message))
+      .catch((err) =>
+        setServerMessage("Backend is not running: " + err.message),
+      );
+
+    const currentLoc = localStorage.getItem("user_location") || locationSearch || "Toronto, ON";
+    loadListings(currentLoc);
 
     const handleLocationUpdate = () => {
-      const loc = localStorage.getItem("user_location");
-      if (loc) setLocationSearch(loc);
+      const updatedLoc = localStorage.getItem("user_location") || "Toronto, ON";
+      setLocationSearch(updatedLoc);
+      loadListings(updatedLoc);
     };
 
     window.addEventListener("location_updated", handleLocationUpdate);

@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { formatPrice } from '../constants';
-import { calculateDistance } from '../utils';
+import { calculateDistance, extractCityName } from '../utils';
 
 const CATEGORY_SYNONYMS: Record<string, string[]> = {
   'Vehicles': ['vehicle', 'vehicles', 'car', 'cars', 'truck', 'trucks', 'suv', 'suvs', 'motorcycle', 'motorcycles', 'auto', 'automotive', 'boat', 'boats', 'rv', 'rvs', 'van', 'vans', 'atv', 'atvs', 'classic car', 'classic cars', 'heavy equipment', 'trailers', 'trailer', 'auto parts', 'motor', 'motors', 'wheel', 'wheels', 'drive'],
@@ -84,11 +84,14 @@ const SearchResults: React.FC = () => {
 
   useEffect(() => {
     setIsLoading(true);
-    fetch('/api/listings/read')
+    const activeLoc = locationSearch || queryParams.get('loc') || (typeof window !== 'undefined' ? localStorage.getItem('user_location') : '') || '';
+    const endpoint = activeLoc ? `/api/listings/read?location=${encodeURIComponent(activeLoc)}` : '/api/listings/read';
+    fetch(endpoint)
       .then(res => res.json())
       .then(data => {
-        setListings(data);
-        const highestPrice = data.reduce((max: number, item: any) => Math.max(max, Number(item.price) || 0), 0);
+        const items = Array.isArray(data) ? data : [];
+        setListings(items);
+        const highestPrice = items.reduce((max: number, item: any) => Math.max(max, Number(item.price) || 0), 0);
         const calcMax = highestPrice > 0 ? highestPrice + 10000 : 100000;
         setAbsoluteMaxPrice(calcMax);
         setSliderMaxPrice(calcMax);
@@ -106,7 +109,7 @@ const SearchResults: React.FC = () => {
         }
       })
       .catch(console.error);
-  }, []);
+  }, [location.search, locationSearch]);
 
   // Normalize category aliases: DB has both 'Cars' and 'Vehicles' for the same category
   const CATEGORY_ALIASES: Record<string, string[]> = {
@@ -124,7 +127,7 @@ const SearchResults: React.FC = () => {
       const delayFn = setTimeout(() => {
         setIsSearchingLocation(true);
         fetch(
-          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(locationSearch)}&countrycodes=ca&format=json&addressdetails=1&limit=5`,
+          `/api/locations/search?q=${encodeURIComponent(locationSearch)}`,
         )
           .then((res) => res.json())
           .then((data) => setLocationSuggestions(data))
@@ -220,22 +223,22 @@ const SearchResults: React.FC = () => {
       if (!match) return false;
     }
     
-    // location filter — only active if user explicitly set a location in filter
-    if (locationFilterActive && distance !== 'Nationwide' && locationSearch && item.location) {
+    // location filter — strictly filter by city name
+    const activeLoc = locationSearch || queryParams.get('loc') || (typeof window !== 'undefined' ? localStorage.getItem('user_location') : '') || '';
+    if (distance !== 'Nationwide' && activeLoc && activeLoc.trim() && activeLoc.toLowerCase() !== 'all' && activeLoc.toLowerCase() !== 'canada') {
       const userLat = parseFloat(localStorage.getItem("user_lat") || "");
       const userLon = parseFloat(localStorage.getItem("user_lon") || "");
       
       if (!isNaN(userLat) && !isNaN(userLon) && item.latitude && item.longitude) {
         const dist = calculateDistance(userLat, userLon, parseFloat(item.latitude), parseFloat(item.longitude));
-        // Parse distance string to number
         const maxDistMatch = distance.match(/\d+/);
         const maxDist = maxDistMatch ? parseInt(maxDistMatch[0], 10) : 50;
-        
         if (dist > maxDist) return false;
       } else {
-        // Fallback to basic text search if no coordinates
-        const searchCity = locationSearch.split(',')[0].trim().toLowerCase();
-        if (!item.location.toLowerCase().includes(searchCity)) return false;
+        const searchCity = extractCityName(activeLoc).toLowerCase();
+        if (searchCity && item.location) {
+          if (!item.location.toLowerCase().includes(searchCity)) return false;
+        }
       }
     }
     

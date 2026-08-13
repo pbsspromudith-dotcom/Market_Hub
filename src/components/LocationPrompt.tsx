@@ -19,6 +19,22 @@ const LocationPrompt: React.FC = () => {
     localStorage.setItem('location_prompted', 'true');
     setShowPrompt(false);
     
+    const provinceMap: Record<string, string> = {
+      "Ontario": "ON",
+      "Quebec": "QC",
+      "British Columbia": "BC",
+      "Alberta": "AB",
+      "Manitoba": "MB",
+      "Saskatchewan": "SK",
+      "Nova Scotia": "NS",
+      "New Brunswick": "NB",
+      "Newfoundland and Labrador": "NL",
+      "Prince Edward Island": "PE",
+      "Northwest Territories": "NT",
+      "Yukon": "YT",
+      "Nunavut": "NU"
+    };
+
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -28,19 +44,26 @@ const LocationPrompt: React.FC = () => {
             .then(res => res.json())
             .then(data => {
               if (data && data.address) {
-                const city = data.address.city || data.address.town || data.address.village || '';
-                const state = data.address.state || 'CA';
-                const locString = city ? `${city}, ${state}` : state;
+                const rawCity = data.address.city || data.address.town || data.address.village || data.address.municipality || data.address.county || 'Toronto';
+                const rawState = data.address.state || '';
+                const state = provinceMap[rawState] || rawState || 'ON';
+                const locString = `${rawCity}, ${state}`;
                 localStorage.setItem('user_location', locString);
                 localStorage.setItem('user_lat', lat.toString());
                 localStorage.setItem('user_lon', lon.toString());
                 window.dispatchEvent(new Event('location_updated'));
               }
             })
-            .catch(err => console.error("Failed to reverse geocode:", err));
+            .catch(err => {
+              console.error("Failed to reverse geocode:", err);
+              localStorage.setItem('user_location', 'Toronto, ON');
+              window.dispatchEvent(new Event('location_updated'));
+            });
         },
         (error) => {
           console.log("Location access denied or failed", error);
+          localStorage.setItem('user_location', 'Toronto, ON');
+          window.dispatchEvent(new Event('location_updated'));
         }
       );
     }
