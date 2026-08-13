@@ -434,6 +434,12 @@ const AdminDashboard: React.FC = () => {
     fetchSeoSettings();
   }, []);
 
+  useEffect(() => {
+    if (activeTab === 'listing-seo') {
+      fetchListingSeo(1);
+    }
+  }, [activeTab]);
+
   const fetchSeoSettings = () => {
     fetch('/api/admin/seo_read?t=' + new Date().getTime())
       .then(res => res.json())
@@ -2368,7 +2374,7 @@ const AdminDashboard: React.FC = () => {
               </div>
               <select
                 value={seoCategoryFilter}
-                onChange={e => { setSeoCategoryFilter(e.target.value); }}
+                onChange={e => { setSeoCategoryFilter(e.target.value); setTimeout(() => fetchListingSeo(1), 50); }}
                 className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium"
               >
                 <option value="">All Categories</option>
@@ -2376,7 +2382,7 @@ const AdminDashboard: React.FC = () => {
               </select>
               <select
                 value={seoStatusFilter}
-                onChange={e => { setSeoStatusFilter(e.target.value); }}
+                onChange={e => { setSeoStatusFilter(e.target.value); setTimeout(() => fetchListingSeo(1), 50); }}
                 className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium"
               >
                 <option value="">All SEO Status</option>
