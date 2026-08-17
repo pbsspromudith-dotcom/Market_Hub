@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { extractCityName } from '@/utils';
+import { extractCityName, getExpandedLocationKeywords } from '@/utils';
 
 export async function GET(req: Request) {
   try {
@@ -24,11 +24,14 @@ export async function GET(req: Request) {
       query = query.or('status.eq.active,status.is.null');
     }
 
-    // Filter by location / city if provided
+    // Filter by location / city (including expanded sub-cities) if provided
     if (!showAll && !userId && locationParam) {
-      const city = extractCityName(locationParam);
-      if (city) {
-        query = query.ilike('location', `%${city}%`);
+      const keywords = getExpandedLocationKeywords(locationParam);
+      if (keywords.length === 1) {
+        query = query.ilike('location', `%${keywords[0]}%`);
+      } else if (keywords.length > 1) {
+        const conditions = keywords.map(kw => `location.ilike.%${kw}%`).join(',');
+        query = query.or(conditions);
       }
     }
 

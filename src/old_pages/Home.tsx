@@ -198,7 +198,7 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn, initialCategories = [], initial
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   useEffect(() => {
-    if (locationSearch.trim().length > 2 && showSuggestions) {
+    if (locationSearch.trim().length >= 1 && showSuggestions) {
       const delayFn = setTimeout(() => {
         setIsSearchingLocation(true);
         fetch(
@@ -208,7 +208,7 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn, initialCategories = [], initial
           .then((data) => setLocationSuggestions(data))
           .catch(console.error)
           .finally(() => setIsSearchingLocation(false));
-      }, 500);
+      }, 150);
       return () => clearTimeout(delayFn);
     } else {
       setLocationSuggestions([]);
@@ -326,7 +326,7 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn, initialCategories = [], initial
               />
 
               {/* Autocomplete Dropdown */}
-              {showSuggestions && locationSearch.length > 2 && (
+              {showSuggestions && locationSearch.trim().length >= 1 && (
                 <div className="absolute top-[110%] left-0 w-full min-w-[250px] bg-white border border-slate-200 rounded-xl shadow-2xl z-50 overflow-hidden text-left">
                   {isSearchingLocation ? (
                     <div className="p-4 text-xs font-bold text-slate-400 text-center">

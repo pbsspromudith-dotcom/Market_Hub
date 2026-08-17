@@ -403,7 +403,7 @@ const PostAd: React.FC = () => {
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   useEffect(() => {
-    if (location.trim().length > 2 && showSuggestions) {
+    if (location.trim().length >= 1 && showSuggestions) {
       const delayFn = setTimeout(() => {
         setIsSearchingLocation(true);
         fetch(
@@ -413,7 +413,7 @@ const PostAd: React.FC = () => {
           .then((data) => setLocationSuggestions(data))
           .catch(console.error)
           .finally(() => setIsSearchingLocation(false));
-      }, 500);
+      }, 150);
       return () => clearTimeout(delayFn);
     } else {
       setLocationSuggestions([]);
@@ -422,7 +422,7 @@ const PostAd: React.FC = () => {
 
   // Multi-city search effect
   useEffect(() => {
-    if (citySearchQuery.trim().length > 2 && showCitySuggestions) {
+    if (citySearchQuery.trim().length >= 1 && showCitySuggestions) {
       const delayFn = setTimeout(() => {
         setIsSearchingCity(true);
         fetch(
@@ -432,7 +432,7 @@ const PostAd: React.FC = () => {
           .then((data) => setCitySearchSuggestions(data))
           .catch(console.error)
           .finally(() => setIsSearchingCity(false));
-      }, 500);
+      }, 150);
       return () => clearTimeout(delayFn);
     } else {
       setCitySearchSuggestions([]);
@@ -1997,7 +1997,7 @@ const PostAd: React.FC = () => {
                         />
 
                         {/* City Suggestions Dropdown */}
-                        {showCitySuggestions && citySearchQuery.length > 2 && selectedCities.length < 5 && (
+                        {showCitySuggestions && citySearchQuery.trim().length >= 1 && selectedCities.length < 5 && (
                           <div className="absolute top-14 left-0 w-full bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden">
                             {isSearchingCity ? (
                               <div className="p-4 text-xs font-bold text-slate-400 text-center flex items-center justify-center gap-2">
@@ -2148,7 +2148,7 @@ const PostAd: React.FC = () => {
                       />
 
                       {/* Suggestions Dropdown */}
-                      {showSuggestions && location.length > 2 && (
+                      {showSuggestions && location.trim().length >= 1 && (
                         <div className="absolute top-14 left-0 w-full bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden">
                           {isSearchingLocation ? (
                             <div className="p-4 text-xs font-bold text-slate-400 text-center">

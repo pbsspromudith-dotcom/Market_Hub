@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { formatPrice } from '../constants';
-import { calculateDistance, extractCityName } from '../utils';
+import { calculateDistance, extractCityName, getExpandedLocationKeywords } from '../utils';
 
 const CATEGORY_SYNONYMS: Record<string, string[]> = {
   'Vehicles': ['vehicle', 'vehicles', 'car', 'cars', 'truck', 'trucks', 'suv', 'suvs', 'motorcycle', 'motorcycles', 'auto', 'automotive', 'boat', 'boats', 'rv', 'rvs', 'van', 'vans', 'atv', 'atvs', 'classic car', 'classic cars', 'heavy equipment', 'trailers', 'trailer', 'auto parts', 'motor', 'motors', 'wheel', 'wheels', 'drive'],
@@ -123,7 +123,7 @@ const SearchResults: React.FC = () => {
   };
 
   useEffect(() => {
-    if (locationSearch.trim().length > 2 && showSuggestions) {
+    if (locationSearch.trim().length >= 1 && showSuggestions) {
       const delayFn = setTimeout(() => {
         setIsSearchingLocation(true);
         fetch(
@@ -133,7 +133,7 @@ const SearchResults: React.FC = () => {
           .then((data) => setLocationSuggestions(data))
           .catch(console.error)
           .finally(() => setIsSearchingLocation(false));
-      }, 500);
+      }, 150);
       return () => clearTimeout(delayFn);
     } else {
       setLocationSuggestions([]);
@@ -235,9 +235,11 @@ const SearchResults: React.FC = () => {
         const maxDist = maxDistMatch ? parseInt(maxDistMatch[0], 10) : 50;
         if (dist > maxDist) return false;
       } else {
-        const searchCity = extractCityName(activeLoc).toLowerCase();
-        if (searchCity && item.location) {
-          if (!item.location.toLowerCase().includes(searchCity)) return false;
+        const keywords = getExpandedLocationKeywords(activeLoc);
+        if (keywords.length > 0 && item.location) {
+          const itemLocLower = item.location.toLowerCase();
+          const match = keywords.some(kw => itemLocLower.includes(kw.toLowerCase()));
+          if (!match) return false;
         }
       }
     }
