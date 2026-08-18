@@ -500,8 +500,8 @@ const UserProfile: React.FC = () => {
             </div>
             <div className="flex flex-wrap gap-2.5 self-start sm:self-auto">
               <Link
-                href="/payments"
-                className="bg-primary/10 hover:bg-primary/20 text-primary px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all"
+                href="/payment-portal"
+                className="bg-primary/10 hover:bg-primary/20 text-primary px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all cursor-pointer"
               >
                 <span className="material-icons text-sm">receipt_long</span>
                 Payment Receipts & Invoices
