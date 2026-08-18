@@ -571,19 +571,23 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
         <p className="text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed">
           By signing in, you agree to our{" "}
-          <a
-            href="#"
+          <Link
+            href="/terms"
+            target="_blank"
+            rel="noopener noreferrer"
             className="text-slate-600 hover:text-primary underline transition-colors"
           >
-            Terms of Service
-          </a>{" "}
+            Terms & Conditions
+          </Link>{" "}
           <br /> and{" "}
-          <a
-            href="#"
+          <Link
+            href="/terms#privacy"
+            target="_blank"
+            rel="noopener noreferrer"
             className="text-slate-600 hover:text-primary underline transition-colors"
           >
             Privacy Policy
-          </a>
+          </Link>
           .
         </p>
       </div>

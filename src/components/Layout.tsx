@@ -47,9 +47,9 @@ const Layout: React.FC<LayoutProps> = ({
 
   const [categoriesTree, setCategoriesTree] = useState<Category[]>([]);
   const [socialLinks, setSocialLinks] = useState({
-    facebook: "",
-    x: "",
-    instagram: "",
+    facebook: "https://www.facebook.com/share/1AUADECy9x/",
+    x: "https://x.com",
+    instagram: "https://www.instagram.com/hitads.ca?igsh=bnVlaG5maWRvMHdx",
   });
   const [footerText, setFooterText] = useState(
     "© 2026 HitAds.ca — Post free ads, sell fast, buy local, and connect with buyers and sellers across Canada.",
@@ -90,9 +90,9 @@ const Layout: React.FC<LayoutProps> = ({
       .then((data: any) => {
         if (data.success && data.settings) {
           setSocialLinks({
-            facebook: data.settings.social_facebook || "",
-            x: data.settings.social_x || "",
-            instagram: data.settings.social_instagram || "",
+            facebook: data.settings.social_facebook || "https://www.facebook.com/share/1AUADECy9x/",
+            x: data.settings.social_x || "https://x.com",
+            instagram: data.settings.social_instagram || "https://www.instagram.com/hitads.ca?igsh=bnVlaG5maWRvMHdx",
           });
           if (data.settings.footer_copyright_text) {
             setFooterText(data.settings.footer_copyright_text);
@@ -584,33 +584,39 @@ const Layout: React.FC<LayoutProps> = ({
       {!isLoginPage && (
         <footer className="relative mt-10 md:mt-24 pt-12 md:pt-24 pb-8 md:pb-12 bg-slate-100/60 border-t border-slate-200 overflow-hidden">
           <div className="relative z-10 w-full px-4 sm:px-6 lg:px-10">
-            <div className="flex gap-4 mb-8 md:mb-12">
+            <div className="flex items-center gap-3 mb-8 md:mb-12">
               <a
-                href={socialLinks.facebook || "#"}
+                href={socialLinks.facebook || "https://www.facebook.com/share/1AUADECy9x/"}
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Visit HitAds on Facebook"
-                className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 hover:text-primary hover:border-primary transition-all"
+                className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:text-white hover:bg-[#1877F2] hover:border-[#1877F2] bg-white shadow-xs transition-all duration-200"
               >
-                <span className="material-icons text-lg">facebook</span>
+                <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                </svg>
               </a>
               <a
-                href={socialLinks.x || "#"}
+                href={socialLinks.x || "https://x.com"}
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Visit HitAds on X"
-                className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 hover:text-primary hover:border-primary transition-all font-black text-xs"
+                className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:text-white hover:bg-black hover:border-black bg-white shadow-xs transition-all duration-200 font-black text-xs"
               >
-                X
+                <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                </svg>
               </a>
               <a
-                href={socialLinks.instagram || "#"}
+                href={socialLinks.instagram || "https://www.instagram.com/hitads.ca?igsh=bnVlaG5maWRvMHdx"}
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Visit HitAds on Instagram"
-                className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 hover:text-primary hover:border-primary transition-all"
+                className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:text-white hover:bg-gradient-to-tr hover:from-[#f09433] hover:via-[#dc2743] hover:to-[#bc1888] hover:border-transparent bg-white shadow-xs transition-all duration-200"
               >
-                <span className="material-icons text-lg">tag</span>
+                <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                  <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+                </svg>
               </a>
             </div>
 
@@ -728,7 +734,7 @@ const Layout: React.FC<LayoutProps> = ({
 
                   <li>
                     <Link
-                      href="/terms"
+                      href="/terms?tab=privacy"
                       onClick={() => window.scrollTo(0, 0)}
                       className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
                     >
@@ -746,7 +752,7 @@ const Layout: React.FC<LayoutProps> = ({
                   </li>
                   <li>
                     <Link
-                      href="/terms"
+                      href="/terms?tab=privacy#privacy-collect"
                       onClick={() => window.scrollTo(0, 0)}
                       className="text-[13px] font-bold text-slate-600 hover:text-primary transition-colors"
                     >
@@ -993,22 +999,6 @@ const Layout: React.FC<LayoutProps> = ({
             <div className="pt-8 border-t border-slate-200 flex flex-col md:flex-row justify-between items-center gap-4">
               <div className="text-[10px] font-black text-slate-400 lowercase">
                 {footerText}
-              </div>
-              <div className="flex items-center gap-8 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                <Link
-                  href="/contact"
-                  onClick={() =>
-                    window.scrollTo({ top: 0, behavior: "smooth" })
-                  }
-                  className="hover:text-primary transition-colors"
-                >
-                  Contact
-                </Link>
-                <img
-                  src="/footer_logo.png?v=2"
-                  alt="HitAds Footer Logo"
-                  className="h-8 md:h-10 w-auto object-contain opacity-80 hover:opacity-100 transition-opacity"
-                />
               </div>
             </div>
           </div>

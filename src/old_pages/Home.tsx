@@ -15,6 +15,11 @@ import {
   ShoppingBag, 
   Store, 
   Megaphone,
+  PawPrint,
+  Trees,
+  Laptop,
+  Sparkles,
+  Gamepad2,
   Folder
 } from "lucide-react";
 
@@ -32,28 +37,99 @@ const OFFICIAL_CATEGORY_SYSTEM = [
 ];
 
 const CATEGORY_ICON_MAP: Record<string, { icon: React.ElementType; textColor: string; badgeBg: string }> = {
-  "marketplace": { icon: HomeIcon, textColor: "text-[#FD3D28]", badgeBg: "bg-[#FD3D28]/10" },
-  "real estate": { icon: Building2, textColor: "text-[#1774F5]", badgeBg: "bg-[#1774F5]/10" },
-  "automotive": { icon: Car, textColor: "text-[#F2994A]", badgeBg: "bg-[#F2994A]/10" },
+  // Vehicles & Automotive
   "vehicles": { icon: Car, textColor: "text-[#F2994A]", badgeBg: "bg-[#F2994A]/10" },
+  "automotive": { icon: Car, textColor: "text-[#F2994A]", badgeBg: "bg-[#F2994A]/10" },
+  "cars": { icon: Car, textColor: "text-[#F2994A]", badgeBg: "bg-[#F2994A]/10" },
+  "directions_car": { icon: Car, textColor: "text-[#F2994A]", badgeBg: "bg-[#F2994A]/10" },
+
+  // Real Estate
+  "real estate": { icon: Building2, textColor: "text-[#1774F5]", badgeBg: "bg-[#1774F5]/10" },
+  "real-estate": { icon: Building2, textColor: "text-[#1774F5]", badgeBg: "bg-[#1774F5]/10" },
+  "property": { icon: Building2, textColor: "text-[#1774F5]", badgeBg: "bg-[#1774F5]/10" },
+  "real_estate_agent": { icon: Building2, textColor: "text-[#1774F5]", badgeBg: "bg-[#1774F5]/10" },
+
+  // Jobs
   "jobs": { icon: Briefcase, textColor: "text-[#27AE60]", badgeBg: "bg-[#27AE60]/10" },
-  "services": { icon: Wrench, textColor: "text-[#5B616A]", badgeBg: "bg-[#5B616A]/10" },
-  "events": { icon: Calendar, textColor: "text-[#F2C94C]", badgeBg: "bg-[#F2C94C]/15" },
-  "community": { icon: Users, textColor: "text-[#FD3D28]", badgeBg: "bg-[#FD3D28]/10" },
-  "buy & sell": { icon: ShoppingBag, textColor: "text-[#1774F5]", badgeBg: "bg-[#1774F5]/10" },
-  "buy and sell": { icon: ShoppingBag, textColor: "text-[#1774F5]", badgeBg: "bg-[#1774F5]/10" },
-  "businesses": { icon: Store, textColor: "text-[#F2994A]", badgeBg: "bg-[#F2994A]/10" },
-  "business": { icon: Store, textColor: "text-[#F2994A]", badgeBg: "bg-[#F2994A]/10" },
+  "careers": { icon: Briefcase, textColor: "text-[#27AE60]", badgeBg: "bg-[#27AE60]/10" },
+  "work": { icon: Briefcase, textColor: "text-[#27AE60]", badgeBg: "bg-[#27AE60]/10" },
+
+  // Services
+  "local services": { icon: Wrench, textColor: "text-[#0284C7]", badgeBg: "bg-[#0284C7]/10" },
+  "services": { icon: Wrench, textColor: "text-[#0284C7]", badgeBg: "bg-[#0284C7]/10" },
+  "handyman": { icon: Wrench, textColor: "text-[#0284C7]", badgeBg: "bg-[#0284C7]/10" },
+  "build": { icon: Wrench, textColor: "text-[#0284C7]", badgeBg: "bg-[#0284C7]/10" },
+
+  // Buy & Sell
+  "buy & sell": { icon: ShoppingBag, textColor: "text-[#8B5CF6]", badgeBg: "bg-[#8B5CF6]/10" },
+  "buy and sell": { icon: ShoppingBag, textColor: "text-[#8B5CF6]", badgeBg: "bg-[#8B5CF6]/10" },
+  "buy-sell": { icon: ShoppingBag, textColor: "text-[#8B5CF6]", badgeBg: "bg-[#8B5CF6]/10" },
+  "shopping_cart": { icon: ShoppingBag, textColor: "text-[#8B5CF6]", badgeBg: "bg-[#8B5CF6]/10" },
+  "shopping_bag": { icon: ShoppingBag, textColor: "text-[#8B5CF6]", badgeBg: "bg-[#8B5CF6]/10" },
+
+  // Business & Industrial
+  "business & industrial": { icon: Store, textColor: "text-[#EA580C]", badgeBg: "bg-[#EA580C]/10" },
+  "business and industrial": { icon: Store, textColor: "text-[#EA580C]", badgeBg: "bg-[#EA580C]/10" },
+  "business-industrial": { icon: Store, textColor: "text-[#EA580C]", badgeBg: "bg-[#EA580C]/10" },
+  "businesses": { icon: Store, textColor: "text-[#EA580C]", badgeBg: "bg-[#EA580C]/10" },
+  "business": { icon: Store, textColor: "text-[#EA580C]", badgeBg: "bg-[#EA580C]/10" },
+
+  // Community
+  "community": { icon: Users, textColor: "text-[#DC2626]", badgeBg: "bg-[#DC2626]/10" },
+  "people": { icon: Users, textColor: "text-[#DC2626]", badgeBg: "bg-[#DC2626]/10" },
+
+  // Pets
+  "pets": { icon: PawPrint, textColor: "text-[#D97706]", badgeBg: "bg-[#D97706]/10" },
+  "pet": { icon: PawPrint, textColor: "text-[#D97706]", badgeBg: "bg-[#D97706]/10" },
+  "animals": { icon: PawPrint, textColor: "text-[#D97706]", badgeBg: "bg-[#D97706]/10" },
+
+  // Home & Garden
+  "home & garden": { icon: Trees, textColor: "text-[#16A34A]", badgeBg: "bg-[#16A34A]/10" },
+  "home and garden": { icon: Trees, textColor: "text-[#16A34A]", badgeBg: "bg-[#16A34A]/10" },
+  "home-garden": { icon: Trees, textColor: "text-[#16A34A]", badgeBg: "bg-[#16A34A]/10" },
+  "garden": { icon: Trees, textColor: "text-[#16A34A]", badgeBg: "bg-[#16A34A]/10" },
+  "yard": { icon: Trees, textColor: "text-[#16A34A]", badgeBg: "bg-[#16A34A]/10" },
+
+  // Electronics & Computers
+  "electronics & computers": { icon: Laptop, textColor: "text-[#4F46E5]", badgeBg: "bg-[#4F46E5]/10" },
+  "electronics and computers": { icon: Laptop, textColor: "text-[#4F46E5]", badgeBg: "bg-[#4F46E5]/10" },
+  "electronics-computers": { icon: Laptop, textColor: "text-[#4F46E5]", badgeBg: "bg-[#4F46E5]/10" },
+  "electronics": { icon: Laptop, textColor: "text-[#4F46E5]", badgeBg: "bg-[#4F46E5]/10" },
+  "computers": { icon: Laptop, textColor: "text-[#4F46E5]", badgeBg: "bg-[#4F46E5]/10" },
+  "computer": { icon: Laptop, textColor: "text-[#4F46E5]", badgeBg: "bg-[#4F46E5]/10" },
+
+  // Fashion & Beauty
+  "fashion & beauty": { icon: Sparkles, textColor: "text-[#DB2777]", badgeBg: "bg-[#DB2777]/10" },
+  "fashion and beauty": { icon: Sparkles, textColor: "text-[#DB2777]", badgeBg: "bg-[#DB2777]/10" },
+  "fashion-beauty": { icon: Sparkles, textColor: "text-[#DB2777]", badgeBg: "bg-[#DB2777]/10" },
+  "fashion": { icon: Sparkles, textColor: "text-[#DB2777]", badgeBg: "bg-[#DB2777]/10" },
+  "beauty": { icon: Sparkles, textColor: "text-[#DB2777]", badgeBg: "bg-[#DB2777]/10" },
+  "checkroom": { icon: Sparkles, textColor: "text-[#DB2777]", badgeBg: "bg-[#DB2777]/10" },
+
+  // Hobbies & Recreation
+  "hobbies & recreation": { icon: Gamepad2, textColor: "text-[#9333EA]", badgeBg: "bg-[#9333EA]/10" },
+  "hobbies and recreation": { icon: Gamepad2, textColor: "text-[#9333EA]", badgeBg: "bg-[#9333EA]/10" },
+  "hobbies": { icon: Gamepad2, textColor: "text-[#9333EA]", badgeBg: "bg-[#9333EA]/10" },
+  "recreation": { icon: Gamepad2, textColor: "text-[#9333EA]", badgeBg: "bg-[#9333EA]/10" },
+  "sports_esports": { icon: Gamepad2, textColor: "text-[#9333EA]", badgeBg: "bg-[#9333EA]/10" },
+
+  // Events & Promotions
+  "events": { icon: Calendar, textColor: "text-[#CA8A04]", badgeBg: "bg-[#CA8A04]/15" },
   "promotions": { icon: Megaphone, textColor: "text-[#FD3D28]", badgeBg: "bg-[#FD3D28]/10" },
+  "marketplace": { icon: HomeIcon, textColor: "text-[#FD3D28]", badgeBg: "bg-[#FD3D28]/10" },
 };
 
-const getCategoryIconConfig = (name: string) => {
+const getCategoryIconConfig = (name: string, iconHint?: string | null) => {
+  if (iconHint) {
+    const hintKey = iconHint.toLowerCase().trim();
+    if (CATEGORY_ICON_MAP[hintKey]) return CATEGORY_ICON_MAP[hintKey];
+  }
   const key = name.toLowerCase().trim();
   if (CATEGORY_ICON_MAP[key]) return CATEGORY_ICON_MAP[key];
   for (const k of Object.keys(CATEGORY_ICON_MAP)) {
     if (key.includes(k) || k.includes(key)) return CATEGORY_ICON_MAP[k];
   }
-  return { icon: Folder, textColor: "text-slate-500", badgeBg: "bg-slate-100" };
+  return { icon: ShoppingBag, textColor: "text-[#FD3D28]", badgeBg: "bg-[#FD3D28]/10" };
 };
 
 interface HomeProps {
@@ -417,7 +493,7 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn, initialCategories = [], initial
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-5 gap-6">
             {(categories && categories.length >= 10 ? categories : OFFICIAL_CATEGORY_SYSTEM).map((cat) => {
               const catName = cat.name;
-              const config = getCategoryIconConfig(catName);
+              const config = getCategoryIconConfig(catName, cat.icon || cat.iconKey);
               const IconComponent = config.icon;
 
               return (
