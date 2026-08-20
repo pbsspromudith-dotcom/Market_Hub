@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { CURRENT_USER } from "../constants";
+import LocationAutocomplete from "./LocationAutocomplete";
 
 
 interface LayoutProps {
@@ -188,21 +189,23 @@ const Layout: React.FC<LayoutProps> = ({
                     />
                   </div>
                   <div className="w-px h-6 bg-slate-200 mx-1"></div>
-                  <div className="flex-1 relative flex items-center group">
-                    <span className="material-icons absolute left-4 text-slate-400 text-xl group-focus-within:text-primary transition-colors">
-                      location_on
-                    </span>
-                    <input
-                      type="text"
-                      value={globalLocation}
-                      onChange={(e) => setGlobalLocation(e.target.value)}
-                      placeholder="City, Province or Postal Code..."
-                      className="w-full bg-transparent border-none focus:ring-0 text-sm font-bold text-slate-800 placeholder:text-slate-400 placeholder:font-medium pl-12 pr-4 py-2.5 outline-none"
-                    />
-                  </div>
+                  <LocationAutocomplete
+                    value={globalLocation}
+                    onChange={(val) => setGlobalLocation(val)}
+                    onSelectLocation={(item) => {
+                      setGlobalLocation(item.fullAddress);
+                      localStorage.setItem("user_location", item.fullAddress);
+                      localStorage.setItem("user_lat", item.lat);
+                      localStorage.setItem("user_lon", item.lon);
+                      window.dispatchEvent(new Event("location_updated"));
+                    }}
+                    variant="navbar"
+                    placeholder="City, Province or Postal Code..."
+                    syncWithLocalStorage={true}
+                  />
                   <button
                     type="submit"
-                    className="bg-primary hover:bg-primary-hover text-white px-8 py-3 rounded-full transition-all flex items-center justify-center font-black text-[11px] uppercase tracking-widest shadow-sm hover:shadow-md hover:-translate-y-[1px] active:translate-y-0 ml-1"
+                    className="bg-primary hover:bg-primary-hover text-white px-8 py-3 rounded-full transition-all flex items-center justify-center font-black text-[11px] uppercase tracking-widest shadow-sm hover:shadow-md hover:-translate-y-[1px] active:translate-y-0 ml-1 shrink-0"
                   >
                     Search
                   </button>
@@ -324,6 +327,46 @@ const Layout: React.FC<LayoutProps> = ({
           <div className="md:hidden absolute top-full left-0 w-full bg-white border-b border-slate-100 shadow-2xl py-6 px-4 space-y-4 animate-in slide-in-from-top-4 duration-200">
             {!isLoginPage && (
               <>
+                {/* Mobile Quick Search Form */}
+                <form
+                  onSubmit={(e) => {
+                    handleGlobalSearch(e);
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="space-y-2 mb-4 p-2 bg-slate-50 rounded-2xl border border-slate-100"
+                >
+                  <div className="relative flex items-center bg-white rounded-xl border border-slate-200 px-3 py-2">
+                    <span className="material-icons text-slate-400 text-lg mr-2">search</span>
+                    <input
+                      type="text"
+                      value={globalSearch}
+                      onChange={(e) => setGlobalSearch(e.target.value)}
+                      placeholder="What are you looking for?"
+                      className="w-full text-xs font-bold text-slate-800 outline-none bg-transparent"
+                    />
+                  </div>
+                  <LocationAutocomplete
+                    value={globalLocation}
+                    onChange={(val) => setGlobalLocation(val)}
+                    onSelectLocation={(item) => {
+                      setGlobalLocation(item.fullAddress);
+                      localStorage.setItem("user_location", item.fullAddress);
+                      localStorage.setItem("user_lat", item.lat);
+                      localStorage.setItem("user_lon", item.lon);
+                      window.dispatchEvent(new Event("location_updated"));
+                    }}
+                    variant="mobile"
+                    placeholder="City or sub-city..."
+                    syncWithLocalStorage={true}
+                  />
+                  <button
+                    type="submit"
+                    className="w-full py-3 bg-primary text-white font-black text-xs uppercase tracking-widest rounded-xl hover:bg-primary-hover transition-colors shadow-sm"
+                  >
+                    Search Listings
+                  </button>
+                </form>
+
                 <Link
                   href="/search"
                   onClick={() => setIsMobileMenuOpen(false)}

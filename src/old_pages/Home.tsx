@@ -3,7 +3,8 @@
 import React, { useEffect, useState } from "react";
 import Link from 'next/link';
 import { formatPrice } from "../constants";
-import { calculateDistance } from "../utils";
+import { calculateDistance, getExpandedLocationKeywords, extractCityName } from "../utils";
+import LocationAutocomplete from "@/components/LocationAutocomplete";
 import { 
   Home as HomeIcon, 
   Building2, 
@@ -269,30 +270,9 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn, initialCategories = [], initial
     if (typeof window === "undefined") return "Toronto, ON";
     return localStorage.getItem("user_location") || "Toronto, ON";
   });
-  const [locationSuggestions, setLocationSuggestions] = useState<any[]>([]);
-  const [isSearchingLocation, setIsSearchingLocation] = useState(false);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-
-  useEffect(() => {
-    if (locationSearch.trim().length >= 1 && showSuggestions) {
-      const delayFn = setTimeout(() => {
-        setIsSearchingLocation(true);
-        fetch(
-          `/api/locations/search?q=${encodeURIComponent(locationSearch)}`
-        )
-          .then((res) => res.json())
-          .then((data) => setLocationSuggestions(data))
-          .catch(console.error)
-          .finally(() => setIsSearchingLocation(false));
-      }, 150);
-      return () => clearTimeout(delayFn);
-    } else {
-      setLocationSuggestions([]);
-    }
-  }, [locationSearch, showSuggestions]);
 
   const handleSelectLocation = (place: any) => {
-    const cleanAddr = getCleanAddressString(place);
+    const cleanAddr = place.fullAddress || getCleanAddressString(place);
     setLocationSearch(cleanAddr);
     localStorage.setItem("user_location", cleanAddr);
     if (place.lat && place.lon) {
@@ -300,7 +280,6 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn, initialCategories = [], initial
       localStorage.setItem("user_lon", place.lon);
     }
     window.dispatchEvent(new Event("location_updated"));
-    setShowSuggestions(false);
   };
 
   const loadListings = (loc?: string) => {
@@ -382,64 +361,15 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn, initialCategories = [], initial
               />
             </div>
             <div className="w-px h-10 bg-slate-100 self-center hidden md:block"></div>
-            <div className="md:w-64 relative flex items-center">
-              <span className="material-icons absolute left-5 text-primary-neutral z-10">
-                location_on
-              </span>
-              <input
+            <div className="md:w-72 relative flex items-center">
+              <LocationAutocomplete
                 value={locationSearch}
-                onChange={(e) => {
-                  setLocationSearch(e.target.value);
-                  setShowSuggestions(true);
-                }}
-                onFocus={() => setShowSuggestions(true)}
-                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                aria-label="Location, City, Province or Postal Code"
-                className="w-full pl-14 pr-4 py-5 bg-transparent border-none focus:ring-0 text-sm font-bold text-slate-700"
-                type="text"
+                onChange={(val) => setLocationSearch(val)}
+                onSelectLocation={(item) => handleSelectLocation(item)}
+                variant="hero"
                 placeholder="City, Province or Postal Code..."
-                autoComplete="off"
+                syncWithLocalStorage={true}
               />
-
-              {/* Autocomplete Dropdown */}
-              {showSuggestions && locationSearch.trim().length >= 1 && (
-                <div className="absolute top-[110%] left-0 w-full min-w-[250px] bg-white border border-slate-200 rounded-xl shadow-2xl z-50 overflow-hidden text-left">
-                  {isSearchingLocation ? (
-                    <div className="p-4 text-xs font-bold text-slate-400 text-center">
-                      Searching...
-                    </div>
-                  ) : locationSuggestions.length > 0 ? (
-                    <ul>
-                      {locationSuggestions.map((place, idx) => {
-                        const { mainText, secondaryText } = getGoogleStyleAddress(place);
-                        return (
-                          <li
-                            key={idx}
-                            onClick={() => handleSelectLocation(place)}
-                            className="px-4 py-3 hover:bg-slate-50 cursor-pointer border-b border-slate-50 last:border-0 flex items-start gap-3 transition-colors"
-                          >
-                            <span className="material-icons text-slate-300 text-lg mt-0.5">
-                              place
-                            </span>
-                            <div>
-                              <p className="text-sm font-bold text-slate-700 leading-tight mb-0.5">
-                                {mainText}
-                              </p>
-                              <p className="text-xs text-slate-400 leading-tight">
-                                {secondaryText}
-                              </p>
-                            </div>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  ) : (
-                    <div className="p-4 text-xs font-bold text-slate-400 text-center">
-                      No locations found.
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
             <Link href={`/search?q=${encodeURIComponent(searchQuery)}&loc=${encodeURIComponent(locationSearch)}`}
               onClick={() => window.scrollTo(0, 0)}
@@ -625,8 +555,14 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn, initialCategories = [], initial
                     const userLoc = (locationSearch || "").toLowerCase().trim();
                     if (!itemLoc) return true;
 
-                    const userCity = userLoc.split(',')[0].trim();
-                    const itemCity = itemLoc.split(',')[0].trim();
+                    const keywords = getExpandedLocationKeywords(locationSearch);
+                    if (keywords.length > 0) {
+                      const matchesKw = keywords.some(kw => itemLoc.includes(kw.toLowerCase()));
+                      if (matchesKw) return true;
+                    }
+
+                    const userCity = extractCityName(userLoc).toLowerCase();
+                    const itemCity = extractCityName(itemLoc).toLowerCase();
 
                     return itemLoc.includes(userLoc) || 
                            userLoc.includes(itemLoc) || 

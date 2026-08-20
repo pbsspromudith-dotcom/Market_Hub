@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { formatPrice } from '../constants';
 import { calculateDistance, extractCityName, getExpandedLocationKeywords } from '../utils';
+import LocationAutocomplete from '@/components/LocationAutocomplete';
 
 const CATEGORY_SYNONYMS: Record<string, string[]> = {
   'Vehicles': ['vehicle', 'vehicles', 'car', 'cars', 'truck', 'trucks', 'suv', 'suvs', 'motorcycle', 'motorcycles', 'auto', 'automotive', 'boat', 'boats', 'rv', 'rvs', 'van', 'vans', 'atv', 'atvs', 'classic car', 'classic cars', 'heavy equipment', 'trailers', 'trailer', 'auto parts', 'motor', 'motors', 'wheel', 'wheels', 'drive'],
@@ -122,28 +123,8 @@ const SearchResults: React.FC = () => {
     'Jobs': ['Jobs'],
   };
 
-  useEffect(() => {
-    if (locationSearch.trim().length >= 1 && showSuggestions) {
-      const delayFn = setTimeout(() => {
-        setIsSearchingLocation(true);
-        fetch(
-          `/api/locations/search?q=${encodeURIComponent(locationSearch)}`,
-        )
-          .then((res) => res.json())
-          .then((data) => setLocationSuggestions(data))
-          .catch(console.error)
-          .finally(() => setIsSearchingLocation(false));
-      }, 150);
-      return () => clearTimeout(delayFn);
-    } else {
-      setLocationSuggestions([]);
-    }
-  }, [locationSearch, showSuggestions]);
-
   const handleSelectLocation = (place: any) => {
-    const city = place.address?.city || place.address?.town || place.address?.village || '';
-    const state = place.address?.state || '';
-    const cleanAddr = city ? `${city}, ${state}` : state || place.display_name.split(',')[0];
+    const cleanAddr = place.fullAddress || (place.address?.city ? `${place.address.city}, ${place.address.state || ''}` : place.display_name?.split(',')[0] || '');
     
     setLocationSearch(cleanAddr);
     localStorage.setItem("user_location", cleanAddr);
@@ -152,7 +133,6 @@ const SearchResults: React.FC = () => {
       localStorage.setItem("user_lon", place.lon);
     }
     window.dispatchEvent(new Event("location_updated"));
-    setShowSuggestions(false);
   };
 
   const getSearchRelevanceScore = (item: any, query: string): number => {
@@ -347,35 +327,14 @@ const SearchResults: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                 <div className="md:col-span-2">
                   <label className="block text-[11px] uppercase tracking-widest font-black text-slate-400 mb-2">Location</label>
-                  <div className="relative">
-                    <span className="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">location_on</span>
-                    <input 
-                      type="text" 
-                      placeholder="Canada" 
-                      value={locationSearch}
-                      onChange={(e) => {
-                        setLocationSearch(e.target.value);
-                        setShowSuggestions(true);
-                      }}
-                      className="w-full border-slate-200 rounded-lg text-sm bg-slate-50 py-2.5 pl-10 pr-4 focus:ring-primary focus:border-primary font-bold text-slate-700" 
-                    />
-                    {showSuggestions && locationSuggestions.length > 0 && (
-                      <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-xl z-[60] overflow-hidden">
-                        {locationSuggestions.map((place, idx) => (
-                          <div 
-                            key={idx} 
-                            className="px-4 py-3 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-0"
-                            onClick={() => handleSelectLocation(place)}
-                          >
-                            <div className="font-bold text-sm text-slate-800">
-                              {place.address?.city || place.address?.town || place.address?.village || place.display_name.split(",")[0]}
-                            </div>
-                            <div className="text-xs text-slate-500">{place.display_name}</div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                  <LocationAutocomplete
+                    value={locationSearch}
+                    onChange={(val) => setLocationSearch(val)}
+                    onSelectLocation={(item) => handleSelectLocation(item)}
+                    variant="filter"
+                    placeholder="City, sub-city or postcode..."
+                    syncWithLocalStorage={true}
+                  />
                 </div>
                 <div>
                   <button className="w-full bg-[#62b914] hover:bg-[#52a10d] text-white font-bold py-3 rounded-lg transition-colors shadow-md">
@@ -449,35 +408,14 @@ const SearchResults: React.FC = () => {
             {/* Location */}
             <div>
               <label className="block text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Location</label>
-              <div className="relative">
-                <span className="material-icons absolute left-4 top-3.5 text-slate-300">place</span>
-                <input 
-                  type="text" 
-                  value={locationSearch}
-                  onChange={(e) => {
-                    setLocationSearch(e.target.value);
-                    setShowSuggestions(true);
-                  }}
-                  placeholder="City or Postcode"
-                  className="w-full bg-slate-50 border-none rounded-2xl py-4 pl-12 pr-4 text-sm font-bold focus:ring-2 focus:ring-primary/20"
-                />
-                {showSuggestions && locationSuggestions.length > 0 && (
-                  <div className="mt-2 bg-white border border-slate-200 rounded-2xl shadow-lg z-[60] overflow-hidden">
-                    {locationSuggestions.map((place, idx) => (
-                      <div 
-                        key={idx} 
-                        className="px-4 py-3 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-0"
-                        onClick={() => handleSelectLocation(place)}
-                      >
-                        <div className="font-bold text-sm text-slate-800">
-                          {place.address?.city || place.address?.town || place.address?.village || place.display_name.split(",")[0]}
-                        </div>
-                        <div className="text-xs text-slate-500 truncate">{place.display_name}</div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <LocationAutocomplete
+                value={locationSearch}
+                onChange={(val) => setLocationSearch(val)}
+                onSelectLocation={(item) => handleSelectLocation(item)}
+                variant="filter"
+                placeholder="City or Postcode"
+                syncWithLocalStorage={true}
+              />
             </div>
 
             {/* Category-specific filters */}
