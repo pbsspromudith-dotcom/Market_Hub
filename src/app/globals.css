@@ -285,4 +285,15 @@ body {
   font-feature-settings: 'liga';
 }
 
+/* ── Remove Browser Default Outlines on Hero/Navbar Search Inputs ── */
+input.bg-transparent,
+input.bg-transparent:focus,
+input.bg-transparent:focus-visible,
+input[type="text"].bg-transparent:focus,
+input[type="text"].bg-transparent:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
 

@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const type = searchParams.get('type');
 
-    let query = supabase.from('options').select('*');
+    let query = supabase.from('options').select('*').order('id', { ascending: true });
     if (type) {
       query = query.eq('option_type', type);
     }
@@ -15,9 +15,9 @@ export async function GET(request: NextRequest) {
     const { data: optionsList, error } = await query;
     if (error) throw error;
 
-    return NextResponse.json({ success: true, data: optionsList });
+    return NextResponse.json({ success: true, data: optionsList || [] });
   } catch (error: any) {
-    console.error('Database error:', error);
-    return NextResponse.json({ error: "Database error" }, { status: 500 });
+    console.error('Database error in /api/options/read:', error);
+    return NextResponse.json({ success: false, error: error.message || "Database error" }, { status: 500 });
   }
 }

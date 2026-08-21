@@ -7,10 +7,10 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     let categoryId = searchParams.get('category_id') ? parseInt(searchParams.get('category_id')!) : null;
     let categoryName = searchParams.get('category_name') || null;
+    const directOnly = searchParams.get('direct') === '1' || searchParams.get('direct') === 'true';
 
     // If no ID but have a name, resolve the name to an ID
     if (!categoryId && categoryName) {
-      // If it's a path like "Vehicles > Cars & Trucks", get the last segment
       if (categoryName.includes(' > ')) {
         const parts = categoryName.split(' > ');
         categoryName = parts[parts.length - 1];
@@ -29,11 +29,38 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: true, data: [] });
     }
 
-    // Query attributes for this category
+    let categoryIdsToQuery = [categoryId];
+
+    // Unless explicitly directOnly, resolve full ancestor hierarchy so attributes inherit cleanly
+    if (!directOnly) {
+      try {
+        let currentId: number | null = categoryId;
+        const seen = new Set<number>([categoryId]);
+        while (currentId) {
+          const res: any = await supabase
+            .from('category')
+            .select('ParentCategoryID')
+            .eq('CategoryID', currentId)
+            .maybeSingle();
+          const parentCatId = res?.data?.ParentCategoryID;
+          if (parentCatId && !seen.has(parentCatId)) {
+            seen.add(parentCatId);
+            categoryIdsToQuery.push(parentCatId);
+            currentId = parentCatId;
+          } else {
+            break;
+          }
+        }
+      } catch (err) {
+        console.warn('Error resolving ancestor category IDs:', err);
+      }
+    }
+
+    // Query attributes for these category IDs
     const { data: rawAttributes, error: attrError } = await supabase
       .from('categoryattribute')
       .select('*')
-      .eq('CategoryID', categoryId)
+      .in('CategoryID', categoryIdsToQuery)
       .order('AttributeID', { ascending: true });
 
     if (attrError) throw attrError;
@@ -61,8 +88,9 @@ export async function GET(request: NextRequest) {
       optionsByAttr[opt.AttributeID].push(opt.OptionValue);
     }
 
-    const attributes = rawAttributes.map(attr => ({
+    const attributes = (rawAttributes || []).map(attr => ({
       AttributeID: attr.AttributeID,
+      CategoryID: attr.CategoryID,
       AttributeName: attr.AttributeName,
       AttributeType: attr.AttributeType,
       IsRequired: attr.IsRequired ? 1 : 0,

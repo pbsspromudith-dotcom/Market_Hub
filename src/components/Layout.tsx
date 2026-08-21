@@ -185,7 +185,7 @@ const Layout: React.FC<LayoutProps> = ({
                       value={globalSearch}
                       onChange={(e) => setGlobalSearch(e.target.value)}
                       placeholder="What are you looking for?"
-                      className="w-full bg-transparent border-none focus:ring-0 text-sm font-bold text-slate-800 placeholder:text-slate-400 placeholder:font-medium pl-12 pr-4 py-2.5 outline-none"
+                      className="w-full bg-transparent border-0 border-none outline-none focus:outline-none focus:ring-0 focus:border-none focus-visible:outline-none shadow-none text-sm font-bold text-slate-800 placeholder:text-slate-400 placeholder:font-medium pl-12 pr-4 py-2.5"
                     />
                   </div>
                   <div className="w-px h-6 bg-slate-200 mx-1"></div>

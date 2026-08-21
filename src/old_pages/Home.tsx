@@ -355,7 +355,7 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn, initialCategories = [], initial
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 aria-label="Search for anything"
-                className="w-full pl-14 pr-4 py-5 bg-transparent border-none focus:ring-0 text-sm font-medium"
+                className="w-full pl-14 pr-4 py-5 bg-transparent border-0 border-none outline-none focus:outline-none focus:ring-0 focus:border-none focus-visible:outline-none shadow-none text-sm font-medium"
                 placeholder="Search for anything..."
                 type="text"
               />

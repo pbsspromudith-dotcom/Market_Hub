@@ -148,24 +148,39 @@ const AdminDashboard: React.FC = () => {
     let isOwn = false;
     for (let i = path.length - 1; i >= 0; i--) {
       if (path[i].template_config) {
-        const cfg = typeof path[i].template_config === 'string' ? JSON.parse(path[i].template_config) : path[i].template_config;
-        resolved = cfg;
-        if (i === path.length - 1) {
-          isOwn = true;
-          resolvedFrom = null;
-        } else {
-          isOwn = false;
-          resolvedFrom = path[i].CategoryName;
+        let cfg: any = null;
+        try {
+          cfg = typeof path[i].template_config === 'string' ? JSON.parse(path[i].template_config) : path[i].template_config;
+          if (typeof cfg === 'string') {
+            try { cfg = JSON.parse(cfg); } catch {}
+          }
+        } catch {
+          try {
+            const unescaped = String(path[i].template_config).replace(/\\"/g, '"').replace(/\\\\/g, '\\');
+            cfg = JSON.parse(unescaped);
+          } catch {
+            cfg = null;
+          }
         }
-        break;
+        if (cfg && typeof cfg === 'object') {
+          resolved = cfg;
+          if (i === path.length - 1) {
+            isOwn = true;
+            resolvedFrom = null;
+          } else {
+            isOwn = false;
+            resolvedFrom = path[i].CategoryName;
+          }
+          break;
+        }
       }
     }
     setTplConfig(resolved || {});
     setTplInheritedFrom(isOwn ? null : resolvedFrom);
     setTplIsOwn(isOwn || !resolvedFrom);
 
-    // Load attributes for the selected category
-    fetch(`/api/categories/attributes?category_id=${selectedId}`)
+    // Load attributes for the selected category (direct attributes for template management)
+    fetch(`/api/categories/attributes?category_id=${selectedId}&direct=1`)
       .then(r => r.json())
       .then(r => { if (r.success) setTplAttributes(r.data); })
       .catch(console.error);
@@ -185,6 +200,7 @@ const AdminDashboard: React.FC = () => {
       const data = await res.json();
       if (data.success) {
         setTplMsg({ type: 'success', text: 'Template saved successfully!' });
+        showAlert('Template saved successfully!', 'success');
         setTplIsOwn(true);
         setTplInheritedFrom(null);
         // Update local tree
@@ -196,8 +212,12 @@ const AdminDashboard: React.FC = () => {
         setTplCategories(updateTree(tplCategories));
       } else {
         setTplMsg({ type: 'error', text: data.message || 'Failed to save template.' });
+        showAlert(data.message || 'Failed to save template.', 'error');
       }
-    } catch { setTplMsg({ type: 'error', text: 'Network error.' }); }
+    } catch { 
+      setTplMsg({ type: 'error', text: 'Network error.' });
+      showAlert('Network error saving template.', 'error');
+    }
     setTplSaving(false);
     setTimeout(() => setTplMsg(null), 4000);
   };
@@ -215,6 +235,7 @@ const AdminDashboard: React.FC = () => {
       const data = await res.json();
       if (data.success) {
         setTplMsg({ type: 'success', text: 'Template reset. Now inheriting from parent.' });
+        showAlert('Template reset. Now inheriting from parent.', 'success');
         // Clear in local tree
         const updateTree = (cats: any[]): any[] => cats.map(c => {
           if (c.CategoryID == selectedId) return { ...c, template_config: null };
@@ -224,8 +245,13 @@ const AdminDashboard: React.FC = () => {
         setTplCategories(updateTree(tplCategories));
         // Re-trigger resolution
         setTplMainCatId(prev => prev);
+      } else {
+        showAlert(data.message || 'Failed to reset template.', 'error');
       }
-    } catch { setTplMsg({ type: 'error', text: 'Network error.' }); }
+    } catch { 
+      setTplMsg({ type: 'error', text: 'Network error.' });
+      showAlert('Network error resetting template.', 'error');
+    }
     setTplSaving(false);
     setTimeout(() => setTplMsg(null), 4000);
   };
@@ -251,14 +277,19 @@ const AdminDashboard: React.FC = () => {
       if (data.success) {
         setTplNewAttrName(''); setTplNewAttrOptions(''); setTplNewAttrRequired(false);
         // Reload attributes
-        const r2 = await fetch(`/api/categories/attributes?category_id=${selectedId}`);
+        const r2 = await fetch(`/api/categories/attributes?category_id=${selectedId}&direct=1`);
         const d2 = await r2.json();
         if (d2.success) setTplAttributes(d2.data);
         setTplMsg({ type: 'success', text: 'Attribute added!' });
+        showAlert('Attribute added successfully!', 'success');
       } else {
         setTplMsg({ type: 'error', text: data.message || 'Failed to add attribute.' });
+        showAlert(data.message || 'Failed to add attribute.', 'error');
       }
-    } catch { setTplMsg({ type: 'error', text: 'Network error.' }); }
+    } catch { 
+      setTplMsg({ type: 'error', text: 'Network error.' });
+      showAlert('Network error adding attribute.', 'error');
+    }
     setTplAddingAttr(false);
     setTimeout(() => setTplMsg(null), 4000);
   };
@@ -275,8 +306,14 @@ const AdminDashboard: React.FC = () => {
       if (data.success) {
         setTplAttributes(prev => prev.filter(a => a.AttributeID !== attrId));
         setTplMsg({ type: 'success', text: 'Attribute deleted!' });
+        showAlert('Attribute deleted successfully!', 'success');
+      } else {
+        showAlert(data.message || 'Failed to delete attribute.', 'error');
       }
-    } catch { setTplMsg({ type: 'error', text: 'Network error.' }); }
+    } catch { 
+      setTplMsg({ type: 'error', text: 'Network error.' });
+      showAlert('Network error deleting attribute.', 'error');
+    }
     setTplDeletingAttr(null);
     setTimeout(() => setTplMsg(null), 4000);
   };
@@ -2056,17 +2093,24 @@ const AdminDashboard: React.FC = () => {
                   {activeSubMaster === 'car_model' && (
                     <div className="w-full sm:w-1/3">
                       <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Car Make <span className="text-red-500">*</span></label>
-                      <select 
-                        required
-                        value={newOptionParentId}
-                        onChange={e => setNewOptionParentId(e.target.value)}
-                        className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm font-medium"
-                      >
-                        <option value="">-- Choose --</option>
-                        {options.filter(o => o.option_type === 'car_make').map(make => (
-                          <option key={make.id} value={make.id}>{make.option_value}</option>
-                        ))}
-                      </select>
+                      <div className="relative">
+                        <select 
+                          required
+                          value={newOptionParentId}
+                          onChange={e => setNewOptionParentId(e.target.value)}
+                          className="w-full px-4 pr-10 py-2.5 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm font-medium appearance-none cursor-pointer"
+                        >
+                          <option value="">-- Choose Car Make --</option>
+                          {[...options.filter(o => o.option_type === 'car_make')]
+                            .sort((a, b) => a.option_value.localeCompare(b.option_value))
+                            .map(make => (
+                              <option key={make.id} value={make.id}>{make.option_value}</option>
+                            ))}
+                        </select>
+                        <span className="material-icons absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-lg">
+                          expand_more
+                        </span>
+                      </div>
                     </div>
                   )}
                   <div className="flex-1 w-full">
@@ -2108,31 +2152,41 @@ const AdminDashboard: React.FC = () => {
                   {options
                     .filter(o => o.option_type === activeSubMaster)
                     .filter(o => subMasterSearch ? o.option_value.toLowerCase().includes(subMasterSearch.toLowerCase()) : true)
+                    .sort((a, b) => a.option_value.localeCompare(b.option_value))
                     .map(opt => {
-                      const parentOpt = activeSubMaster === 'car_model' && opt.parent_id ? options.find(p => p.id === opt.parent_id) : null;
+                      const parentOpt = activeSubMaster === 'car_model' && opt.parent_id ? options.find(p => Number(p.id) === Number(opt.parent_id)) : null;
                       return (
                         <tr key={opt.id} className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors group">
-                          <td className="px-6 py-4 text-xs font-bold text-slate-400">#{opt.id}</td>
-                          <td className="px-6 py-4 text-sm font-bold text-slate-700">{opt.option_value}</td>
+                          <td className="px-6 py-4 text-xs font-bold text-slate-400 font-mono">#{opt.id}</td>
+                          <td className="px-6 py-4 text-sm font-bold text-slate-800">{opt.option_value}</td>
                           {activeSubMaster === 'car_model' && (
-                            <td className="px-6 py-4 text-sm font-medium text-slate-505">
-                              <select 
-                                value={opt.parent_id || ''} 
-                                onChange={(e) => handleUpdateParentId(opt.id, opt.option_type, e.target.value)}
-                                className="px-3 py-1 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-xs text-slate-700 w-32"
-                              >
-                                <option value="">-- Unmapped --</option>
-                                {options.filter(o => o.option_type === 'car_make').map(make => (
-                                  <option key={make.id} value={make.id}>{make.option_value}</option>
-                                ))}
-                              </select>
+                            <td className="px-6 py-4 text-sm font-medium text-slate-600">
+                              <div className="relative inline-block">
+                                <select 
+                                  value={opt.parent_id || ''} 
+                                  onChange={(e) => handleUpdateParentId(opt.id, opt.option_type, e.target.value)}
+                                  className={`pl-3 pr-8 py-1.5 bg-white border rounded-lg focus:ring-primary focus:border-primary text-xs font-bold w-44 transition-colors appearance-none cursor-pointer ${
+                                    opt.parent_id ? 'border-slate-300 text-slate-800' : 'border-amber-300 bg-amber-50/50 text-amber-700'
+                                  }`}
+                                >
+                                  <option value="">-- Unmapped --</option>
+                                  {[...options.filter(o => o.option_type === 'car_make')]
+                                    .sort((a, b) => a.option_value.localeCompare(b.option_value))
+                                    .map(make => (
+                                      <option key={make.id} value={make.id}>{make.option_value}</option>
+                                    ))}
+                                </select>
+                                <span className="material-icons absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-base">
+                                  expand_more
+                                </span>
+                              </div>
                             </td>
                           )}
                           <td className="px-6 py-4 text-center">
                             <button 
                               onClick={() => handleDeleteOption(opt.id, opt.option_type)}
                               disabled={isDeletingOption === opt.id}
-                              className="text-slate-300 hover:text-red-505 transition-colors p-1 rounded-md hover:bg-red-50 disabled:opacity-50"
+                              className="text-slate-400 hover:text-red-600 transition-colors p-1.5 rounded-lg hover:bg-red-50 disabled:opacity-50 inline-flex items-center justify-center cursor-pointer"
                               title="Delete"
                             >
                               <span className="material-icons text-[18px]">delete_outline</span>
@@ -3675,17 +3729,22 @@ const AdminDashboard: React.FC = () => {
                   {/* Main Category */}
                   <div>
                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Main Category</label>
-                    <select
-                      id="tpl-main-category"
-                      value={tplMainCatId || ''}
-                      onChange={e => { setTplMainCatId(e.target.value ? Number(e.target.value) : null); setTplSubCatId(null); setTplL3CatId(null); }}
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-primary focus:border-primary"
-                    >
-                      <option value="">— Choose —</option>
-                      {tplCategories.map((c: any) => (
-                        <option key={c.CategoryID} value={c.CategoryID}>{c.CategoryName}</option>
-                      ))}
-                    </select>
+                    <div className="relative">
+                      <select
+                        id="tpl-main-category"
+                        value={tplMainCatId || ''}
+                        onChange={e => { setTplMainCatId(e.target.value ? Number(e.target.value) : null); setTplSubCatId(null); setTplL3CatId(null); }}
+                        className="w-full h-12 pl-4 pr-10 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-white transition-all appearance-none cursor-pointer text-slate-800"
+                      >
+                        <option value="">— Choose —</option>
+                        {tplCategories.map((c: any) => (
+                          <option key={c.CategoryID} value={c.CategoryID}>{c.CategoryName}</option>
+                        ))}
+                      </select>
+                      <span className="material-icons absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-xl">
+                        expand_more
+                      </span>
+                    </div>
                   </div>
 
                   {/* Sub-Category */}
@@ -3696,17 +3755,22 @@ const AdminDashboard: React.FC = () => {
                     return (
                       <div>
                         <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Sub-Category</label>
-                        <select
-                          id="tpl-sub-category"
-                          value={tplSubCatId || ''}
-                          onChange={e => { setTplSubCatId(e.target.value ? Number(e.target.value) : null); setTplL3CatId(null); }}
-                          className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-primary focus:border-primary"
-                        >
-                          <option value="">— All sub-categories (Main) —</option>
-                          {subs.map((c: any) => (
-                            <option key={c.CategoryID} value={c.CategoryID}>{c.CategoryName}</option>
-                          ))}
-                        </select>
+                        <div className="relative">
+                          <select
+                            id="tpl-sub-category"
+                            value={tplSubCatId || ''}
+                            onChange={e => { setTplSubCatId(e.target.value ? Number(e.target.value) : null); setTplL3CatId(null); }}
+                            className="w-full h-12 pl-4 pr-10 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-white transition-all appearance-none cursor-pointer text-slate-800"
+                          >
+                            <option value="">— All sub-categories (Main) —</option>
+                            {subs.map((c: any) => (
+                              <option key={c.CategoryID} value={c.CategoryID}>{c.CategoryName}</option>
+                            ))}
+                          </select>
+                          <span className="material-icons absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-xl">
+                            expand_more
+                          </span>
+                        </div>
                       </div>
                     );
                   })()}
@@ -3720,17 +3784,22 @@ const AdminDashboard: React.FC = () => {
                     return (
                       <div>
                         <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Level 3</label>
-                        <select
-                          id="tpl-l3-category"
-                          value={tplL3CatId || ''}
-                          onChange={e => setTplL3CatId(e.target.value ? Number(e.target.value) : null)}
-                          className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-primary focus:border-primary"
-                        >
-                          <option value="">— All (Sub-Category) —</option>
-                          {l3s.map((c: any) => (
-                            <option key={c.CategoryID} value={c.CategoryID}>{c.CategoryName}</option>
-                          ))}
-                        </select>
+                        <div className="relative">
+                          <select
+                            id="tpl-l3-category"
+                            value={tplL3CatId || ''}
+                            onChange={e => setTplL3CatId(e.target.value ? Number(e.target.value) : null)}
+                            className="w-full h-12 pl-4 pr-10 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-white transition-all appearance-none cursor-pointer text-slate-800"
+                          >
+                            <option value="">— All (Sub-Category) —</option>
+                            {l3s.map((c: any) => (
+                              <option key={c.CategoryID} value={c.CategoryID}>{c.CategoryName}</option>
+                            ))}
+                          </select>
+                          <span className="material-icons absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-xl">
+                            expand_more
+                          </span>
+                        </div>
                       </div>
                     );
                   })()}
@@ -3762,10 +3831,33 @@ const AdminDashboard: React.FC = () => {
               {/* Standard Fields Settings */}
               {(tplMainCatId || tplSubCatId || tplL3CatId) && (
                 <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm p-8">
-                  <h2 className="text-lg font-black text-slate-800 mb-6 flex items-center gap-2">
-                    <span className="material-icons text-primary">toggle_on</span>
-                    Standard Fields
-                  </h2>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-100">
+                    <div>
+                      <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
+                        <span className="material-icons text-primary">toggle_on</span>
+                        Standard Fields
+                      </h2>
+                      <p className="text-xs text-slate-400 font-medium mt-0.5">Toggle and customize fields for this category template.</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {(tplSubCatId || tplL3CatId) && tplIsOwn && (
+                        <button
+                          onClick={() => showConfirm({ title: 'Reset Template', message: 'Reset template for this category? It will inherit from its parent instead.', onConfirm: doTplReset })}
+                          disabled={tplSaving}
+                          className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                        >
+                          <span className="material-icons text-sm">restart_alt</span> Reset
+                        </button>
+                      )}
+                      <button
+                        onClick={handleTplSave}
+                        disabled={tplSaving}
+                        className="px-5 py-2 bg-primary hover:bg-primary-hover text-white font-black text-xs uppercase tracking-wider rounded-xl transition-all shadow-md shadow-primary/20 flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                      >
+                        {tplSaving ? <><span className="material-icons text-sm animate-spin">refresh</span> Saving...</> : <><span className="material-icons text-sm">save</span> Save Template</>}
+                      </button>
+                    </div>
+                  </div>
 
                   {tplMsg && (
                     <div className={`mb-6 px-4 py-3 rounded-xl text-sm font-bold flex items-center gap-2 ${
@@ -4000,16 +4092,21 @@ const AdminDashboard: React.FC = () => {
                       className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm"
                       placeholder="Attribute name..."
                     />
-                    <select
-                      value={tplNewAttrType}
-                      onChange={e => setTplNewAttrType(e.target.value)}
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium"
-                    >
-                      <option value="Text">Text</option>
-                      <option value="Number">Number</option>
-                      <option value="Dropdown">Dropdown</option>
-                      <option value="CheckboxGroup">Checkbox Group</option>
-                    </select>
+                    <div className="relative">
+                      <select
+                        value={tplNewAttrType}
+                        onChange={e => setTplNewAttrType(e.target.value)}
+                        className="w-full h-12 pl-4 pr-10 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-white transition-all appearance-none cursor-pointer text-slate-800"
+                      >
+                        <option value="Text">Text</option>
+                        <option value="Number">Number</option>
+                        <option value="Dropdown">Dropdown</option>
+                        <option value="CheckboxGroup">Checkbox Group</option>
+                      </select>
+                      <span className="material-icons absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-xl">
+                        expand_more
+                      </span>
+                    </div>
                     {(tplNewAttrType === 'Dropdown' || tplNewAttrType === 'CheckboxGroup') && (
                       <input
                         type="text"

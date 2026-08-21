@@ -427,12 +427,25 @@ const PostAd: React.FC = () => {
   // Resolve template config by walking up the category path
   const resolveTemplate = (path: any[]) => {
     for (let i = path.length - 1; i >= 0; i--) {
-      if (path[i].template_config) {
+      if (path[i]?.template_config) {
         try {
-          return typeof path[i].template_config === 'string'
+          const cfg = typeof path[i].template_config === 'string'
             ? JSON.parse(path[i].template_config)
             : path[i].template_config;
-        } catch { return {}; }
+          if (typeof cfg === 'string') {
+            try {
+              const double = JSON.parse(cfg);
+              if (typeof double === 'object' && double !== null) return double;
+            } catch {}
+          }
+          if (typeof cfg === 'object' && cfg !== null) return cfg;
+        } catch {
+          try {
+            const unescaped = String(path[i].template_config).replace(/\\"/g, '"').replace(/\\\\/g, '\\');
+            const cfg = JSON.parse(unescaped);
+            if (typeof cfg === 'object' && cfg !== null) return cfg;
+          } catch {}
+        }
       }
     }
     return {}; // default: all fields visible
@@ -594,7 +607,7 @@ const PostAd: React.FC = () => {
 
   useEffect(() => {
     const leafCategory = categoryPath.length > 0 ? categoryPath[categoryPath.length - 1] : null;
-    if (leafCategory && (!leafCategory.children || leafCategory.children.length === 0)) {
+    if (leafCategory) {
       fetch(
         `/api/categories/attributes?category_id=${leafCategory.CategoryID}`,
       )
@@ -960,80 +973,135 @@ const PostAd: React.FC = () => {
   };
 
   return (
-    <div className="w-full px-4 sm:px-6 lg:px-10 py-12">
-      {/* Header Stepper */}
-      <div className="flex items-center justify-center mb-16 relative">
-        <div className="flex flex-col items-center z-10">
-          <div
-            className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${step >= 1 ? "bg-primary text-white" : "bg-slate-200 text-slate-400"}`}
-          >
-            <span className="material-icons text-xl">
-              {step > 1 ? "check" : "category"}
-            </span>
-          </div>
-          <span
-            className={`text-[10px] font-bold mt-2 uppercase tracking-widest ${step >= 1 ? "text-primary" : "text-slate-400"}`}
-          >
-            Category
-          </span>
+    <div className="w-full max-w-[1720px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 py-6 lg:py-10">
+      {/* Top Title & Quick Actions Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 pb-6 border-b border-slate-200">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+            {isEditMode ? "Edit Your Listing" : "Post a Free Ad"}
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">
+            Connect with verified buyers and sellers across Canada in 3 easy steps
+          </p>
         </div>
-        <div
-          className={`h-1 flex-1 mx-4 rounded-full ${step >= 2 ? "bg-primary" : "bg-slate-200"}`}
-        ></div>
-        <div className="flex flex-col items-center z-10">
-          <div
-            className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${step >= 2 ? "bg-primary text-white" : "bg-slate-200 text-slate-400"}`}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleReset}
+            type="button"
+            className="inline-flex items-center gap-2 text-slate-500 hover:text-red-600 font-bold text-xs uppercase tracking-wider transition-all bg-white hover:bg-red-50/80 px-4 py-2.5 rounded-xl border border-slate-200 shadow-2xs hover:border-red-200 cursor-pointer"
           >
-            <span className="material-icons text-xl">
-              {step > 2 ? "check" : "info"}
-            </span>
-          </div>
-          <span
-            className={`text-[10px] font-bold mt-2 uppercase tracking-widest ${step >= 2 ? "text-primary" : "text-slate-400"}`}
-          >
-            Details
-          </span>
-        </div>
-        <div
-          className={`h-1 flex-1 mx-4 rounded-full ${step >= 3 ? "bg-primary" : "bg-slate-200"}`}
-        ></div>
-        <div className="flex flex-col items-center z-10">
-          <div
-            className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${step >= 3 ? "bg-primary text-white" : "bg-slate-200 text-slate-400"}`}
-          >
-            <span className="material-icons text-xl">image</span>
-          </div>
-          <span
-            className={`text-[10px] font-bold mt-2 uppercase tracking-widest ${step >= 3 ? "text-primary" : "text-slate-400"}`}
-          >
-            Media
-          </span>
+            <span className="material-icons text-base">refresh</span> Reset Form
+          </button>
         </div>
       </div>
 
-      <div className="flex justify-end mb-6 relative z-20">
-        <button
-          onClick={handleReset}
-          type="button"
-          className="flex items-center gap-2 text-slate-500 hover:text-red-500 font-bold text-sm transition-colors bg-white px-5 py-2.5 rounded-xl border border-slate-200 shadow-sm hover:border-red-200 hover:bg-red-50 cursor-pointer"
-        >
-          <span className="material-icons text-lg">refresh</span> Reset Form
-        </button>
+      {/* Stepper Progress */}
+      <div className="max-w-3xl mx-auto mb-8 sm:mb-10">
+        <div className="flex items-center justify-between relative">
+          {/* Step 1: Category */}
+          <div 
+            onClick={() => step > 1 && setStep(1)} 
+            className={`flex flex-col items-center z-10 ${step > 1 ? "cursor-pointer group" : ""}`}
+          >
+            <div
+              className={`w-11 h-11 rounded-full flex items-center justify-center font-bold transition-all shadow-sm ${
+                step >= 1 ? "bg-primary text-white shadow-primary/30" : "bg-slate-100 text-slate-400 border border-slate-200"
+              }`}
+            >
+              <span className="material-icons text-xl">
+                {step > 1 ? "check" : "category"}
+              </span>
+            </div>
+            <span
+              className={`text-[11px] font-black mt-2 uppercase tracking-widest transition-colors ${
+                step >= 1 ? "text-primary" : "text-slate-400"
+              }`}
+            >
+              1. Category
+            </span>
+          </div>
+
+          {/* Connector Line 1-2 */}
+          <div className="h-1 flex-1 mx-3 rounded-full bg-slate-200 relative overflow-hidden">
+            <div 
+              className="h-full bg-primary transition-all duration-300 rounded-full"
+              style={{ width: step >= 2 ? "100%" : "0%" }}
+            />
+          </div>
+
+          {/* Step 2: Details */}
+          <div 
+            onClick={() => step > 2 && setStep(2)} 
+            className={`flex flex-col items-center z-10 ${step > 2 ? "cursor-pointer group" : ""}`}
+          >
+            <div
+              className={`w-11 h-11 rounded-full flex items-center justify-center font-bold transition-all shadow-sm ${
+                step >= 2 ? "bg-primary text-white shadow-primary/30" : "bg-slate-100 text-slate-400 border border-slate-200"
+              }`}
+            >
+              <span className="material-icons text-xl">
+                {step > 2 ? "check" : "edit_note"}
+              </span>
+            </div>
+            <span
+              className={`text-[11px] font-black mt-2 uppercase tracking-widest transition-colors ${
+                step >= 2 ? "text-primary" : "text-slate-400"
+              }`}
+            >
+              2. Details
+            </span>
+          </div>
+
+          {/* Connector Line 2-3 */}
+          <div className="h-1 flex-1 mx-3 rounded-full bg-slate-200 relative overflow-hidden">
+            <div 
+              className="h-full bg-primary transition-all duration-300 rounded-full"
+              style={{ width: step >= 3 ? "100%" : "0%" }}
+            />
+          </div>
+
+          {/* Step 3: Media & Publish */}
+          <div className="flex flex-col items-center z-10">
+            <div
+              className={`w-11 h-11 rounded-full flex items-center justify-center font-bold transition-all shadow-sm ${
+                step >= 3 ? "bg-primary text-white shadow-primary/30" : "bg-slate-100 text-slate-400 border border-slate-200"
+              }`}
+            >
+              <span className="material-icons text-xl">image</span>
+            </div>
+            <span
+              className={`text-[11px] font-black mt-2 uppercase tracking-widest transition-colors ${
+                step >= 3 ? "text-primary" : "text-slate-400"
+              }`}
+            >
+              3. Media & Publish
+            </span>
+          </div>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-        <div className="lg:col-span-8 space-y-8">
+      {/* Main Grid: Form Column + Sticky Sidebar Column */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 xl:gap-10 items-start">
+        {/* Left Form Area (8 cols on lg, 9 cols on xl) */}
+        <div className="lg:col-span-8 xl:col-span-9 space-y-6 sm:space-y-8">
+          {/* ═══════════════════════════════════════════
+              STEP 1: CATEGORY SELECTION
+             ═══════════════════════════════════════════ */}
           {step === 1 && (
-            <div className="bg-white p-10 rounded-[2rem] border border-slate-200 shadow-sm">
-              <h2 className="text-2xl font-black mb-8">{isEditMode ? "Edit Category" : "Select Category"}</h2>
-              <div className="mb-4">
-                <p className="text-sm text-slate-500 mb-4 tracking-widest uppercase font-bold text-center">
-                  Manually select a category
+            <div className="bg-white p-6 sm:p-8 md:p-10 rounded-3xl border border-slate-200 shadow-sm space-y-6">
+              <div className="border-b border-slate-100 pb-4">
+                <h2 className="text-xl sm:text-2xl font-black text-slate-900">
+                  {isEditMode ? "Edit Listing Category" : "Select a Category"}
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">
+                  Choose the category that best matches what you are advertising.
                 </p>
+              </div>
 
+              <div>
                 {/* Category Breadcrumbs / Selected path */}
                 {categoryPath.length > 0 && (
-                  <div className="flex items-center justify-between p-4 border border-slate-200 rounded-xl mb-4 bg-white shadow-sm">
+                  <div className="flex items-center justify-between p-4 border border-slate-200 rounded-2xl mb-6 bg-slate-50/70 shadow-2xs">
                     <div className="flex items-center gap-1.5 flex-wrap">
                       {categoryPath.map((c, i) => (
                         <React.Fragment key={c.CategoryID}>
@@ -1052,7 +1120,7 @@ const PostAd: React.FC = () => {
                       {category === "" && (
                         <button
                           onClick={handleCategoryBack}
-                          className="text-slate-400 hover:text-slate-700 transition-colors text-xs font-bold flex items-center gap-1 bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-100"
+                          className="text-slate-600 hover:text-slate-900 transition-colors text-xs font-bold flex items-center gap-1 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-2xs"
                         >
                           <span className="material-icons text-sm">
                             arrow_back
@@ -1062,7 +1130,7 @@ const PostAd: React.FC = () => {
                       )}
                       <button
                         onClick={handleCategoryReset}
-                        className="text-slate-400 hover:text-red-500 transition-colors text-xs font-bold flex items-center gap-1 bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-100"
+                        className="text-slate-500 hover:text-red-600 transition-colors text-xs font-bold flex items-center gap-1 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-2xs"
                       >
                         <span className="material-icons text-sm">close</span>{" "}
                         Reset
@@ -1074,661 +1142,755 @@ const PostAd: React.FC = () => {
                 {/* Categories lists at current depth */}
                 {category === "" ? (
                   currentLevelCategories.length > 0 ? (
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-6 gap-3.5 sm:gap-4">
                       {currentLevelCategories.map((cat: any) => (
                         <button
                           key={cat.CategoryID}
                           onClick={() => handleCategoryClick(cat)}
-                          className={`flex flex-col items-center justify-center p-6 rounded-2xl border-2 transition-all group bg-slate-50 border-transparent hover:border-primary hover:bg-white`}
+                          className="flex flex-col items-center justify-center p-5 sm:p-6 rounded-2xl border-2 transition-all group bg-slate-50/70 border-slate-100 hover:border-primary hover:bg-white hover:shadow-md cursor-pointer text-center"
                         >
-                          <span
-                            className={`material-icons text-3xl mb-3 text-slate-400 group-hover:text-primary`}
-                          >
+                          <span className="material-icons text-3xl mb-2.5 text-slate-400 group-hover:text-primary group-hover:scale-110 transition-all">
                             {cat.Icon || "folder"}
                           </span>
-                          <span className="text-xs font-bold text-slate-600 uppercase tracking-widest text-center">
+                          <span className="text-xs font-bold text-slate-700 uppercase tracking-wider group-hover:text-primary transition-colors">
                             {cat.CategoryName}
                           </span>
                         </button>
                       ))}
                     </div>
                   ) : (
-                    <div className="p-8 text-center bg-amber-50 rounded-xl border border-amber-200 text-amber-800 font-bold">
+                    <div className="p-8 text-center bg-amber-50 rounded-2xl border border-amber-200 text-amber-800 font-bold text-sm">
                       No subcategories available.
                     </div>
                   )
                 ) : (
-                  <div className="p-8 text-center bg-primary/5 rounded-xl border border-primary/20">
-                    <span className="material-icons text-4xl text-primary mb-4 block">
+                  <div className="p-8 text-center bg-blue-50/60 rounded-2xl border border-blue-200/80">
+                    <span className="material-icons text-4xl text-primary mb-3 block">
                       check_circle
                     </span>
-                    <p className="font-bold text-slate-800 text-lg">
+                    <p className="font-black text-slate-900 text-lg">
                       Category Selected
                     </p>
-                    <p className="text-slate-500 text-sm mt-2">{category}</p>
+                    <p className="text-primary font-bold text-sm mt-1">{category}</p>
+                    <button
+                      onClick={handleCategoryReset}
+                      className="mt-4 text-xs font-bold text-slate-500 hover:text-primary underline"
+                    >
+                      Choose a different category
+                    </button>
                   </div>
                 )}
               </div>
-              <div className="mt-10 pt-10 border-t border-slate-100 text-right">
+
+              <div className="pt-6 border-t border-slate-100 flex justify-end">
                 <button
                   disabled={category === ""}
                   onClick={() => setStep(2)}
-                  className="bg-primary hover:bg-primary-hover text-white px-10 py-4 rounded-xl font-bold transition-all shadow-lg shadow-primary/20 flex items-center gap-2 ml-auto disabled:opacity-50"
+                  className="bg-primary hover:bg-primary-hover text-white px-8 py-3.5 rounded-xl font-black text-sm uppercase tracking-wider transition-all shadow-md shadow-primary/20 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
-                  Next Step{" "}
-                  <span className="material-icons">chevron_right</span>
+                  Continue to Details{" "}
+                  <span className="material-icons text-lg">chevron_right</span>
                 </button>
               </div>
             </div>
           )}
 
+          {/* ═══════════════════════════════════════════
+              STEP 2: AD DETAILS & VEHICLE SPECIFICATIONS
+             ═══════════════════════════════════════════ */}
           {step === 2 && (
-            <div className="bg-white p-10 rounded-[2rem] border border-slate-200 shadow-sm space-y-8">
-              <h2 className="text-2xl font-black">{isEditMode ? "Edit Ad Information" : "Ad Information"}</h2>
+            <div className="bg-white p-6 sm:p-8 md:p-10 rounded-3xl border border-slate-200 shadow-sm space-y-8">
+              {/* Header & Category Banner */}
+              <div className="border-b border-slate-100 pb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-xl sm:text-2xl font-black text-slate-900">
+                    {isEditMode ? "Edit Ad Information" : "Ad Information & Details"}
+                  </h2>
+                  <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">
+                    Fill in the details to make your ad informative and searchable.
+                  </p>
+                </div>
+                {category && (
+                  <div className="flex items-center gap-2 bg-blue-50/80 text-primary border border-blue-200/80 px-3.5 py-1.5 rounded-full text-xs font-bold self-start sm:self-center">
+                    <span className="material-icons text-sm">category</span>
+                    <span className="truncate max-w-[200px]">{category}</span>
+                    <button
+                      type="button"
+                      onClick={() => setStep(1)}
+                      className="text-primary hover:text-primary-hover underline text-[11px] ml-1"
+                    >
+                      Change
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Title & Description Section */}
               <div className="space-y-6">
                 {!templateConfig.hideTitle && (
                   <div>
-                    <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">
-                      Ad Title
+                    <label className="block text-xs font-black text-slate-600 uppercase tracking-widest mb-2 flex items-center justify-between">
+                      <span>Ad Title <span className="text-red-500">*</span></span>
+                      <span className="text-slate-400 font-normal text-[11px]">Clear & descriptive</span>
                     </label>
                     <input
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
-                      className="w-full px-5 py-4 bg-slate-50 border-slate-100 rounded-xl focus:ring-primary focus:border-primary text-sm"
+                      className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-bold text-slate-900 placeholder:text-slate-400 placeholder:font-normal transition-all"
                       placeholder={getTitlePlaceholder(category)}
-                    />
-                  </div>
-                )}
-                {!templateConfig.hideDescription && (
-                  <div>
-                    <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">
-                      Description <span className="text-red-500">*</span>
-                    </label>
-                    <textarea
-                      value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                      rows={6}
-                      className="w-full px-5 py-4 bg-slate-50 border-slate-100 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium resize-y"
-                      placeholder="Provide a detailed description of your item, service, or job..."
                       required
                     />
                   </div>
                 )}
 
-                {/* Vehicle Specifications & Characteristics Section — strictly scoped to selected vehicle categories */}
-                {isVehicleSpecCategory(categoryPath, category) && (
-                  <div className="bg-gradient-to-br from-blue-50/80 to-slate-50 p-6 sm:p-8 rounded-2xl border border-blue-100/80 shadow-xs space-y-6">
-                    <div className="flex items-center gap-3 pb-3 border-b border-blue-100">
-                      <div className="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center shadow-md shadow-primary/20">
-                        <span className="material-icons text-xl">directions_car</span>
-                      </div>
-                      <div>
-                        <h3 className="text-base font-black text-slate-900 tracking-tight">
-                          Vehicle Specifications & Characteristics
-                        </h3>
-                        <p className="text-xs text-slate-500 font-medium">
-                          Provide detailed vehicle specifications to build buyer trust and increase search visibility.
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                      {/* VIN Field */}
-                      <div className="col-span-1 md:col-span-2">
-                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 flex items-center justify-between">
-                          <span>Vehicle Identification Number (VIN)</span>
-                          <span className="text-slate-400 font-medium normal-case">17-character VIN</span>
-                        </label>
-                        <div className="relative">
-                          <input
-                            type="text"
-                            maxLength={17}
-                            value={carVIN}
-                            onChange={(e) => setCarVIN(e.target.value.toUpperCase())}
-                            className="w-full pl-12 pr-4 py-3.5 bg-white border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-mono tracking-wider text-slate-800 uppercase placeholder:normal-case placeholder:tracking-normal placeholder:text-slate-400"
-                            placeholder="e.g. 2T1BURHE9FC123456"
-                          />
-                          <span className="material-icons absolute left-4 top-3.5 text-slate-400 text-lg">
-                            fingerprint
-                          </span>
-                        </div>
-                        <p className="text-[10px] text-slate-400 mt-1 font-medium">
-                          Including a valid VIN gives buyers confidence and unlocks car history verification badges.
-                        </p>
-                      </div>
-
-                      {/* Make */}
-                      <div>
-                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">
-                          Make / Brand <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          value={carMake}
-                          onChange={(e) => setCarMake(e.target.value)}
-                          className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-bold text-slate-800"
-                          placeholder="e.g. Toyota, Honda, Ford, BMW..."
-                        />
-                      </div>
-
-                      {/* Model */}
-                      <div>
-                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">
-                          Model <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          value={carModel}
-                          onChange={(e) => setCarModel(e.target.value)}
-                          className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-bold text-slate-800"
-                          placeholder="e.g. Camry, Civic, F-150, RAV4..."
-                        />
-                      </div>
-
-                      {/* Year */}
-                      <div>
-                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">
-                          Model Year
-                        </label>
-                        <select
-                          value={carYear}
-                          onChange={(e) => setCarYear(e.target.value)}
-                          className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-bold text-slate-800 cursor-pointer"
-                        >
-                          <option value="">Select Year...</option>
-                          {Array.from({ length: 47 }, (_, i) => 2026 - i).map((y) => (
-                            <option key={y} value={y}>{y}</option>
-                          ))}
-                        </select>
-                      </div>
-
-                      {/* Trim / Edition */}
-                      <div>
-                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">
-                          Trim / Package
-                        </label>
-                        <input
-                          type="text"
-                          value={carTrim}
-                          onChange={(e) => setCarTrim(e.target.value)}
-                          className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium text-slate-800"
-                          placeholder="e.g. XLE, EX-L, Lariat, M Sport..."
-                        />
-                      </div>
-
-                      {/* Mileage / Kilometers */}
-                      <div>
-                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">
-                          Kilometers (km)
-                        </label>
-                        <input
-                          type="number"
-                          value={carMileage}
-                          onChange={(e) => setCarMileage(e.target.value)}
-                          className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-bold text-slate-800"
-                          placeholder="e.g. 45000"
-                        />
-                      </div>
-
-                      {/* Transmission */}
-                      <div>
-                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">
-                          Transmission
-                        </label>
-                        <select
-                          value={carTransmission}
-                          onChange={(e) => setCarTransmission(e.target.value)}
-                          className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium text-slate-800 cursor-pointer"
-                        >
-                          <option value="">Select Transmission...</option>
-                          <option value="Automatic">Automatic</option>
-                          <option value="Manual">Manual</option>
-                          <option value="CVT">CVT (Continuously Variable)</option>
-                          <option value="Dual-Clutch">Dual-Clutch (DCT)</option>
-                          <option value="Direct Drive">Direct Drive (EV)</option>
-                        </select>
-                      </div>
-
-                      {/* Fuel Type */}
-                      <div>
-                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">
-                          Fuel Type
-                        </label>
-                        <select
-                          value={carFuelType}
-                          onChange={(e) => setCarFuelType(e.target.value)}
-                          className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium text-slate-800 cursor-pointer"
-                        >
-                          <option value="">Select Fuel Type...</option>
-                          <option value="Gasoline">Gasoline</option>
-                          <option value="Hybrid">Hybrid</option>
-                          <option value="Electric">Electric (EV)</option>
-                          <option value="Plug-in Hybrid">Plug-in Hybrid (PHEV)</option>
-                          <option value="Diesel">Diesel</option>
-                        </select>
-                      </div>
-
-                      {/* Body Type */}
-                      <div>
-                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">
-                          Body Type
-                        </label>
-                        <select
-                          value={carBodyType}
-                          onChange={(e) => setCarBodyType(e.target.value)}
-                          className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium text-slate-800 cursor-pointer"
-                        >
-                          <option value="">Select Body Type...</option>
-                          <option value="Sedan">Sedan</option>
-                          <option value="SUV / Crossover">SUV / Crossover</option>
-                          <option value="Truck / Pickup">Truck / Pickup</option>
-                          <option value="Coupe">Coupe</option>
-                          <option value="Hatchback">Hatchback</option>
-                          <option value="Convertible">Convertible</option>
-                          <option value="Minivan / Van">Minivan / Van</option>
-                          <option value="Wagon">Wagon</option>
-                        </select>
-                      </div>
-
-                      {/* Drivetrain */}
-                      <div>
-                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">
-                          Drivetrain
-                        </label>
-                        <select
-                          value={carDrivetrain}
-                          onChange={(e) => setCarDrivetrain(e.target.value)}
-                          className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium text-slate-800 cursor-pointer"
-                        >
-                          <option value="">Select Drivetrain...</option>
-                          <option value="All-Wheel Drive (AWD)">All-Wheel Drive (AWD)</option>
-                          <option value="Four-Wheel Drive (4WD)">Four-Wheel Drive (4WD)</option>
-                          <option value="Front-Wheel Drive (FWD)">Front-Wheel Drive (FWD)</option>
-                          <option value="Rear-Wheel Drive (RWD)">Rear-Wheel Drive (RWD)</option>
-                        </select>
-                      </div>
-
-                      {/* Exterior Color */}
-                      <div>
-                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">
-                          Exterior Color
-                        </label>
-                        <select
-                          value={carColor}
-                          onChange={(e) => setCarColor(e.target.value)}
-                          className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium text-slate-800 cursor-pointer"
-                        >
-                          <option value="">Select Color...</option>
-                          <option value="Black">Black</option>
-                          <option value="White">White</option>
-                          <option value="Silver">Silver</option>
-                          <option value="Grey">Grey</option>
-                          <option value="Blue">Blue</option>
-                          <option value="Red">Red</option>
-                          <option value="Green">Green</option>
-                          <option value="Brown / Bronze">Brown / Bronze</option>
-                          <option value="Gold / Yellow">Gold / Yellow</option>
-                          <option value="Other">Other</option>
-                        </select>
-                      </div>
-
-                      {/* Doors */}
-                      <div>
-                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">
-                          Doors
-                        </label>
-                        <select
-                          value={carDoors}
-                          onChange={(e) => setCarDoors(e.target.value)}
-                          className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium text-slate-800 cursor-pointer"
-                        >
-                          <option value="">Select Doors...</option>
-                          <option value="2 Doors">2 Doors</option>
-                          <option value="3 Doors">3 Doors</option>
-                          <option value="4 Doors">4 Doors</option>
-                          <option value="5 Doors">5 Doors</option>
-                        </select>
-                      </div>
-
-                      {/* Seating Capacity */}
-                      <div>
-                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">
-                          Seating Capacity
-                        </label>
-                        <select
-                          value={carSeatingCapacity}
-                          onChange={(e) => setCarSeatingCapacity(e.target.value)}
-                          className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium text-slate-800 cursor-pointer"
-                        >
-                          <option value="">Select Seating...</option>
-                          <option value="2 Seats">2 Seats</option>
-                          <option value="4 Seats">4 Seats</option>
-                          <option value="5 Seats">5 Seats</option>
-                          <option value="6 Seats">6 Seats</option>
-                          <option value="7 Seats">7 Seats</option>
-                          <option value="8+ Seats">8+ Seats</option>
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                {dynamicAttributesList.length > 0 && (
-                  <div className="bg-primary/5 p-6 rounded-xl border border-primary/20 space-y-4">
-                    <h3 className="font-bold text-slate-800 flex items-center gap-2 mb-2">
-                      <span className="material-icons text-primary">info</span>
-                      Specific Details
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {dynamicAttributesList.map((attr) => {
-                        const name = attr.AttributeName;
-                        const isRequired = attr.IsRequired === 1;
-                        if (attr.AttributeType === "Dropdown") {
-                          return (
-                            <div key={attr.AttributeID}>
-                              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">
-                                {name}{" "}
-                                {isRequired && (
-                                  <span className="text-red-500">*</span>
-                                )}
-                              </label>
-                              <select
-                                value={dynamicAttributesValues[name] || ""}
-                                onChange={(e) =>
-                                  setDynamicAttributesValues((prev) => ({
-                                    ...prev,
-                                    [name]: e.target.value,
-                                  }))
-                                }
-                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm text-slate-700"
-                                required={isRequired}
-                              >
-                                <option value="">Select {name}...</option>
-                                {attr.options.map((opt: string) => (
-                                  <option key={opt} value={opt}>
-                                    {opt}
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
-                          );
-                        } else if (attr.AttributeType === "Number") {
-                          return (
-                            <div key={attr.AttributeID}>
-                              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">
-                                {name}{" "}
-                                {isRequired && (
-                                  <span className="text-red-500">*</span>
-                                )}
-                              </label>
-                              <input
-                                type="number"
-                                value={dynamicAttributesValues[name] || ""}
-                                onChange={(e) =>
-                                  setDynamicAttributesValues((prev) => ({
-                                    ...prev,
-                                    [name]: e.target.value,
-                                  }))
-                                }
-                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm"
-                                placeholder={`Enter ${name}...`}
-                                required={isRequired}
-                              />
-                            </div>
-                          );
-                        } else if (attr.AttributeType === "CheckboxGroup") {
-                          const currentVals = dynamicAttributesValues[name] ? dynamicAttributesValues[name].split(",").map((v: string) => v.trim()) : [];
-                          return (
-                            <div key={attr.AttributeID} className="col-span-1 md:col-span-2 pt-4 mt-2 border-t border-primary/10">
-                              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">
-                                {name} {isRequired && <span className="text-red-500">*</span>}
-                              </label>
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                {attr.options.map((opt: string) => {
-                                  const isChecked = currentVals.includes(opt);
-                                  return (
-                                    <label key={opt} className="flex items-center gap-3 cursor-pointer group">
-                                      <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isChecked ? "bg-primary border-primary" : "bg-white border-slate-300 group-hover:border-primary"}`}>
-                                        {isChecked && <span className="material-icons text-white text-[14px]">check</span>}
-                                      </div>
-                                      <span className="text-sm font-medium text-slate-700">{opt}</span>
-                                      <input
-                                        type="checkbox"
-                                        className="hidden"
-                                        checked={isChecked}
-                                        onChange={() => {
-                                          const newVals = isChecked ? currentVals.filter((v: string) => v !== opt) : [...currentVals, opt];
-                                          setDynamicAttributesValues((prev) => ({ ...prev, [name]: newVals.join(", ") }));
-                                        }}
-                                      />
-                                    </label>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          );
-                        } else {
-                          return (
-                            <div key={attr.AttributeID}>
-                              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">
-                                {name}{" "}
-                                {isRequired && (
-                                  <span className="text-red-500">*</span>
-                                )}
-                              </label>
-                              <input
-                                type="text"
-                                value={dynamicAttributesValues[name] || ""}
-                                onChange={(e) =>
-                                  setDynamicAttributesValues((prev) => ({
-                                    ...prev,
-                                    [name]: e.target.value,
-                                  }))
-                                }
-                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm"
-                                placeholder={`Enter ${name}...`}
-                                required={isRequired}
-                              />
-                            </div>
-                          );
-                        }
-                      })}
-                    </div>
-                    {!templateConfig.hideCarFeatures && isVehicleSpecCategory(categoryPath, category) && (Array.isArray(templateConfig.carFeaturesList) ? templateConfig.carFeaturesList.length > 0 : CAR_FEATURES_LIST.length > 0) && (
-                      <div className="pt-4 mt-2 border-t border-primary/10">
-                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">
-                          Features
-                        </label>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          {(Array.isArray(templateConfig.carFeaturesList) ? templateConfig.carFeaturesList : CAR_FEATURES_LIST).map((feature: string) => (
-                            <label
-                              key={feature}
-                              className="flex items-center gap-3 cursor-pointer group"
-                            >
-                              <div
-                                className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${carFeatures.includes(feature) ? "bg-primary border-primary" : "bg-white border-slate-300 group-hover:border-primary"}`}
-                              >
-                                {carFeatures.includes(feature) && (
-                                  <span className="material-icons text-white text-[14px]">
-                                    check
-                                  </span>
-                                )}
-                              </div>
-                              <span className="text-sm font-medium text-slate-700">
-                                {feature}
-                              </span>
-                              <input
-                                type="checkbox"
-                                className="hidden"
-                                checked={carFeatures.includes(feature)}
-                                onChange={() => {
-                                  setCarFeatures((prev) =>
-                                    prev.includes(feature)
-                                      ? prev.filter((f) => f !== feature)
-                                      : [...prev, feature],
-                                  );
-                                }}
-                              />
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Brand & Model — for Mobile Phones & Computers under Electronics */}
-                    {!templateConfig.hideBrandModel && (category.includes("Mobile Phones") ||
-                      category.includes("Laptops") ||
-                      category.includes("Desktop Computers") ||
-                      category.includes("Gaming PCs") ||
-                      category.includes("Tablets") ||
-                      category.includes("Computer Parts")) && (
-                      <div className="pt-4 mt-2 border-t border-primary/10">
-                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">
-                          Brand & Model
-                        </label>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">
-                              Brand
-                            </label>
-                            <input
-                              type="text"
-                              value={electronBrand}
-                              onChange={(e) => setElectronBrand(e.target.value)}
-                              className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm"
-                              placeholder="e.g. Apple, Samsung, Dell, HP..."
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">
-                              Model
-                            </label>
-                            <input
-                              type="text"
-                              value={electronModel}
-                              onChange={(e) => setElectronModel(e.target.value)}
-                              className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-primary focus:border-primary text-sm"
-                              placeholder="e.g. iPhone 16 Pro, Galaxy S25, XPS 15..."
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {!templateConfig.hideDescription && (
                   <div>
-                    <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">
-                      {templateConfig.priceLabel || "Price"}
+                    <label className="block text-xs font-black text-slate-600 uppercase tracking-widest mb-2 flex items-center justify-between">
+                      <span>Description <span className="text-red-500">*</span></span>
+                      <span className="text-slate-400 font-normal text-[11px]">Include key specs, condition, features</span>
                     </label>
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-3">
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="radio"
-                            name="priceType"
-                            value="amount"
-                            checked={priceType === "amount"}
-                            onChange={() => setPriceType("amount")}
-                            className="w-4 h-4 text-primary border-slate-300 focus:ring-primary"
-                          />
-                          <span className="text-sm font-bold text-slate-700">$</span>
-                        </label>
+                    <textarea
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      rows={6}
+                      className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-medium text-slate-800 placeholder:text-slate-400 resize-y transition-all"
+                      placeholder="Provide a detailed description of your item, service, or job..."
+                      required
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* ───────────────────────────────────────────
+                  VEHICLE SPECIFICATIONS & CHARACTERISTICS
+                  ─────────────────────────────────────────── */}
+              {isVehicleSpecCategory(categoryPath, category) && (
+                <div className="bg-gradient-to-br from-blue-50/70 via-slate-50 to-white p-6 sm:p-8 rounded-2xl border border-blue-200/80 shadow-2xs space-y-6">
+                  {/* Header */}
+                  <div className="flex items-center gap-3.5 pb-4 border-b border-blue-200/60">
+                    <div className="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center shadow-md shadow-primary/20 shrink-0">
+                      <span className="material-icons text-xl">directions_car</span>
+                    </div>
+                    <div>
+                      <h3 className="text-base font-black text-slate-900 tracking-tight">
+                        Vehicle Specifications & Characteristics
+                      </h3>
+                      <p className="text-xs text-slate-500 font-medium">
+                        Detailed specs build buyer trust, verify vehicle history, and increase visibility.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* VIN Full Width Input */}
+                  <div>
+                    <label className="block text-[11px] font-black text-slate-600 uppercase tracking-widest mb-2 flex items-center justify-between">
+                      <span>Vehicle Identification Number (VIN)</span>
+                      <span className="text-slate-400 font-medium normal-case text-[11px]">17 characters</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        maxLength={17}
+                        value={carVIN}
+                        onChange={(e) => setCarVIN(e.target.value.toUpperCase())}
+                        className="w-full pl-11 pr-4 py-3.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-mono tracking-wider text-slate-900 uppercase placeholder:normal-case placeholder:tracking-normal placeholder:text-slate-400 transition-all shadow-2xs"
+                        placeholder="e.g. 2T1BURHE9FC123456"
+                      />
+                      <span className="material-icons absolute left-3.5 top-3.5 text-slate-400 text-lg">
+                        fingerprint
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 mt-1.5 font-medium flex items-center gap-1">
+                      <span className="material-icons text-xs text-primary">verified</span>
+                      Valid VINs unlock verified vehicle badges and build instant buyer confidence.
+                    </p>
+                  </div>
+
+                  {/* 2-Column Responsive Specifications Grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    {/* Make */}
+                    <div>
+                      <label className="block text-[11px] font-black text-slate-600 uppercase tracking-widest mb-2">
+                        Make / Brand <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={carMake}
+                        onChange={(e) => setCarMake(e.target.value)}
+                        className="w-full h-12 px-4 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-bold text-slate-900 placeholder:text-slate-400 placeholder:font-normal transition-all shadow-2xs"
+                        placeholder="e.g. Toyota, Honda, Ford, BMW..."
+                      />
+                    </div>
+
+                    {/* Model */}
+                    <div>
+                      <label className="block text-[11px] font-black text-slate-600 uppercase tracking-widest mb-2">
+                        Model <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={carModel}
+                        onChange={(e) => setCarModel(e.target.value)}
+                        className="w-full h-12 px-4 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-bold text-slate-900 placeholder:text-slate-400 placeholder:font-normal transition-all shadow-2xs"
+                        placeholder="e.g. Camry, Civic, F-150, RAV4..."
+                      />
+                    </div>
+
+                    {/* Year */}
+                    <div>
+                      <label className="block text-[11px] font-black text-slate-600 uppercase tracking-widest mb-2">
+                        Model Year
+                      </label>
+                      <select
+                        value={carYear}
+                        onChange={(e) => setCarYear(e.target.value)}
+                        className="w-full h-12 px-4 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-bold text-slate-800 cursor-pointer transition-all shadow-2xs"
+                      >
+                        <option value="">Select Year...</option>
+                        {Array.from({ length: 47 }, (_, i) => 2026 - i).map((y) => (
+                          <option key={y} value={y}>{y}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Trim / Edition */}
+                    <div>
+                      <label className="block text-[11px] font-black text-slate-600 uppercase tracking-widest mb-2">
+                        Trim / Package
+                      </label>
+                      <input
+                        type="text"
+                        value={carTrim}
+                        onChange={(e) => setCarTrim(e.target.value)}
+                        className="w-full h-12 px-4 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-medium text-slate-800 placeholder:text-slate-400 transition-all shadow-2xs"
+                        placeholder="e.g. XLE, EX-L, Lariat, M Sport..."
+                      />
+                    </div>
+
+                    {/* Mileage / Kilometers */}
+                    <div>
+                      <label className="block text-[11px] font-black text-slate-600 uppercase tracking-widest mb-2">
+                        Kilometers (km)
+                      </label>
+                      <input
+                        type="number"
+                        value={carMileage}
+                        onChange={(e) => setCarMileage(e.target.value)}
+                        className="w-full h-12 px-4 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-bold text-slate-900 placeholder:text-slate-400 placeholder:font-normal transition-all shadow-2xs"
+                        placeholder="e.g. 45000"
+                      />
+                    </div>
+
+                    {/* Transmission */}
+                    <div>
+                      <label className="block text-[11px] font-black text-slate-600 uppercase tracking-widest mb-2">
+                        Transmission
+                      </label>
+                      <select
+                        value={carTransmission}
+                        onChange={(e) => setCarTransmission(e.target.value)}
+                        className="w-full h-12 px-4 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-medium text-slate-800 cursor-pointer transition-all shadow-2xs"
+                      >
+                        <option value="">Select Transmission...</option>
+                        <option value="Automatic">Automatic</option>
+                        <option value="Manual">Manual</option>
+                        <option value="CVT">CVT (Continuously Variable)</option>
+                        <option value="Dual-Clutch">Dual-Clutch (DCT)</option>
+                        <option value="Direct Drive">Direct Drive (EV)</option>
+                      </select>
+                    </div>
+
+                    {/* Fuel Type */}
+                    <div>
+                      <label className="block text-[11px] font-black text-slate-600 uppercase tracking-widest mb-2">
+                        Fuel Type
+                      </label>
+                      <select
+                        value={carFuelType}
+                        onChange={(e) => setCarFuelType(e.target.value)}
+                        className="w-full h-12 px-4 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-medium text-slate-800 cursor-pointer transition-all shadow-2xs"
+                      >
+                        <option value="">Select Fuel Type...</option>
+                        <option value="Gasoline">Gasoline</option>
+                        <option value="Hybrid">Hybrid</option>
+                        <option value="Electric">Electric (EV)</option>
+                        <option value="Plug-in Hybrid">Plug-in Hybrid (PHEV)</option>
+                        <option value="Diesel">Diesel</option>
+                      </select>
+                    </div>
+
+                    {/* Body Type */}
+                    <div>
+                      <label className="block text-[11px] font-black text-slate-600 uppercase tracking-widest mb-2">
+                        Body Type
+                      </label>
+                      <select
+                        value={carBodyType}
+                        onChange={(e) => setCarBodyType(e.target.value)}
+                        className="w-full h-12 px-4 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-medium text-slate-800 cursor-pointer transition-all shadow-2xs"
+                      >
+                        <option value="">Select Body Type...</option>
+                        <option value="Sedan">Sedan</option>
+                        <option value="SUV / Crossover">SUV / Crossover</option>
+                        <option value="Truck / Pickup">Truck / Pickup</option>
+                        <option value="Coupe">Coupe</option>
+                        <option value="Hatchback">Hatchback</option>
+                        <option value="Convertible">Convertible</option>
+                        <option value="Minivan / Van">Minivan / Van</option>
+                        <option value="Wagon">Wagon</option>
+                      </select>
+                    </div>
+
+                    {/* Drivetrain */}
+                    <div>
+                      <label className="block text-[11px] font-black text-slate-600 uppercase tracking-widest mb-2">
+                        Drivetrain
+                      </label>
+                      <select
+                        value={carDrivetrain}
+                        onChange={(e) => setCarDrivetrain(e.target.value)}
+                        className="w-full h-12 px-4 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-medium text-slate-800 cursor-pointer transition-all shadow-2xs"
+                      >
+                        <option value="">Select Drivetrain...</option>
+                        <option value="All-Wheel Drive (AWD)">All-Wheel Drive (AWD)</option>
+                        <option value="Four-Wheel Drive (4WD)">Four-Wheel Drive (4WD)</option>
+                        <option value="Front-Wheel Drive (FWD)">Front-Wheel Drive (FWD)</option>
+                        <option value="Rear-Wheel Drive (RWD)">Rear-Wheel Drive (RWD)</option>
+                      </select>
+                    </div>
+
+                    {/* Exterior Color */}
+                    <div>
+                      <label className="block text-[11px] font-black text-slate-600 uppercase tracking-widest mb-2">
+                        Exterior Color
+                      </label>
+                      <select
+                        value={carColor}
+                        onChange={(e) => setCarColor(e.target.value)}
+                        className="w-full h-12 px-4 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-medium text-slate-800 cursor-pointer transition-all shadow-2xs"
+                      >
+                        <option value="">Select Color...</option>
+                        <option value="Black">Black</option>
+                        <option value="White">White</option>
+                        <option value="Silver">Silver</option>
+                        <option value="Grey">Grey</option>
+                        <option value="Blue">Blue</option>
+                        <option value="Red">Red</option>
+                        <option value="Green">Green</option>
+                        <option value="Brown / Bronze">Brown / Bronze</option>
+                        <option value="Gold / Yellow">Gold / Yellow</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
+
+                    {/* Doors */}
+                    <div>
+                      <label className="block text-[11px] font-black text-slate-600 uppercase tracking-widest mb-2">
+                        Doors
+                      </label>
+                      <select
+                        value={carDoors}
+                        onChange={(e) => setCarDoors(e.target.value)}
+                        className="w-full h-12 px-4 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-medium text-slate-800 cursor-pointer transition-all shadow-2xs"
+                      >
+                        <option value="">Select Doors...</option>
+                        <option value="2 Doors">2 Doors</option>
+                        <option value="3 Doors">3 Doors</option>
+                        <option value="4 Doors">4 Doors</option>
+                        <option value="5 Doors">5 Doors</option>
+                      </select>
+                    </div>
+
+                    {/* Seating Capacity */}
+                    <div>
+                      <label className="block text-[11px] font-black text-slate-600 uppercase tracking-widest mb-2">
+                        Seating Capacity
+                      </label>
+                      <select
+                        value={carSeatingCapacity}
+                        onChange={(e) => setCarSeatingCapacity(e.target.value)}
+                        className="w-full h-12 px-4 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-medium text-slate-800 cursor-pointer transition-all shadow-2xs"
+                      >
+                        <option value="">Select Seating...</option>
+                        <option value="2 Seats">2 Seats</option>
+                        <option value="4 Seats">4 Seats</option>
+                        <option value="5 Seats">5 Seats</option>
+                        <option value="6 Seats">6 Seats</option>
+                        <option value="7 Seats">7 Seats</option>
+                        <option value="8+ Seats">8+ Seats</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Dynamic Specific Attributes (if configured in DB) */}
+              {dynamicAttributesList.length > 0 && (
+                <div className="bg-slate-50/80 p-6 sm:p-7 rounded-2xl border border-slate-200/80 space-y-4">
+                  <h3 className="font-bold text-slate-900 flex items-center gap-2 text-sm">
+                    <span className="material-icons text-primary text-base">tune</span>
+                    Category Specific Details
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {dynamicAttributesList.map((attr) => {
+                      const name = attr.AttributeName;
+                      const isRequired = attr.IsRequired === 1;
+                      if (attr.AttributeType === "Dropdown") {
+                        return (
+                          <div key={attr.AttributeID}>
+                            <label className="block text-[11px] font-black text-slate-600 uppercase tracking-widest mb-2">
+                              {name} {isRequired && <span className="text-red-500">*</span>}
+                            </label>
+                            <select
+                              value={dynamicAttributesValues[name] || ""}
+                              onChange={(e) =>
+                                setDynamicAttributesValues((prev) => ({
+                                  ...prev,
+                                  [name]: e.target.value,
+                                }))
+                              }
+                              className="w-full h-12 px-4 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-medium text-slate-800"
+                              required={isRequired}
+                            >
+                              <option value="">Select {name}...</option>
+                              {attr.options.map((opt: string) => (
+                                <option key={opt} value={opt}>
+                                  {opt}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        );
+                      } else if (attr.AttributeType === "Number") {
+                        return (
+                          <div key={attr.AttributeID}>
+                            <label className="block text-[11px] font-black text-slate-600 uppercase tracking-widest mb-2">
+                              {name} {isRequired && <span className="text-red-500">*</span>}
+                            </label>
+                            <input
+                              type="number"
+                              value={dynamicAttributesValues[name] || ""}
+                              onChange={(e) =>
+                                setDynamicAttributesValues((prev) => ({
+                                  ...prev,
+                                  [name]: e.target.value,
+                                }))
+                              }
+                              className="w-full h-12 px-4 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-medium text-slate-800"
+                              placeholder={`Enter ${name}...`}
+                              required={isRequired}
+                            />
+                          </div>
+                        );
+                      } else if (attr.AttributeType === "CheckboxGroup") {
+                        const currentVals = dynamicAttributesValues[name] ? dynamicAttributesValues[name].split(",").map((v: string) => v.trim()) : [];
+                        return (
+                          <div key={attr.AttributeID} className="col-span-1 md:col-span-2 pt-3">
+                            <label className="block text-[11px] font-black text-slate-600 uppercase tracking-widest mb-3">
+                              {name} {isRequired && <span className="text-red-500">*</span>}
+                            </label>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              {attr.options.map((opt: string) => {
+                                const isChecked = currentVals.includes(opt);
+                                return (
+                                  <label key={opt} className="flex items-center gap-3 cursor-pointer group bg-white p-3 rounded-xl border border-slate-200 hover:border-primary/50 transition-all">
+                                    <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-colors ${isChecked ? "bg-primary border-primary" : "bg-white border-slate-300 group-hover:border-primary"}`}>
+                                      {isChecked && <span className="material-icons text-white text-[14px]">check</span>}
+                                    </div>
+                                    <span className="text-xs font-bold text-slate-700">{opt}</span>
+                                    <input
+                                      type="checkbox"
+                                      className="hidden"
+                                      checked={isChecked}
+                                      onChange={() => {
+                                        const newVals = isChecked ? currentVals.filter((v: string) => v !== opt) : [...currentVals, opt];
+                                        setDynamicAttributesValues((prev) => ({ ...prev, [name]: newVals.join(", ") }));
+                                      }}
+                                    />
+                                  </label>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      } else {
+                        return (
+                          <div key={attr.AttributeID}>
+                            <label className="block text-[11px] font-black text-slate-600 uppercase tracking-widest mb-2">
+                              {name} {isRequired && <span className="text-red-500">*</span>}
+                            </label>
+                            <input
+                              type="text"
+                              value={dynamicAttributesValues[name] || ""}
+                              onChange={(e) =>
+                                setDynamicAttributesValues((prev) => ({
+                                  ...prev,
+                                  [name]: e.target.value,
+                                }))
+                              }
+                              className="w-full h-12 px-4 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-medium text-slate-800"
+                              placeholder={`Enter ${name}...`}
+                              required={isRequired}
+                            />
+                          </div>
+                        );
+                      }
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Vehicle Features Checklist */}
+              {!templateConfig.hideCarFeatures && isVehicleSpecCategory(categoryPath, category) && (Array.isArray(templateConfig.carFeaturesList) ? templateConfig.carFeaturesList.length > 0 : CAR_FEATURES_LIST.length > 0) && (
+                <div className="bg-slate-50/80 p-6 sm:p-7 rounded-2xl border border-slate-200/80 space-y-3.5">
+                  <label className="block text-[11px] font-black text-slate-600 uppercase tracking-widest">
+                    Vehicle Key Features & Options
+                  </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {(Array.isArray(templateConfig.carFeaturesList) ? templateConfig.carFeaturesList : CAR_FEATURES_LIST).map((feature: string) => (
+                      <label
+                        key={feature}
+                        className="flex items-center gap-3 cursor-pointer group bg-white p-3 rounded-xl border border-slate-200 hover:border-primary/50 transition-all"
+                      >
+                        <div
+                          className={`w-5 h-5 rounded-md border flex items-center justify-center transition-colors ${
+                            carFeatures.includes(feature) ? "bg-primary border-primary" : "bg-white border-slate-300 group-hover:border-primary"
+                          }`}
+                        >
+                          {carFeatures.includes(feature) && (
+                            <span className="material-icons text-white text-[14px]">
+                              check
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-xs font-bold text-slate-700">
+                          {feature}
+                        </span>
                         <input
-                          type="number"
-                          value={priceType === "amount" ? price : ""}
-                          disabled={priceType !== "amount"}
-                          onChange={(e) => setPrice(e.target.value)}
-                          className="flex-1 px-5 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-primary focus:border-primary text-sm font-bold disabled:opacity-50 disabled:bg-slate-100"
-                          placeholder={templateConfig.pricePlaceholder || "0.00"}
-                          required={priceType === "amount"}
+                          type="checkbox"
+                          className="hidden"
+                          checked={carFeatures.includes(feature)}
+                          onChange={() => {
+                            setCarFeatures((prev) =>
+                              prev.includes(feature)
+                                ? prev.filter((f) => f !== feature)
+                                : [...prev, feature],
+                            );
+                          }}
                         />
-                      </div>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Brand & Model for Electronics */}
+              {!templateConfig.hideBrandModel && (category.includes("Mobile Phones") ||
+                category.includes("Laptops") ||
+                category.includes("Desktop Computers") ||
+                category.includes("Gaming PCs") ||
+                category.includes("Tablets") ||
+                category.includes("Computer Parts")) && (
+                <div className="bg-slate-50/80 p-6 sm:p-7 rounded-2xl border border-slate-200/80 space-y-4">
+                  <label className="block text-[11px] font-black text-slate-600 uppercase tracking-widest">
+                    Brand & Model Information
+                  </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2">
+                        Brand
+                      </label>
+                      <input
+                        type="text"
+                        value={electronBrand}
+                        onChange={(e) => setElectronBrand(e.target.value)}
+                        className="w-full h-12 px-4 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-medium text-slate-800"
+                        placeholder="e.g. Apple, Samsung, Dell, HP..."
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2">
+                        Model
+                      </label>
+                      <input
+                        type="text"
+                        value={electronModel}
+                        onChange={(e) => setElectronModel(e.target.value)}
+                        className="w-full h-12 px-4 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-medium text-slate-800"
+                        placeholder="e.g. iPhone 16 Pro, Galaxy S25, XPS 15..."
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ───────────────────────────────────────────
+                  PRICING & CONDITION (UNIFIED & ALIGNED CARD)
+                  ─────────────────────────────────────────── */}
+              <div className="bg-slate-50/80 p-6 sm:p-8 rounded-2xl border border-slate-200/80 shadow-2xs space-y-6">
+                <div className="flex items-center gap-3 pb-3 border-b border-slate-200">
+                  <div className="w-9 h-9 rounded-xl bg-slate-900 text-white flex items-center justify-center shadow-xs shrink-0">
+                    <span className="material-icons text-lg">attach_money</span>
+                  </div>
+                  <div>
+                    <h3 className="text-base font-black text-slate-900 tracking-tight">
+                      Pricing & Item Condition
+                    </h3>
+                    <p className="text-xs text-slate-500 font-medium">
+                      Set a fair price and honest condition to attract more serious buyers.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                  {/* Left Column: Pricing */}
+                  <div className="space-y-3">
+                    <label className="block text-xs font-black text-slate-600 uppercase tracking-widest">
+                      {templateConfig.priceLabel || "Price"} <span className="text-red-500">*</span>
+                    </label>
+
+                    {/* Price Type Segmented Buttons */}
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setPriceType("amount")}
+                        className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all border ${
+                          priceType === "amount"
+                            ? "bg-primary text-white border-primary shadow-xs"
+                            : "bg-white text-slate-700 border-slate-200 hover:border-primary/50"
+                        }`}
+                      >
+                        Fixed Amount ($)
+                      </button>
                       {priceOptions.map((opt: any) => (
-                        <label key={opt.id} className="flex items-center gap-2 cursor-pointer w-fit">
-                          <input
-                            type="radio"
-                            name="priceType"
-                            value={opt.option_key}
-                            checked={priceType === opt.option_key}
-                            onChange={() => {
-                              setPriceType(opt.option_key);
-                              setPrice("0");
-                            }}
-                            className="w-4 h-4 text-primary border-slate-300 focus:ring-primary"
-                          />
-                          <span className="text-sm font-bold text-slate-700">{opt.option_value}</span>
-                        </label>
+                        <button
+                          key={opt.id}
+                          type="button"
+                          onClick={() => {
+                            setPriceType(opt.option_key);
+                            setPrice("0");
+                          }}
+                          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all border ${
+                            priceType === opt.option_key
+                              ? "bg-primary text-white border-primary shadow-xs"
+                              : "bg-white text-slate-700 border-slate-200 hover:border-primary/50"
+                          }`}
+                        >
+                          {opt.option_value}
+                        </button>
                       ))}
                     </div>
-                  </div>
-                  {/* Condition — only for relevant categories */}
-                  {!templateConfig.hideCondition && (
-                      <div>
-                        <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">
-                          Condition
-                        </label>
-                        <select
-                          value={condition}
-                          onChange={(e) => setCondition(e.target.value)}
-                          className="w-full px-5 py-4 bg-slate-50 border-slate-100 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium"
-                        >
-                          {category.startsWith("Vehicles") ? (
-                            <>
-                              <option>Excellent</option>
-                              <option>Good</option>
-                              <option>Fair</option>
-                              <option>Parts Only</option>
-                            </>
-                          ) : (
-                            <>
-                              <option>New</option>
-                              <option>Used - Like New</option>
-                              <option>Used - Good</option>
-                              <option>Used - Fair</option>
-                              <option>For Parts</option>
-                            </>
-                          )}
-                        </select>
+
+                    {/* Price Input when amount selected */}
+                    {priceType === "amount" ? (
+                      <div className="relative flex items-center">
+                        <span className="absolute left-4 font-black text-base text-slate-400 pointer-events-none">
+                          $
+                        </span>
+                        <input
+                          type="number"
+                          value={price}
+                          onChange={(e) => setPrice(e.target.value)}
+                          className="w-full h-12 pl-9 pr-14 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary text-base font-black text-slate-900 placeholder:text-slate-400 placeholder:font-normal transition-all shadow-2xs"
+                          placeholder={templateConfig.pricePlaceholder || "0.00"}
+                          required
+                        />
+                        <span className="absolute right-4 text-xs font-bold text-slate-400 uppercase tracking-wider pointer-events-none">
+                          CAD
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="h-12 px-4 rounded-xl bg-white border border-slate-200 flex items-center text-xs font-bold text-slate-600">
+                        <span className="material-icons text-sm text-green-600 mr-2">check_circle</span>
+                        No numerical price required ({priceOptions.find(o => o.option_key === priceType)?.option_value || "Special Pricing"})
                       </div>
                     )}
+                  </div>
+
+                  {/* Right Column: Condition */}
+                  {!templateConfig.hideCondition && (
+                    <div className="space-y-3">
+                      <label className="block text-xs font-black text-slate-600 uppercase tracking-widest">
+                        Condition
+                      </label>
+                      <select
+                        value={condition}
+                        onChange={(e) => setCondition(e.target.value)}
+                        className="w-full h-12 px-4 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-bold text-slate-800 cursor-pointer transition-all shadow-2xs"
+                      >
+                        {category.startsWith("Vehicles") ? (
+                          <>
+                            <option value="Excellent">Excellent</option>
+                            <option value="Good">Good</option>
+                            <option value="Fair">Fair</option>
+                            <option value="Parts Only">Parts Only</option>
+                          </>
+                        ) : (
+                          <>
+                            <option value="New">Brand New</option>
+                            <option value="Used - Like New">Used - Like New</option>
+                            <option value="Used - Good">Used - Good</option>
+                            <option value="Used - Fair">Used - Fair</option>
+                            <option value="For Parts">For Parts / Not Working</option>
+                          </>
+                        )}
+                      </select>
+                      <p className="text-[11px] text-slate-400 font-medium">
+                        Accurate condition helps set the right buyer expectations.
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
-              <div className="pt-10 border-t border-slate-100 flex justify-between">
+
+              {/* Navigation Actions */}
+              <div className="pt-6 border-t border-slate-100 flex justify-between items-center">
                 <button
+                  type="button"
                   onClick={() => setStep(1)}
-                  className="px-10 py-4 font-bold text-slate-400 hover:text-slate-600"
+                  className="px-6 py-3 font-bold text-slate-500 hover:text-slate-800 text-sm transition-colors cursor-pointer flex items-center gap-1.5"
                 >
-                  Back
+                  <span className="material-icons text-base">chevron_left</span>
+                  Back to Category
                 </button>
                 <button
                   disabled={(!templateConfig.hideTitle && !title) || (!templateConfig.hideDescription && !description) || (priceType === "amount" && !price && !templateConfig.hidePrice)}
                   onClick={() => setStep(3)}
-                  className="bg-primary hover:bg-primary-hover text-white px-10 py-4 rounded-xl font-bold transition-all shadow-lg shadow-primary/20 flex items-center gap-2 disabled:opacity-50"
+                  className="bg-primary hover:bg-primary-hover text-white px-8 py-3.5 rounded-xl font-black text-sm uppercase tracking-wider transition-all shadow-md shadow-primary/20 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
-                  Next Step{" "}
-                  <span className="material-icons">chevron_right</span>
+                  Continue to Media{" "}
+                  <span className="material-icons text-lg">chevron_right</span>
                 </button>
               </div>
             </div>
           )}
 
+          {/* ═══════════════════════════════════════════
+              STEP 3: MEDIA, LOCATION & VISIBILITY PLAN
+             ═══════════════════════════════════════════ */}
           {step === 3 && (
-            <div className="bg-white p-10 rounded-[2rem] border border-slate-200 shadow-sm space-y-10">
-              <h2 className="text-2xl font-black">{isEditMode ? "Edit Media & Location" : "Media & Location"}</h2>
+            <div className="bg-white p-6 sm:p-8 md:p-10 rounded-3xl border border-slate-200 shadow-sm space-y-8">
+              <div className="border-b border-slate-100 pb-4">
+                <h2 className="text-xl sm:text-2xl font-black text-slate-900">
+                  {isEditMode ? "Edit Media & Location" : "Media, Location & Promotion"}
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">
+                  Upload high quality photos, set your location, and pick a visibility plan.
+                </p>
+              </div>
 
-              <section>
-                {/* Header + progress */}
-                <div className="flex items-center justify-between mb-3">
-                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest">
+              {/* Photos Section */}
+              <section className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-black text-slate-700 uppercase tracking-widest">
                     Add Photos {templateConfig.photosRequired !== false ? '(Cover Photo Required)' : '(Optional)'}{" "}
                     {templateConfig.photosRequired !== false && <span className="text-red-500">*</span>}
                   </label>
                   <span
                     className={`text-xs font-black px-3 py-1 rounded-full ${
                       imagePreviews.filter((p) => p !== null).length > 0
-                        ? "bg-green-100 text-green-600"
-                        : "bg-amber-50 text-amber-600"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-amber-50 text-amber-700"
                     }`}
                   >
                     {imagePreviews.filter((p) => p !== null).length} / 10 photos
@@ -1736,7 +1898,7 @@ const PostAd: React.FC = () => {
                 </div>
 
                 {/* Progress bar */}
-                <div className="w-full h-1.5 bg-slate-100 rounded-full mb-4 overflow-hidden">
+                <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
                   <div
                     className="h-full rounded-full transition-all duration-500"
                     style={{
@@ -1748,20 +1910,20 @@ const PostAd: React.FC = () => {
                 </div>
 
                 {imageFiles[0] === null && imagePreviews[0] === null && (
-                  <p className="text-xs text-amber-600 font-bold mb-4 flex items-center gap-1.5">
+                  <p className="text-xs text-amber-600 font-bold flex items-center gap-1.5">
                     <span className="material-icons text-sm">info</span>
                     Cover photo is required to publish your ad.
                   </p>
                 )}
 
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3.5">
                   {Array.from({ length: 10 }).map((_, index) => (
                     <div
                       key={index}
                       className={`relative w-full aspect-square border-2 border-dashed rounded-2xl flex flex-col items-center justify-center group hover:border-primary hover:bg-white transition-all overflow-hidden cursor-pointer ${
                         imagePreviews[index]
-                          ? "border-green-400 bg-green-50"
-                          : "border-slate-200 bg-slate-50"
+                          ? "border-green-400 bg-green-50/50"
+                          : "border-slate-200 bg-slate-50/70"
                       }`}
                     >
                       <input
@@ -1792,8 +1954,7 @@ const PostAd: React.FC = () => {
                             className="w-full h-full object-cover"
                             alt={`Image ${index + 1}`}
                           />
-                          {/* Green check badge */}
-                          <div className="absolute bottom-2 left-2 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center shadow">
+                          <div className="absolute bottom-2 left-2 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center shadow-xs">
                             <span className="material-icons text-white text-[12px]">
                               check
                             </span>
@@ -1801,14 +1962,14 @@ const PostAd: React.FC = () => {
                         </div>
                       ) : (
                         <>
-                          <span className="material-icons text-3xl text-slate-300 group-hover:text-primary mb-1">
+                          <span className="material-icons text-2xl text-slate-300 group-hover:text-primary mb-1">
                             {index === 0 ? "add_a_photo" : "add"}
                           </span>
-                          <span className="text-[10px] font-bold text-slate-400 tracking-widest uppercase">
-                            {index === 0 ? "Cover" : `Pic ${index + 1}`}
+                          <span className="text-[10px] font-bold text-slate-500 tracking-wider uppercase">
+                            {index === 0 ? "Cover Photo" : `Photo ${index + 1}`}
                           </span>
                           {index === 0 && (
-                            <span className="text-[9px] text-red-400 font-bold mt-0.5">
+                            <span className="text-[9px] text-red-500 font-bold mt-0.5">
                               Required
                             </span>
                           )}
@@ -1818,7 +1979,8 @@ const PostAd: React.FC = () => {
                       {/* Delete button */}
                       {imagePreviews[index] && (
                         <button
-                          className="absolute top-2 right-2 z-30 w-6 h-6 bg-white/90 rounded-full flex items-center justify-center text-red-500 hover:scale-110 shadow-sm transition-all"
+                          type="button"
+                          className="absolute top-2 right-2 z-30 w-6 h-6 bg-white/90 rounded-full flex items-center justify-center text-red-500 hover:scale-110 shadow-xs transition-all"
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
@@ -1840,192 +2002,168 @@ const PostAd: React.FC = () => {
                 </div>
               </section>
 
+              {/* Location Section */}
               {!templateConfig.hideLocation && (
-              <section>
-                <div className="flex flex-col gap-1 mb-4">
-                  <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">
-                    Item Location
-                  </label>
-                  <p className="text-xs text-slate-400 font-medium">
-                    Provide either a street address/city or a postal code. If you prefer to keep your exact home address private, you can enter just your city or postal code.
-                  </p>
-                </div>
-
-                {/* Multi-city toggle — only for new ads */}
-                {!isEditMode && (
-                  <div className="mb-6">
-                    <label className="flex items-center gap-3 cursor-pointer group w-fit select-none">
-                      <div
-                        className={`relative w-12 h-6 rounded-full transition-colors duration-300 ${
-                          postInMultipleCities
-                            ? "bg-primary"
-                            : "bg-slate-200 group-hover:bg-slate-300"
-                        }`}
-                        onClick={() => {
-                          setPostInMultipleCities(!postInMultipleCities);
-                          if (postInMultipleCities) {
-                            setSelectedCities([]);
-                            setCitySearchQuery("");
-                          }
-                        }}
-                      >
-                        <div
-                          className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-md transition-transform duration-300 ${
-                            postInMultipleCities ? "translate-x-6" : "translate-x-0"
-                          }`}
-                        />
-                      </div>
-                      <div
-                        className="flex flex-col"
-                        onClick={() => {
-                          setPostInMultipleCities(!postInMultipleCities);
-                          if (postInMultipleCities) {
-                            setSelectedCities([]);
-                            setCitySearchQuery("");
-                          }
-                        }}
-                      >
-                        <span className="text-sm font-black text-slate-700">
-                          Post in Multiple Cities
-                        </span>
-                        <span className="text-[10px] text-slate-400 font-medium">
-                          Reach more buyers by posting your ad in multiple cities at once
-                        </span>
-                      </div>
+                <section className="space-y-4 pt-6 border-t border-slate-100">
+                  <div>
+                    <label className="block text-xs font-black text-slate-700 uppercase tracking-widest mb-1">
+                      Item Location
                     </label>
+                    <p className="text-xs text-slate-400 font-medium">
+                      Enter your city, neighborhood, or postal code.
+                    </p>
                   </div>
-                )}
 
-                {/* MULTI-CITY MODE */}
-                {!isEditMode && postInMultipleCities ? (
-                  <div className="space-y-4 mb-6">
-                    {/* City Search Input */}
-                    <div className="flex gap-2">
-                      <div className="flex-1">
+                  {/* Multi-city toggle — only for new ads */}
+                  {!isEditMode && (
+                    <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
+                      <label className="flex items-center gap-3.5 cursor-pointer group w-fit select-none">
+                        <div
+                          className={`relative w-11 h-6 rounded-full transition-colors duration-300 ${
+                            postInMultipleCities
+                              ? "bg-primary"
+                              : "bg-slate-300 group-hover:bg-slate-400"
+                          }`}
+                          onClick={() => {
+                            setPostInMultipleCities(!postInMultipleCities);
+                            if (postInMultipleCities) {
+                              setSelectedCities([]);
+                              setCitySearchQuery("");
+                            }
+                          }}
+                        >
+                          <div
+                            className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-md transition-transform duration-300 ${
+                              postInMultipleCities ? "translate-x-5" : "translate-x-0"
+                            }`}
+                          />
+                        </div>
+                        <div
+                          className="flex flex-col"
+                          onClick={() => {
+                            setPostInMultipleCities(!postInMultipleCities);
+                            if (postInMultipleCities) {
+                              setSelectedCities([]);
+                              setCitySearchQuery("");
+                            }
+                          }}
+                        >
+                          <span className="text-xs font-black text-slate-900">
+                            Post in Multiple Cities (Up to 5)
+                          </span>
+                          <span className="text-[11px] text-slate-500 font-medium">
+                            Reach wider audiences across several Canadian cities at once
+                          </span>
+                        </div>
+                      </label>
+                    </div>
+                  )}
+
+                  {/* MULTI-CITY MODE */}
+                  {!isEditMode && postInMultipleCities ? (
+                    <div className="space-y-4">
+                      <div className="flex gap-2">
+                        <div className="flex-1">
+                          <LocationAutocomplete
+                            value={citySearchQuery}
+                            onChange={(val) => setCitySearchQuery(val)}
+                            onSelectLocation={(item) => handleSelectCity(item)}
+                            disabled={selectedCities.length >= 5}
+                            variant="form"
+                            placeholder={selectedCities.length >= 5 ? "Maximum 5 cities limit reached" : "Search and add cities/sub-cities (e.g. Scarborough, Airdrie, Richmond...)"}
+                            syncWithLocalStorage={false}
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          disabled={selectedCities.length >= 5 || !citySearchQuery.trim()}
+                          onClick={() => handleAddCustomCity(citySearchQuery)}
+                          className="px-6 bg-primary hover:bg-primary-hover text-white rounded-xl font-bold text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                        >
+                          Add
+                        </button>
+                      </div>
+
+                      {selectedCities.length > 0 ? (
+                        <div>
+                          <div className="flex items-center justify-between mb-2.5">
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                              Selected Cities ({selectedCities.length} / 5 max)
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedCities([])}
+                              className="text-[10px] font-bold text-red-500 hover:text-red-700 uppercase tracking-widest transition-colors cursor-pointer"
+                            >
+                              Clear All
+                            </button>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {selectedCities.map((city, idx) => (
+                              <div
+                                key={idx}
+                                className="flex items-center gap-2 bg-blue-50 text-primary pl-3.5 pr-2 py-1.5 rounded-full border border-blue-200 text-xs font-bold"
+                              >
+                                <span className="material-icons text-sm">location_on</span>
+                                <span>{city.location}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveCity(idx)}
+                                  className="w-4 h-4 rounded-full bg-blue-200/60 hover:bg-red-500 hover:text-white text-primary flex items-center justify-center transition-all ml-1 cursor-pointer"
+                                >
+                                  <span className="material-icons text-[10px]">close</span>
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="p-5 text-center bg-amber-50 rounded-xl border border-amber-200 text-xs font-bold text-amber-800">
+                          Search and add at least one city above to continue.
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    /* SINGLE LOCATION MODE */
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
                         <LocationAutocomplete
-                          value={citySearchQuery}
-                          onChange={(val) => setCitySearchQuery(val)}
-                          onSelectLocation={(item) => handleSelectCity(item)}
-                          disabled={selectedCities.length >= 5}
+                          value={location}
+                          onChange={(val) => setLocation(val)}
+                          onSelectLocation={(item) => handleSelectLocation(item)}
                           variant="form"
-                          placeholder={selectedCities.length >= 5 ? "Maximum 5 cities limit reached" : "Search and add cities/sub-cities (e.g. Scarborough, Airdrie, Richmond...)"}
+                          placeholder="Street address, City or Sub-city (e.g. Toronto, ON)"
                           syncWithLocalStorage={false}
                         />
                       </div>
-                      <button
-                        type="button"
-                        disabled={selectedCities.length >= 5 || !citySearchQuery.trim()}
-                        onClick={() => handleAddCustomCity(citySearchQuery)}
-                        className="px-6 bg-primary hover:bg-primary-hover text-white rounded-xl font-bold text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        Add
-                      </button>
-                    </div>
-
-                    {/* Limit notification warning */}
-                    {selectedCities.length >= 5 && (
-                      <p className="text-xs font-bold text-amber-600 flex items-center gap-1">
-                        <span className="material-icons text-sm">warning</span>
-                        Maximum 5 cities limit reached for Multi-City posting.
-                      </p>
-                    )}
-
-                    {/* Selected Cities Chips */}
-                    {selectedCities.length > 0 ? (
-                      <div>
-                        <div className="flex items-center justify-between mb-3">
-                          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                            Selected Cities ({selectedCities.length} / 5 max)
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => setSelectedCities([])}
-                            className="text-[10px] font-bold text-red-500 hover:text-red-700 uppercase tracking-widest transition-colors"
-                          >
-                            Clear All
-                          </button>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          {selectedCities.map((city, idx) => (
-                            <div
-                              key={idx}
-                              className="flex items-center gap-2 bg-primary/10 text-primary pl-4 pr-2 py-2 rounded-full border border-primary/20 group hover:bg-primary/20 transition-all"
-                            >
-                              <span className="material-icons text-sm">location_on</span>
-                              <span className="text-xs font-bold">{city.location}</span>
-                              {city.postalCode && (
-                                <span className="text-[9px] font-medium text-primary/60">
-                                  ({city.postalCode})
-                                </span>
-                              )}
-                              <button
-                                type="button"
-                                onClick={() => handleRemoveCity(idx)}
-                                className="w-5 h-5 rounded-full bg-primary/10 hover:bg-red-500 hover:text-white text-primary flex items-center justify-center transition-all ml-1"
-                              >
-                                <span className="material-icons text-xs">close</span>
-                              </button>
-                            </div>
-                          ))}
-                        </div>
+                      <div className="relative">
+                        <span className="material-icons absolute left-4 top-3.5 text-slate-400 text-lg">
+                          markunread_mailbox
+                        </span>
+                        <input
+                          value={postalCode}
+                          onChange={(e) => setPostalCode(e.target.value)}
+                          className="w-full h-12 pl-11 pr-4 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-medium text-slate-800"
+                          placeholder="Postal Code (e.g. M5C 1X6)"
+                        />
                       </div>
-                    ) : (
-                      <div className="p-6 text-center bg-amber-50 rounded-xl border border-amber-200">
-                        <span className="material-icons text-amber-500 text-2xl mb-2 block">add_location_alt</span>
-                        <p className="text-xs font-bold text-amber-700">
-                          Search and add at least one city above (up to 5 max) to continue.
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Info banner */}
-                    <div className="flex items-start gap-3 p-4 bg-blue-50 rounded-xl border border-blue-200">
-                      <span className="material-icons text-blue-500 text-lg mt-0.5">info</span>
-                      <p className="text-xs text-blue-700 font-medium leading-relaxed">
-                        You can select up to 5 cities. Your ad will be posted as a separate listing in each selected city, sharing the same details, images, and promotions. You can manage all copies from your profile.
-                      </p>
                     </div>
-                  </div>
-                ) : (
-                  /* SINGLE LOCATION MODE (original) */
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                    <div className="relative">
-                      <LocationAutocomplete
-                        value={location}
-                        onChange={(val) => setLocation(val)}
-                        onSelectLocation={(item) => handleSelectLocation(item)}
-                        variant="form"
-                        placeholder="Street address, Main city or Sub-city (e.g. Toronto, ON)"
-                        syncWithLocalStorage={false}
-                      />
-                    </div>
-                    <div className="relative">
-                      <span className="material-icons absolute left-4 top-3.5 text-slate-400">
-                        markunread_mailbox
-                      </span>
-                      <input
-                        value={postalCode}
-                        onChange={(e) => setPostalCode(e.target.value)}
-                        className="w-full pl-12 pr-4 py-4 bg-slate-50 border-slate-100 rounded-xl focus:ring-primary focus:border-primary text-sm"
-                        placeholder="Postal Code (e.g. M5C 1X6)"
-                      />
-                    </div>
-                  </div>
-                )}
-              </section>
+                  )}
+                </section>
               )}
 
-              <section>
-                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-4">
-                  Contact Details
+              {/* Contact & Social Links Section */}
+              <section className="space-y-4 pt-6 border-t border-slate-100">
+                <label className="block text-xs font-black text-slate-700 uppercase tracking-widest">
+                  Contact & Social Media Links
                 </label>
-                <div className="space-y-6">
-                  {/* Phone Toggle Option */}
-                  {!templateConfig.hidePhone && (
+
+                {/* Phone Toggle */}
+                {!templateConfig.hidePhone && (
                   <div className="space-y-3">
-                    <label className="flex items-center gap-3 cursor-pointer group w-fit">
+                    <label className="flex items-center gap-3 cursor-pointer group w-fit select-none">
                       <div
-                        className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
+                        className={`w-5 h-5 rounded-md border flex items-center justify-center transition-colors ${
                           includePhone ? "bg-primary border-primary" : "bg-white border-slate-300 group-hover:border-primary"
                         }`}
                       >
@@ -2035,8 +2173,8 @@ const PostAd: React.FC = () => {
                           </span>
                         )}
                       </div>
-                      <span className="text-sm font-bold text-slate-700 select-none">
-                        Show Phone Number on Ad
+                      <span className="text-xs font-bold text-slate-700">
+                        Display Phone Number on Public Ad
                       </span>
                       <input
                         type="checkbox"
@@ -2053,107 +2191,94 @@ const PostAd: React.FC = () => {
                     </label>
 
                     {includePhone && (
-                      <div className="relative animate-fadeIn max-w-md">
-                        <span className="material-icons absolute left-4 top-3.5 text-slate-400">
+                      <div className="relative max-w-md">
+                        <span className="material-icons absolute left-4 top-3.5 text-slate-400 text-lg">
                           phone
                         </span>
                         <input
                           type="tel"
                           value={contactPhone}
                           onChange={(e) => setContactPhone(e.target.value)}
-                          className="w-full pl-12 pr-4 py-4 bg-slate-50 border-slate-100 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium"
-                          placeholder="Contact Phone Number (e.g. 416-555-0199)"
+                          className="w-full h-12 pl-11 pr-4 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-medium text-slate-800"
+                          placeholder="Phone Number (e.g. 416-555-0199)"
                         />
                       </div>
                     )}
                   </div>
-                  )}
-                </div>
-              </section>
+                )}
 
-              {!templateConfig.hideSocialLinks && (
-              <section className="pt-6 border-t border-slate-100">
-                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-4">
-                  Social Media Links (Optional)
-                </label>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                      <span className="material-icons text-red-500 text-sm">play_circle</span>
-                      YouTube Video Link
-                    </label>
-                    <input
-                      type="url"
-                      value={youtubeLink}
-                      onChange={(e) => setYoutubeLink(e.target.value)}
-                      className="w-full px-5 py-4 bg-slate-50 border-slate-100 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium"
-                      placeholder="e.g. https://www.youtube.com/watch?v=dQw4w9WgXcQ"
-                    />
-                    <p className="text-[10px] text-slate-400 mt-1 font-medium">
-                      Add a YouTube video walkthrough of your item/property/service to attract more interest.
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                      <span className="material-icons text-blue-600 text-sm">facebook</span>
-                      Facebook Page or Listing Link
-                    </label>
-                    <input
-                      type="url"
-                      value={facebookLink}
-                      onChange={(e) => setFacebookLink(e.target.value)}
-                      className="w-full px-5 py-4 bg-slate-50 border-slate-100 rounded-xl focus:ring-primary focus:border-primary text-sm font-medium"
-                      placeholder="e.g. https://www.facebook.com/yourpage"
-                    />
-                    <p className="text-[10px] text-slate-400 mt-1 font-medium">
-                      Provide a link to your Facebook page or listing for buyer credibility.
-                    </p>
-                  </div>
-                </div>
-              </section>
-              )}
-
-              {/* Step 3: Plan & Promotion Selection */}
-              <section className="pt-8 border-t border-slate-100">
-                {/* Section Header */}
-                <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#3b2885] to-[#2563eb] flex items-center justify-center shadow-lg shadow-blue-500/20">
-                      <span className="material-icons text-white text-lg">workspace_premium</span>
+                {/* Social Links */}
+                {!templateConfig.hideSocialLinks && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                    <div>
+                      <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                        <span className="material-icons text-red-500 text-sm">play_circle</span>
+                        YouTube Video Link
+                      </label>
+                      <input
+                        type="url"
+                        value={youtubeLink}
+                        onChange={(e) => setYoutubeLink(e.target.value)}
+                        className="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-medium text-slate-800"
+                        placeholder="e.g. https://www.youtube.com/watch?v=..."
+                      />
                     </div>
                     <div>
-                      <h3 className="text-lg font-black text-slate-900 tracking-tight">HitAds Visibility Plan</h3>
-                      <p className="text-xs text-slate-500 font-medium">Choose a plan to boost views and sell faster</p>
+                      <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                        <span className="material-icons text-blue-600 text-sm">facebook</span>
+                        Facebook Page or Listing Link
+                      </label>
+                      <input
+                        type="url"
+                        value={facebookLink}
+                        onChange={(e) => setFacebookLink(e.target.value)}
+                        className="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-medium text-slate-800"
+                        placeholder="e.g. https://www.facebook.com/..."
+                      />
                     </div>
+                  </div>
+                )}
+              </section>
+
+              {/* HitAds Visibility Plan Selector */}
+              <section className="space-y-4 pt-6 border-t border-slate-100">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-base font-black text-slate-900 tracking-tight flex items-center gap-2">
+                      <span className="material-icons text-primary text-lg">workspace_premium</span>
+                      HitAds Visibility Plan
+                    </h3>
+                    <p className="text-xs text-slate-500 font-medium mt-0.5">
+                      Boost views and sell up to 5x faster with optional promotion.
+                    </p>
                   </div>
                   <button
                     type="button"
                     onClick={() => setIsPlanModalOpen(true)}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#3b2885]/10 hover:bg-[#3b2885]/20 text-[#3b2885] font-bold text-xs uppercase tracking-wider transition-all duration-150 border border-[#3b2885]/20"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-primary font-bold text-xs uppercase tracking-wider transition-colors border border-blue-200 cursor-pointer self-start sm:self-center"
                   >
                     <span className="material-icons text-sm">view_carousel</span> Compare Plans
                   </button>
                 </div>
 
-                {/* 3 Interactive Quick Plan Selector Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {/* FREE */}
                   <div 
                     onClick={() => setSelectedPlan('free')}
                     className={`p-5 rounded-2xl border-2 cursor-pointer transition-all duration-200 flex flex-col justify-between ${
                       selectedPlan === 'free'
-                        ? "border-[#3b2885] bg-purple-50/40 shadow-md shadow-purple-500/5 ring-2 ring-[#3b2885]/20"
-                        : "border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm"
+                        ? "border-primary bg-blue-50/40 shadow-md ring-2 ring-primary/20"
+                        : "border-slate-200 bg-white hover:border-slate-300 hover:shadow-xs"
                     }`}
                   >
                     <div>
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-xs font-black text-slate-900 uppercase tracking-wider">FREE</span>
                         {selectedPlan === 'free' && (
-                          <span className="text-[10px] font-black text-white bg-[#3b2885] px-2 py-0.5 rounded-full uppercase tracking-wider">Selected</span>
+                          <span className="text-[10px] font-black text-white bg-primary px-2 py-0.5 rounded-full uppercase tracking-wider">Selected</span>
                         )}
                       </div>
-                      <div className="text-xl font-black text-[#16a34a] mb-2">FREE</div>
+                      <div className="text-xl font-black text-green-600 mb-2">FREE</div>
                       <p className="text-xs text-slate-500 font-medium leading-relaxed">Standard listing with up to 10 photos.</p>
                     </div>
                   </div>
@@ -2163,22 +2288,22 @@ const PostAd: React.FC = () => {
                     onClick={() => setSelectedPlan('boost')}
                     className={`relative p-5 rounded-2xl border-2 cursor-pointer transition-all duration-200 flex flex-col justify-between ${
                       selectedPlan === 'boost'
-                        ? "border-[#2563eb] bg-blue-50/50 shadow-lg shadow-blue-500/10 ring-2 ring-blue-500/20"
-                        : "border-slate-200 bg-white hover:border-blue-200 hover:shadow-sm"
+                        ? "border-blue-600 bg-blue-50/50 shadow-lg ring-2 ring-blue-500/20"
+                        : "border-slate-200 bg-white hover:border-blue-200 hover:shadow-xs"
                     }`}
                   >
-                    <div className="absolute -top-2.5 right-4 bg-[#1d4ed8] text-white text-[9px] font-black uppercase tracking-widest py-0.5 px-2.5 rounded-full">
+                    <div className="absolute -top-2.5 right-4 bg-blue-600 text-white text-[9px] font-black uppercase tracking-widest py-0.5 px-2.5 rounded-full">
                       POPULAR
                     </div>
                     <div>
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-xs font-black text-slate-900 uppercase tracking-wider">BOOST</span>
                         {selectedPlan === 'boost' && (
-                          <span className="text-[10px] font-black text-white bg-[#2563eb] px-2 py-0.5 rounded-full uppercase tracking-wider">Selected</span>
+                          <span className="text-[10px] font-black text-white bg-blue-600 px-2 py-0.5 rounded-full uppercase tracking-wider">Selected</span>
                         )}
                       </div>
-                      <div className="text-xl font-black text-[#16a34a] mb-2">$9.99 <span className="text-xs text-slate-400 font-normal">/ 30 days</span></div>
-                      <p className="text-xs text-slate-500 font-medium leading-relaxed">Priority in search, 20 photos, 7-day auto refresh & website link.</p>
+                      <div className="text-xl font-black text-green-600 mb-2">$9.99 <span className="text-xs text-slate-400 font-normal">/ 30 days</span></div>
+                      <p className="text-xs text-slate-500 font-medium leading-relaxed">Priority top placement, 20 photos & 7-day auto refresh.</p>
                     </div>
                   </div>
 
@@ -2187,92 +2312,180 @@ const PostAd: React.FC = () => {
                     onClick={() => setSelectedPlan('premium')}
                     className={`p-5 rounded-2xl border-2 cursor-pointer transition-all duration-200 flex flex-col justify-between ${
                       selectedPlan === 'premium'
-                        ? "border-[#3b2885] bg-purple-50/40 shadow-md shadow-purple-500/5 ring-2 ring-[#3b2885]/20"
-                        : "border-slate-200 bg-white hover:border-purple-200 hover:shadow-sm"
+                        ? "border-purple-600 bg-purple-50/40 shadow-md ring-2 ring-purple-600/20"
+                        : "border-slate-200 bg-white hover:border-purple-200 hover:shadow-xs"
                     }`}
                   >
                     <div>
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-xs font-black text-slate-900 uppercase tracking-wider">PREMIUM</span>
                         {selectedPlan === 'premium' && (
-                          <span className="text-[10px] font-black text-white bg-[#3b2885] px-2 py-0.5 rounded-full uppercase tracking-wider">Selected</span>
+                          <span className="text-[10px] font-black text-white bg-purple-600 px-2 py-0.5 rounded-full uppercase tracking-wider">Selected</span>
                         )}
                       </div>
-                      <div className="text-xl font-black text-[#16a34a] mb-2">$24.99 <span className="text-xs text-slate-400 font-normal">/ 30 days</span></div>
-                      <p className="text-xs text-slate-500 font-medium leading-relaxed">Maximum exposure across 5 cities, 3-day refresh, social & YouTube links.</p>
+                      <div className="text-xl font-black text-green-600 mb-2">$24.99 <span className="text-xs text-slate-400 font-normal">/ 30 days</span></div>
+                      <p className="text-xs text-slate-500 font-medium leading-relaxed">Homepage gallery, maximum exposure across 5 cities & 3-day refresh.</p>
                     </div>
                   </div>
                 </div>
               </section>
 
-              <div className="pt-10 border-t border-slate-100 flex justify-between items-center">
+              {/* Bottom Actions */}
+              <div className="pt-6 border-t border-slate-100 flex justify-between items-center">
                 <button
+                  type="button"
                   onClick={() => setStep(2)}
-                  className="px-10 py-4 font-bold text-slate-400 hover:text-slate-600"
+                  className="px-6 py-3 font-bold text-slate-500 hover:text-slate-800 text-sm transition-colors cursor-pointer flex items-center gap-1.5"
                 >
-                  Back
+                  <span className="material-icons text-base">chevron_left</span>
+                  Back to Details
                 </button>
-                <div className="flex flex-col items-end gap-2">
-                  {templateConfig.photosRequired !== false && imageFiles[0] === null && imagePreviews[0] === null && (
-                    <p className="text-xs text-red-500 font-bold">
-                      Cover photo is required
-                    </p>
-                  )}
-                  <button
-                    disabled={
-                      (templateConfig.hideLocation ? false : (postInMultipleCities ? selectedCities.length === 0 : (!location && !postalCode))) ||
-                      isPublishing ||
-                      (templateConfig.photosRequired !== false && imageFiles[0] === null && imagePreviews[0] === null)
-                    }
-                    onClick={handleInitiatePublish}
-                    className="bg-primary hover:bg-primary-hover text-white px-10 py-4 rounded-xl font-bold transition-all shadow-lg shadow-primary/20 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                  >
-                    {isPublishing ? (isEditMode ? "Saving..." : "Publishing...") : (isEditMode ? "Save Changes" : "Publish Ad")}{" "}
-                    <span className="material-icons">check</span>
-                  </button>
-                </div>
+                <button
+                  disabled={
+                    (templateConfig.hideLocation ? false : (postInMultipleCities ? selectedCities.length === 0 : (!location && !postalCode))) ||
+                    isPublishing ||
+                    (templateConfig.photosRequired !== false && imageFiles[0] === null && imagePreviews[0] === null)
+                  }
+                  onClick={handleInitiatePublish}
+                  className="bg-primary hover:bg-primary-hover text-white px-8 py-3.5 rounded-xl font-black text-sm uppercase tracking-wider transition-all shadow-md shadow-primary/20 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                >
+                  {isPublishing ? (isEditMode ? "Saving Changes..." : "Publishing Ad...") : (isEditMode ? "Save Changes" : "Publish Ad")}{" "}
+                  <span className="material-icons text-lg">check</span>
+                </button>
               </div>
             </div>
           )}
         </div>
 
-        {/* Sidebar Info */}
-        <aside className="lg:col-span-4 space-y-8">
-          <div className="bg-primary/5 rounded-[2rem] border border-primary/20 p-8">
-            <h3 className="font-black mb-6 flex items-center gap-2 text-primary uppercase tracking-widest text-sm">
-              <span className="material-icons">lightbulb</span> Tips for a Great
-              Ad
+        {/* ═══════════════════════════════════════════
+            RIGHT SIDEBAR (STICKY, LIVE SUMMARY & TIPS)
+           ═══════════════════════════════════════════ */}
+        <aside className="lg:col-span-4 xl:col-span-3 space-y-6 sticky top-28 self-start">
+          {/* Live Ad Summary Card */}
+          <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-5">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h3 className="font-black text-xs uppercase tracking-widest text-slate-900 flex items-center gap-2">
+                <span className="material-icons text-primary text-base">visibility</span>
+                Live Summary
+              </h3>
+              <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-blue-50 text-primary">
+                Step {step} of 3
+              </span>
+            </div>
+
+            <div className="space-y-3.5 text-xs">
+              {/* Category */}
+              <div className="flex justify-between items-start gap-2">
+                <span className="font-bold text-slate-400 uppercase tracking-wider text-[10px]">Category:</span>
+                <span className="font-bold text-slate-800 text-right truncate max-w-[180px]">
+                  {category || "Not selected"}
+                </span>
+              </div>
+
+              {/* Title */}
+              <div className="flex justify-between items-start gap-2">
+                <span className="font-bold text-slate-400 uppercase tracking-wider text-[10px]">Title:</span>
+                <span className="font-bold text-slate-800 text-right truncate max-w-[180px]">
+                  {title || "Untitled Ad"}
+                </span>
+              </div>
+
+              {/* Price */}
+              <div className="flex justify-between items-start gap-2">
+                <span className="font-bold text-slate-400 uppercase tracking-wider text-[10px]">Price:</span>
+                <span className="font-black text-green-600 text-right">
+                  {priceType === "amount" 
+                    ? (price ? `$${parseFloat(price).toLocaleString()}` : "$0.00")
+                    : (priceOptions.find(o => o.option_key === priceType)?.option_value || "Special Pricing")}
+                </span>
+              </div>
+
+              {/* Location */}
+              <div className="flex justify-between items-start gap-2">
+                <span className="font-bold text-slate-400 uppercase tracking-wider text-[10px]">Location:</span>
+                <span className="font-bold text-slate-800 text-right truncate max-w-[180px]">
+                  {postInMultipleCities 
+                    ? `${selectedCities.length} ${selectedCities.length === 1 ? 'city' : 'cities'}` 
+                    : (location || "Not set")}
+                </span>
+              </div>
+
+              {/* Photos */}
+              <div className="flex justify-between items-start gap-2">
+                <span className="font-bold text-slate-400 uppercase tracking-wider text-[10px]">Photos:</span>
+                <span className="font-bold text-slate-800 text-right">
+                  {imagePreviews.filter(p => p !== null).length} / 10 added
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Context-Aware Tips Card */}
+          <div className="bg-slate-50/80 rounded-3xl border border-slate-200 p-6 space-y-4">
+            <h3 className="font-black flex items-center gap-2 text-primary uppercase tracking-widest text-xs">
+              <span className="material-icons text-base">lightbulb</span> 
+              {step === 1 ? "Category Tips" : step === 2 ? "Listing Tips" : "Publishing Tips"}
             </h3>
-            <ul className="space-y-8">
-              {[
-                {
-                  title: "Be specific",
-                  desc: "Include brand, model, and dimensions to help buyers find your item.",
-                },
-                {
-                  title: "Price it right",
-                  desc: "Research similar items to stay competitive and sell faster.",
-                },
-                {
-                  title: "Mention defects",
-                  desc: "Honesty builds trust. Highlight any scratches or repairs needed.",
-                },
+
+            <ul className="space-y-4">
+              {step === 1 && [
+                { title: "Select Exact Subcategory", desc: "Choosing the most specific subcategory places your ad directly in front of interested buyers." },
+                { title: "Vehicle Categories", desc: "Selecting Cars & Trucks unlocks full VIN decoding and verified specifications." },
               ].map((tip, i) => (
-                <li key={i} className="flex gap-4">
-                  <div className="w-7 h-7 bg-primary text-white text-xs font-bold rounded-full flex items-center justify-center flex-shrink-0">
+                <li key={i} className="flex gap-3">
+                  <div className="w-5 h-5 bg-primary/10 text-primary text-[10px] font-black rounded-full flex items-center justify-center shrink-0 mt-0.5">
                     {i + 1}
                   </div>
                   <div>
-                    <h4 className="font-bold text-slate-800 text-sm mb-1">
-                      {tip.title}
-                    </h4>
-                    <p className="text-xs text-slate-500 leading-relaxed">
-                      {tip.desc}
-                    </p>
+                    <h4 className="font-bold text-slate-900 text-xs mb-0.5">{tip.title}</h4>
+                    <p className="text-[11px] text-slate-500 leading-relaxed font-medium">{tip.desc}</p>
+                  </div>
+                </li>
+              ))}
+
+              {step === 2 && [
+                { title: "Include Valid VIN", desc: "Including your 17-digit VIN builds buyer trust and unlocks verified history badges." },
+                { title: "Be Transparent", desc: "Mention exact mileage, recent maintenance, and any minor cosmetic wear." },
+                { title: "Competitive Pricing", desc: "Check similar listings in your city to price your item competitively." },
+              ].map((tip, i) => (
+                <li key={i} className="flex gap-3">
+                  <div className="w-5 h-5 bg-primary/10 text-primary text-[10px] font-black rounded-full flex items-center justify-center shrink-0 mt-0.5">
+                    {i + 1}
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-slate-900 text-xs mb-0.5">{tip.title}</h4>
+                    <p className="text-[11px] text-slate-500 leading-relaxed font-medium">{tip.desc}</p>
+                  </div>
+                </li>
+              ))}
+
+              {step === 3 && [
+                { title: "Bright Natural Light", desc: "Take photos in daylight showing front, rear, interior, and odometer." },
+                { title: "Multi-City Posting", desc: "Expand your reach up to 5 Canadian cities to find buyers faster." },
+                { title: "Verified Moneris Checkout", desc: "HitAds uses Moneris encrypted Canadian payment processing." },
+              ].map((tip, i) => (
+                <li key={i} className="flex gap-3">
+                  <div className="w-5 h-5 bg-primary/10 text-primary text-[10px] font-black rounded-full flex items-center justify-center shrink-0 mt-0.5">
+                    {i + 1}
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-slate-900 text-xs mb-0.5">{tip.title}</h4>
+                    <p className="text-[11px] text-slate-500 leading-relaxed font-medium">{tip.desc}</p>
                   </div>
                 </li>
               ))}
             </ul>
+          </div>
+
+          {/* Canadian Marketplace Trust Guarantee */}
+          <div className="p-4 rounded-2xl bg-blue-50/60 border border-blue-200/70 flex items-start gap-3">
+            <span className="material-icons text-primary text-lg mt-0.5">verified_user</span>
+            <div>
+              <h4 className="text-xs font-black text-slate-900">HitAds Canada Verified</h4>
+              <p className="text-[11px] text-slate-600 font-medium mt-0.5 leading-relaxed">
+                Free ads Canada-wide. All paid promotions are securely processed with Moneris.
+              </p>
+            </div>
           </div>
         </aside>
       </div>
