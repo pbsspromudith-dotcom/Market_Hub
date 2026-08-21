@@ -53,6 +53,12 @@ export async function POST(req: Request) {
     if (typeof body.custom_amount === 'number' && body.custom_amount > 0) {
       subtotal = Number(body.custom_amount);
       selectedPromotions.push('test_checkout');
+    } else if (body.plan === 'boost') {
+      subtotal = 9.99;
+      selectedPromotions.push('plan_boost:30', 'top_ad:30');
+    } else if (body.plan === 'premium') {
+      subtotal = 24.99;
+      selectedPromotions.push('plan_premium:30', 'top_ad:30', 'home_gallery:30', 'highlighted:30');
     } else {
       if (is_top_ad) { 
         subtotal += calculatePrice('top_ad', top_ad_duration, 9.99); 

@@ -420,7 +420,7 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn, initialCategories = [], initial
               All Categories
             </Link>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-5 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {(categories && categories.length >= 10 ? categories : OFFICIAL_CATEGORY_SYSTEM).map((cat) => {
               const catName = cat.name;
               const config = getCategoryIconConfig(catName, cat.icon || cat.iconKey);

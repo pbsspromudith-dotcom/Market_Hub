@@ -7,6 +7,7 @@ import { trackListingSubmission } from "../analytics";
 import MonerisPayModal from "../components/MonerisPayModal";
 import { useUI } from "../components/UIProvider";
 import LocationAutocomplete from "../components/LocationAutocomplete";
+import PricingPlansModal from "../components/PricingPlansModal";
 const CAR_FEATURES_LIST = [
   "Alloy Wheels",
   "Backup Camera",
@@ -218,19 +219,9 @@ const PostAd: React.FC = () => {
   // State for form
   const [category, setCategory] = useState("");
 
-  // Promotion selection state
-  const [promotionData, setPromotionData] = useState({
-    is_top_ad: false,
-    top_ad_duration: 7,
-    is_highlighted: false,
-    highlighted_duration: 7,
-    is_urgent: false,
-    urgent_duration: 7,
-    is_home_gallery: false,
-    home_gallery_duration: 7,
-  });
-  
-  const [promotionPricing, setPromotionPricing] = useState<any[]>([]);
+  // Plan selection state (HitAds 3-tier plans: Free, Boost $9.99, Premium $24.99)
+  const [selectedPlan, setSelectedPlan] = useState<'free' | 'boost' | 'premium'>('free');
+  const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
 
   // Moneris Checkout payment state
   const [isPayModalOpen, setIsPayModalOpen] = useState(false);
@@ -317,38 +308,6 @@ const PostAd: React.FC = () => {
       .then((data) => {
         if (data.success && Array.isArray(data.data)) {
           setPriceOptions(data.data);
-        }
-      })
-      .catch(console.error);
-  }, []);
-
-  useEffect(() => {
-    fetch("/api/promotions/pricing")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success && Array.isArray(data.data)) {
-          setPromotionPricing(data.data);
-
-          // Auto-sync initial duration selections to match active packages set in Admin
-          setPromotionData((prev) => {
-            const getValidDuration = (type: string, currentDuration: number) => {
-              const opts = data.data.filter((p: any) => p.promotion_type === type);
-              if (opts.length > 0) {
-                const match = opts.find((p: any) => Number(p.duration_days) === Number(currentDuration));
-                if (match) return Number(match.duration_days);
-                return Number(opts[0].duration_days);
-              }
-              return currentDuration;
-            };
-
-            return {
-              ...prev,
-              top_ad_duration: getValidDuration('top_ad', prev.top_ad_duration),
-              highlighted_duration: getValidDuration('highlighted', prev.highlighted_duration),
-              urgent_duration: getValidDuration('urgent', prev.urgent_duration),
-              home_gallery_duration: getValidDuration('home_gallery', prev.home_gallery_duration),
-            };
-          });
         }
       })
       .catch(console.error);
@@ -688,14 +647,6 @@ const PostAd: React.FC = () => {
       ? categoriesTree
       : categoryPath[categoryPath.length - 1].children || [];
 
-  const getPromotionOptions = (promoType: string, defaultPrice: number) => {
-    const options = promotionPricing.filter(p => p.promotion_type === promoType);
-    if (options.length === 0) {
-      return [{ duration_days: 7, price: defaultPrice }];
-    }
-    return [...options].sort((a, b) => Number(a.duration_days) - Number(b.duration_days));
-  };
-
   const isVehicleSpecCategory = (path: any[], catString: string) => {
     const names: string[] = [];
     if (Array.isArray(path)) {
@@ -727,18 +678,9 @@ const PostAd: React.FC = () => {
     return ALLOWED.includes(subCat);
   };
 
-  const calculatePrice = (promoType: string, duration: number, fallbackPrice: number) => {
-    const options = promotionPricing.filter(p => p.promotion_type === promoType);
-    if (options.length > 0) {
-      const match = options.find(p => Number(p.duration_days) === Number(duration));
-      if (match) return Number(match.price);
-      return Number(options[0].price);
-    }
-    return fallbackPrice;
-  };
-
-  const handlePublish = async () => {
+  const handlePublish = async (chosenPlan?: 'free' | 'boost' | 'premium') => {
     setIsPublishing(true);
+    const planToUse = chosenPlan || selectedPlan;
     try {
       const userStr = localStorage.getItem("user");
       const user = userStr ? JSON.parse(userStr) : null;
@@ -844,6 +786,15 @@ const PostAd: React.FC = () => {
         facebook_link: facebookLink,
       };
 
+      // Apply promotional plan properties
+      if (planToUse === 'boost') {
+        payload.is_top_ad = true;
+      } else if (planToUse === 'premium') {
+        payload.is_top_ad = true;
+        payload.is_home_gallery = true;
+        payload.is_highlighted = true;
+      }
+
       // Multi-city or single city
       if (!isEditMode && postInMultipleCities && selectedCities.length > 0) {
         if (selectedCities.length > 5) {
@@ -887,17 +838,11 @@ const PostAd: React.FC = () => {
           location || "Unknown",
         );
 
-        // Check if any promotions are selected
-        const hasPromotions =
-          promotionData.is_top_ad ||
-          promotionData.is_highlighted ||
-          promotionData.is_urgent ||
-          promotionData.is_home_gallery;
-
         const isPending = !!(data.needs_approval || data.status === 'pending_approval');
         setCreatedNeedsApproval(isPending);
 
-        if (hasPromotions) {
+        // If paid plan (Boost or Premium), initiate Moneris payment preload
+        if (planToUse === 'boost' || planToUse === 'premium') {
           setCreatedListingId(data.id);
 
           const preloadRes = await fetch("/api/payments/preload", {
@@ -906,7 +851,7 @@ const PostAd: React.FC = () => {
             body: JSON.stringify({
               listing_id: data.id,
               user_id: userId,
-              ...promotionData,
+              plan: planToUse,
             }),
           });
           const preloadData = await preloadRes.json();
@@ -934,6 +879,7 @@ const PostAd: React.FC = () => {
           );
           navigate.push("/profile");
         } else {
+          showAlert("Your ad is now published and live on HitAds!", "success");
           navigate.push("/item/" + data.id);
         }
       } else {
@@ -945,6 +891,38 @@ const PostAd: React.FC = () => {
     } finally {
       setIsPublishing(false);
     }
+  };
+
+  const handleInitiatePublish = () => {
+    if (!templateConfig.hideTitle && !title.trim()) {
+      showAlert("Please enter an ad title", "error");
+      return;
+    }
+    if (templateConfig.photosRequired !== false && imageFiles[0] === null && imagePreviews[0] === null) {
+      showAlert("Please upload a cover photo for your ad", "error");
+      return;
+    }
+    if (!templateConfig.hideLocation && !postInMultipleCities && !location && !postalCode) {
+      showAlert("Please specify a location or postal code", "error");
+      return;
+    }
+    if (!templateConfig.hideLocation && postInMultipleCities && selectedCities.length === 0) {
+      showAlert("Please select at least one city", "error");
+      return;
+    }
+
+    if (isEditMode) {
+      handlePublish('free');
+    } else {
+      // Pop up the HitAds Pricing Cards Modal
+      setIsPlanModalOpen(true);
+    }
+  };
+
+  const handleSelectPlanFromModal = async (plan: 'free' | 'boost' | 'premium', price: number) => {
+    setSelectedPlan(plan);
+    setIsPlanModalOpen(false);
+    await handlePublish(plan);
   };
 
   const handlePaymentSuccess = (receiptId: string) => {
@@ -2135,365 +2113,96 @@ const PostAd: React.FC = () => {
               </section>
               )}
 
+              {/* Step 3: Plan & Promotion Selection */}
               <section className="pt-8 border-t border-slate-100">
                 {/* Section Header */}
-                <div className="mb-2">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
-                      <span className="material-icons text-white text-lg">campaign</span>
+                <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#3b2885] to-[#2563eb] flex items-center justify-center shadow-lg shadow-blue-500/20">
+                      <span className="material-icons text-white text-lg">workspace_premium</span>
                     </div>
                     <div>
-                      <h3 className="text-lg font-black text-slate-900 tracking-tight">Promote Your Ad <span className="text-sm font-medium text-slate-400">(Optional)</span></h3>
+                      <h3 className="text-lg font-black text-slate-900 tracking-tight">HitAds Visibility Plan</h3>
+                      <p className="text-xs text-slate-500 font-medium">Choose a plan to boost views and sell faster</p>
                     </div>
                   </div>
-                  <p className="text-sm text-slate-500 font-medium ml-[52px]">
-                    Increase your listing visibility and sell faster by selecting one or more promotional options.
-                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setIsPlanModalOpen(true)}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#3b2885]/10 hover:bg-[#3b2885]/20 text-[#3b2885] font-bold text-xs uppercase tracking-wider transition-all duration-150 border border-[#3b2885]/20"
+                  >
+                    <span className="material-icons text-sm">view_carousel</span> Compare Plans
+                  </button>
                 </div>
 
-                {/* Promotion Cards Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-6">
-
-                  {/* Top Ad Card */}
-                  <div
-                    onClick={() => setPromotionData(prev => ({ ...prev, is_top_ad: !prev.is_top_ad }))}
-                    className={`relative flex flex-col p-6 rounded-2xl cursor-pointer transition-all duration-200 group border-2 ${
-                      promotionData.is_top_ad
-                        ? "border-blue-500 bg-blue-50/50 shadow-lg shadow-blue-500/10"
-                        : "border-slate-100 bg-white hover:border-slate-200 hover:shadow-md"
+                {/* 3 Interactive Quick Plan Selector Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* FREE */}
+                  <div 
+                    onClick={() => setSelectedPlan('free')}
+                    className={`p-5 rounded-2xl border-2 cursor-pointer transition-all duration-200 flex flex-col justify-between ${
+                      selectedPlan === 'free'
+                        ? "border-[#3b2885] bg-purple-50/40 shadow-md shadow-purple-500/5 ring-2 ring-[#3b2885]/20"
+                        : "border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm"
                     }`}
                   >
-                    {/* Most Popular Badge */}
-                    <div className="absolute -top-3 right-5">
-                      <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider bg-gradient-to-r from-blue-600 to-blue-500 text-white px-3 py-1 rounded-full shadow-md shadow-blue-500/30">
-                        <span className="material-icons text-[10px]">star</span> Most Popular
-                      </span>
-                    </div>
-
-                    <div className="flex items-start gap-4">
-                      {/* Checkbox */}
-                      <div className="pt-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>
-                        <input
-                          type="checkbox"
-                          checked={promotionData.is_top_ad}
-                          onChange={(e) =>
-                            setPromotionData({
-                              ...promotionData,
-                              is_top_ad: e.target.checked,
-                            })
-                          }
-                          className="w-5 h-5 text-blue-600 border-2 border-slate-300 rounded-md focus:ring-blue-500 focus:ring-offset-0 transition-all duration-200 cursor-pointer checked:border-blue-600"
-                        />
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-black text-slate-900 uppercase tracking-wider">FREE</span>
+                        {selectedPlan === 'free' && (
+                          <span className="text-[10px] font-black text-white bg-[#3b2885] px-2 py-0.5 rounded-full uppercase tracking-wider">Selected</span>
+                        )}
                       </div>
-                      {/* Icon */}
-                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 transition-all duration-200 ${
-                        promotionData.is_top_ad ? "bg-blue-100" : "bg-slate-50 group-hover:bg-slate-100"
-                      }`}>
-                        <span className="text-2xl leading-none">&#11088;</span>
-                      </div>
-                      {/* Content */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap mb-1">
-                          <span className="text-sm font-black text-slate-900">Top Ad</span>
-                          <span className="inline-flex items-center text-[11px] font-bold bg-gradient-to-r from-amber-100 to-orange-100 text-amber-700 px-2.5 py-0.5 rounded-lg">
-                            ${calculatePrice('top_ad', promotionData.top_ad_duration, 9.99).toFixed(2)}
-                          </span>
-                          <select 
-                            value={promotionData.top_ad_duration}
-                            onChange={(e) => setPromotionData({...promotionData, top_ad_duration: Number(e.target.value)})}
-                            onClick={(e) => e.stopPropagation()}
-                            className="text-[10px] font-bold text-slate-600 bg-white border border-slate-200 px-2 py-0.5 rounded-md focus:ring-2 focus:border-blue-500 cursor-pointer shadow-xs"
-                          >
-                            {getPromotionOptions('top_ad', 9.99).map(opt => (
-                              <option key={opt.duration_days} value={opt.duration_days}>
-                                {opt.duration_days} Days (${Number(opt.price).toFixed(2)})
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                        <p className="text-xs text-slate-500 font-medium leading-relaxed mb-3">
-                          Keep your listing at the top of category search results for {promotionData.top_ad_duration} days.
-                        </p>
-                        <div className="flex flex-wrap gap-x-4 gap-y-1">
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600">
-                            <span className="material-icons text-[11px]">check_circle</span> Higher visibility
-                          </span>
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600">
-                            <span className="material-icons text-[11px]">check_circle</span> More impressions
-                          </span>
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600">
-                            <span className="material-icons text-[11px]">check_circle</span> Higher click-through
-                          </span>
-                        </div>
-                      </div>
+                      <div className="text-xl font-black text-[#16a34a] mb-2">FREE</div>
+                      <p className="text-xs text-slate-500 font-medium leading-relaxed">Standard listing with up to 10 photos.</p>
                     </div>
                   </div>
 
-                  {/* Highlighted Card */}
-                  <div
-                    onClick={() => setPromotionData(prev => ({ ...prev, is_highlighted: !prev.is_highlighted }))}
-                    className={`relative flex flex-col p-6 rounded-2xl cursor-pointer transition-all duration-200 group border-2 ${
-                      promotionData.is_highlighted
-                        ? "border-blue-500 bg-blue-50/50 shadow-lg shadow-blue-500/10"
-                        : "border-slate-100 bg-white hover:border-slate-200 hover:shadow-md"
+                  {/* BOOST */}
+                  <div 
+                    onClick={() => setSelectedPlan('boost')}
+                    className={`relative p-5 rounded-2xl border-2 cursor-pointer transition-all duration-200 flex flex-col justify-between ${
+                      selectedPlan === 'boost'
+                        ? "border-[#2563eb] bg-blue-50/50 shadow-lg shadow-blue-500/10 ring-2 ring-blue-500/20"
+                        : "border-slate-200 bg-white hover:border-blue-200 hover:shadow-sm"
                     }`}
                   >
-                    <div className="flex items-start gap-4">
-                      <div className="pt-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>
-                        <input
-                          type="checkbox"
-                          checked={promotionData.is_highlighted}
-                          onChange={(e) =>
-                            setPromotionData({
-                              ...promotionData,
-                              is_highlighted: e.target.checked,
-                            })
-                          }
-                          className="w-5 h-5 text-blue-600 border-2 border-slate-300 rounded-md focus:ring-blue-500 focus:ring-offset-0 transition-all duration-200 cursor-pointer checked:border-blue-600"
-                        />
+                    <div className="absolute -top-2.5 right-4 bg-[#1d4ed8] text-white text-[9px] font-black uppercase tracking-widest py-0.5 px-2.5 rounded-full">
+                      POPULAR
+                    </div>
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-black text-slate-900 uppercase tracking-wider">BOOST</span>
+                        {selectedPlan === 'boost' && (
+                          <span className="text-[10px] font-black text-white bg-[#2563eb] px-2 py-0.5 rounded-full uppercase tracking-wider">Selected</span>
+                        )}
                       </div>
-                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 transition-all duration-200 ${
-                        promotionData.is_highlighted ? "bg-yellow-100" : "bg-slate-50 group-hover:bg-slate-100"
-                      }`}>
-                        <span className="text-2xl leading-none">&#128310;</span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap mb-1">
-                          <span className="text-sm font-black text-slate-900">Highlighted</span>
-                          <span className="inline-flex items-center text-[11px] font-bold bg-gradient-to-r from-amber-100 to-orange-100 text-amber-700 px-2.5 py-0.5 rounded-lg">
-                            ${calculatePrice('highlighted', promotionData.highlighted_duration, 4.99).toFixed(2)}
-                          </span>
-                          <select 
-                            value={promotionData.highlighted_duration}
-                            onChange={(e) => setPromotionData({...promotionData, highlighted_duration: Number(e.target.value)})}
-                            onClick={(e) => e.stopPropagation()}
-                            className="text-[10px] font-bold text-slate-600 bg-white border border-slate-200 px-2 py-0.5 rounded-md focus:ring-2 focus:border-blue-500 cursor-pointer shadow-xs"
-                          >
-                            {getPromotionOptions('highlighted', 4.99).map(opt => (
-                              <option key={opt.duration_days} value={opt.duration_days}>
-                                {opt.duration_days} Days (${Number(opt.price).toFixed(2)})
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                        <p className="text-xs text-slate-500 font-medium leading-relaxed mb-3">
-                          Highlight your listing with a premium background color to attract more attention.
-                        </p>
-                        <div className="flex flex-wrap gap-x-4 gap-y-1">
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600">
-                            <span className="material-icons text-[11px]">check_circle</span> Yellow highlighted card
-                          </span>
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600">
-                            <span className="material-icons text-[11px]">check_circle</span> More clicks
-                          </span>
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600">
-                            <span className="material-icons text-[11px]">check_circle</span> Better visibility
-                          </span>
-                        </div>
-                      </div>
+                      <div className="text-xl font-black text-[#16a34a] mb-2">$9.99 <span className="text-xs text-slate-400 font-normal">/ 30 days</span></div>
+                      <p className="text-xs text-slate-500 font-medium leading-relaxed">Priority in search, 20 photos, 7-day auto refresh & website link.</p>
                     </div>
                   </div>
 
-                  {/* Urgent Card */}
-                  <div
-                    onClick={() => setPromotionData(prev => ({ ...prev, is_urgent: !prev.is_urgent }))}
-                    className={`relative flex flex-col p-6 rounded-2xl cursor-pointer transition-all duration-200 group border-2 ${
-                      promotionData.is_urgent
-                        ? "border-blue-500 bg-blue-50/50 shadow-lg shadow-blue-500/10"
-                        : "border-slate-100 bg-white hover:border-slate-200 hover:shadow-md"
+                  {/* PREMIUM */}
+                  <div 
+                    onClick={() => setSelectedPlan('premium')}
+                    className={`p-5 rounded-2xl border-2 cursor-pointer transition-all duration-200 flex flex-col justify-between ${
+                      selectedPlan === 'premium'
+                        ? "border-[#3b2885] bg-purple-50/40 shadow-md shadow-purple-500/5 ring-2 ring-[#3b2885]/20"
+                        : "border-slate-200 bg-white hover:border-purple-200 hover:shadow-sm"
                     }`}
                   >
-                    <div className="flex items-start gap-4">
-                      <div className="pt-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>
-                        <input
-                          type="checkbox"
-                          checked={promotionData.is_urgent}
-                          onChange={(e) =>
-                            setPromotionData({
-                              ...promotionData,
-                              is_urgent: e.target.checked,
-                            })
-                          }
-                          className="w-5 h-5 text-blue-600 border-2 border-slate-300 rounded-md focus:ring-blue-500 focus:ring-offset-0 transition-all duration-200 cursor-pointer checked:border-blue-600"
-                        />
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-black text-slate-900 uppercase tracking-wider">PREMIUM</span>
+                        {selectedPlan === 'premium' && (
+                          <span className="text-[10px] font-black text-white bg-[#3b2885] px-2 py-0.5 rounded-full uppercase tracking-wider">Selected</span>
+                        )}
                       </div>
-                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 transition-all duration-200 ${
-                        promotionData.is_urgent ? "bg-red-100" : "bg-slate-50 group-hover:bg-slate-100"
-                      }`}>
-                        <span className="text-2xl leading-none">&#128293;</span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap mb-1">
-                          <span className="text-sm font-black text-slate-900">Urgent</span>
-                          <span className="inline-flex items-center text-[11px] font-bold bg-gradient-to-r from-amber-100 to-orange-100 text-amber-700 px-2.5 py-0.5 rounded-lg">
-                            ${calculatePrice('urgent', promotionData.urgent_duration, 5.99).toFixed(2)}
-                          </span>
-                          <select 
-                            value={promotionData.urgent_duration}
-                            onChange={(e) => setPromotionData({...promotionData, urgent_duration: Number(e.target.value)})}
-                            onClick={(e) => e.stopPropagation()}
-                            className="text-[10px] font-bold text-slate-600 bg-white border border-slate-200 px-2 py-0.5 rounded-md focus:ring-2 focus:border-blue-500 cursor-pointer shadow-xs"
-                          >
-                            {getPromotionOptions('urgent', 5.99).map(opt => (
-                              <option key={opt.duration_days} value={opt.duration_days}>
-                                {opt.duration_days} Days (${Number(opt.price).toFixed(2)})
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                        <p className="text-xs text-slate-500 font-medium leading-relaxed mb-3">
-                          Display a red &quot;URGENT&quot; badge to encourage faster buyer engagement.
-                        </p>
-                        <div className="flex flex-wrap gap-x-4 gap-y-1">
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600">
-                            <span className="material-icons text-[11px]">check_circle</span> Urgent badge
-                          </span>
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600">
-                            <span className="material-icons text-[11px]">check_circle</span> Increased trust
-                          </span>
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600">
-                            <span className="material-icons text-[11px]">check_circle</span> Higher response rate
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Home Gallery Card */}
-                  <div
-                    onClick={() => setPromotionData(prev => ({ ...prev, is_home_gallery: !prev.is_home_gallery }))}
-                    className={`relative flex flex-col p-6 rounded-2xl cursor-pointer transition-all duration-200 group border-2 ${
-                      promotionData.is_home_gallery
-                        ? "border-blue-500 bg-blue-50/50 shadow-lg shadow-blue-500/10"
-                        : "border-slate-100 bg-white hover:border-slate-200 hover:shadow-md"
-                    }`}
-                  >
-                    <div className="flex items-start gap-4">
-                      <div className="pt-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>
-                        <input
-                          type="checkbox"
-                          checked={promotionData.is_home_gallery}
-                          onChange={(e) =>
-                            setPromotionData({
-                              ...promotionData,
-                              is_home_gallery: e.target.checked,
-                            })
-                          }
-                          className="w-5 h-5 text-blue-600 border-2 border-slate-300 rounded-md focus:ring-blue-500 focus:ring-offset-0 transition-all duration-200 cursor-pointer checked:border-blue-600"
-                        />
-                      </div>
-                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 transition-all duration-200 ${
-                        promotionData.is_home_gallery ? "bg-blue-100" : "bg-slate-50 group-hover:bg-slate-100"
-                      }`}>
-                        <span className="text-2xl leading-none">&#127968;</span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap mb-1">
-                          <span className="text-sm font-black text-slate-900">Home Page</span>
-                          <span className="inline-flex items-center text-[11px] font-bold bg-gradient-to-r from-amber-100 to-orange-100 text-amber-700 px-2.5 py-0.5 rounded-lg">
-                            ${calculatePrice('home_gallery', promotionData.home_gallery_duration, 14.99).toFixed(2)}
-                          </span>
-                          <select 
-                            value={promotionData.home_gallery_duration}
-                            onChange={(e) => setPromotionData({...promotionData, home_gallery_duration: Number(e.target.value)})}
-                            onClick={(e) => e.stopPropagation()}
-                            className="text-[10px] font-bold text-slate-600 bg-white border border-slate-200 px-2 py-0.5 rounded-md focus:ring-2 focus:border-blue-500 cursor-pointer shadow-xs"
-                          >
-                            {getPromotionOptions('home_gallery', 14.99).map(opt => (
-                              <option key={opt.duration_days} value={opt.duration_days}>
-                                {opt.duration_days} Days (${Number(opt.price).toFixed(2)})
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                        <p className="text-xs text-slate-500 font-medium leading-relaxed mb-3">
-                          Feature your listing on the homepage gallery for maximum exposure.
-                        </p>
-                        <div className="flex flex-wrap gap-x-4 gap-y-1">
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600">
-                            <span className="material-icons text-[11px]">check_circle</span> Homepage placement
-                          </span>
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600">
-                            <span className="material-icons text-[11px]">check_circle</span> Large featured card
-                          </span>
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600">
-                            <span className="material-icons text-[11px]">check_circle</span> Maximum impressions
-                          </span>
-                        </div>
-                      </div>
+                      <div className="text-xl font-black text-[#16a34a] mb-2">$24.99 <span className="text-xs text-slate-400 font-normal">/ 30 days</span></div>
+                      <p className="text-xs text-slate-500 font-medium leading-relaxed">Maximum exposure across 5 cities, 3-day refresh, social & YouTube links.</p>
                     </div>
                   </div>
                 </div>
-
-                {/* Promotion Summary */}
-                {(promotionData.is_top_ad || promotionData.is_highlighted || promotionData.is_urgent || promotionData.is_home_gallery) && (
-                  <div className="mt-6 bg-slate-50 rounded-2xl border border-slate-100 p-6 transition-all duration-200">
-                    <div className="flex items-center gap-2 mb-4">
-                      <span className="material-icons text-blue-600 text-lg">receipt_long</span>
-                      <h4 className="text-sm font-black text-slate-900">Promotion Summary</h4>
-                    </div>
-                    <div className="space-y-2.5">
-                      {promotionData.is_top_ad && (
-                        <div className="flex justify-between items-center text-sm">
-                          <span className="text-slate-600 font-medium flex items-center gap-2">
-                            <span className="text-base leading-none">&#11088;</span> Top Ad <span className="text-xs text-slate-400">({promotionData.top_ad_duration} days)</span>
-                          </span>
-                          <span className="font-bold text-slate-800">${calculatePrice('top_ad', promotionData.top_ad_duration, 9.99).toFixed(2)}</span>
-                        </div>
-                      )}
-                      {promotionData.is_highlighted && (
-                        <div className="flex justify-between items-center text-sm">
-                          <span className="text-slate-600 font-medium flex items-center gap-2">
-                            <span className="text-base leading-none">&#128310;</span> Highlighted <span className="text-xs text-slate-400">({promotionData.highlighted_duration} days)</span>
-                          </span>
-                          <span className="font-bold text-slate-800">${calculatePrice('highlighted', promotionData.highlighted_duration, 4.99).toFixed(2)}</span>
-                        </div>
-                      )}
-                      {promotionData.is_urgent && (
-                        <div className="flex justify-between items-center text-sm">
-                          <span className="text-slate-600 font-medium flex items-center gap-2">
-                            <span className="text-base leading-none">&#128293;</span> Urgent <span className="text-xs text-slate-400">({promotionData.urgent_duration} days)</span>
-                          </span>
-                          <span className="font-bold text-slate-800">${calculatePrice('urgent', promotionData.urgent_duration, 5.99).toFixed(2)}</span>
-                        </div>
-                      )}
-                      {promotionData.is_home_gallery && (
-                        <div className="flex justify-between items-center text-sm">
-                          <span className="text-slate-600 font-medium flex items-center gap-2">
-                            <span className="text-base leading-none">&#127968;</span> Home Page <span className="text-xs text-slate-400">({promotionData.home_gallery_duration} days)</span>
-                          </span>
-                          <span className="font-bold text-slate-800">${calculatePrice('home_gallery', promotionData.home_gallery_duration, 14.99).toFixed(2)}</span>
-                        </div>
-                      )}
-                      {(() => {
-                        const subtotal = (
-                          (promotionData.is_top_ad ? calculatePrice('top_ad', promotionData.top_ad_duration, 9.99) : 0) +
-                          (promotionData.is_highlighted ? calculatePrice('highlighted', promotionData.highlighted_duration, 4.99) : 0) +
-                          (promotionData.is_urgent ? calculatePrice('urgent', promotionData.urgent_duration, 5.99) : 0) +
-                          (promotionData.is_home_gallery ? calculatePrice('home_gallery', promotionData.home_gallery_duration, 14.99) : 0)
-                        );
-                        const tax = Math.round(subtotal * 0.13 * 100) / 100;
-                        const total = Math.round((subtotal + tax) * 100) / 100;
-                        return (
-                          <div className="border-t border-slate-200 pt-3 mt-3 space-y-2">
-                            <div className="flex justify-between items-center text-sm">
-                              <span className="text-slate-600 font-medium">Subtotal</span>
-                              <span className="font-bold text-slate-800">${subtotal.toFixed(2)}</span>
-                            </div>
-                            <div className="flex justify-between items-center text-sm">
-                              <span className="text-slate-600 font-medium">Tax (13%)</span>
-                              <span className="font-bold text-slate-800">${tax.toFixed(2)}</span>
-                            </div>
-                            <div className="flex justify-between items-center text-sm pt-2 border-t border-slate-200">
-                              <span className="text-sm font-black text-slate-900">Total</span>
-                              <span className="text-lg font-black text-blue-600">${total.toFixed(2)}</span>
-                            </div>
-                          </div>
-                        );
-                      })()}
-                    </div>
-                  </div>
-                )}
               </section>
 
               <div className="pt-10 border-t border-slate-100 flex justify-between items-center">
@@ -2515,8 +2224,8 @@ const PostAd: React.FC = () => {
                       isPublishing ||
                       (templateConfig.photosRequired !== false && imageFiles[0] === null && imagePreviews[0] === null)
                     }
-                    onClick={handlePublish}
-                    className="bg-primary hover:bg-primary-hover text-white px-10 py-4 rounded-xl font-bold transition-all shadow-lg shadow-primary/20 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={handleInitiatePublish}
+                    className="bg-primary hover:bg-primary-hover text-white px-10 py-4 rounded-xl font-bold transition-all shadow-lg shadow-primary/20 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                   >
                     {isPublishing ? (isEditMode ? "Saving..." : "Publishing...") : (isEditMode ? "Save Changes" : "Publish Ad")}{" "}
                     <span className="material-icons">check</span>
@@ -2567,6 +2276,16 @@ const PostAd: React.FC = () => {
           </div>
         </aside>
       </div>
+
+      {/* HitAds Pricing Cards Popup Modal */}
+      <PricingPlansModal
+        isOpen={isPlanModalOpen}
+        onClose={() => setIsPlanModalOpen(false)}
+        onSelectPlan={handleSelectPlanFromModal}
+        isSubmitting={isPublishing}
+      />
+
+      {/* Moneris Payment Modal */}
       {isPayModalOpen && (
         <MonerisPayModal
           ticket={payTicket}

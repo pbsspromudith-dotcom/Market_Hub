@@ -99,6 +99,16 @@ export async function POST(req: Request) {
           maxDurationDays = days;
         }
 
+        if (type === 'plan_boost') {
+          promoUpdate.is_top_ad = true;
+          if (maxDurationDays < 30) maxDurationDays = 30;
+        }
+        if (type === 'plan_premium') {
+          promoUpdate.is_top_ad = true;
+          promoUpdate.is_home_gallery = true;
+          promoUpdate.is_highlighted = true;
+          if (maxDurationDays < 30) maxDurationDays = 30;
+        }
         if (type === 'top_ad') promoUpdate.is_top_ad = true;
         if (type === 'highlighted') promoUpdate.is_highlighted = true;
         if (type === 'urgent') promoUpdate.is_urgent = true;
