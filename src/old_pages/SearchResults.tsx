@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { formatPrice } from '../constants';
-import { calculateDistance, extractCityName, getExpandedLocationKeywords } from '../utils';
+import { calculateDistance, extractCityName, getExpandedLocationKeywords, isLocationMatch } from '../utils';
 import LocationAutocomplete from '@/components/LocationAutocomplete';
 
 const CATEGORY_SYNONYMS: Record<string, string[]> = {
@@ -203,25 +203,11 @@ const SearchResults: React.FC = () => {
       if (!match) return false;
     }
     
-    // location filter — strictly filter by city name
+    // location filter — strictly filter by area/city
     const activeLoc = locationSearch || queryParams.get('loc') || (typeof window !== 'undefined' ? localStorage.getItem('user_location') : '') || '';
     if (distance !== 'Nationwide' && activeLoc && activeLoc.trim() && activeLoc.toLowerCase() !== 'all' && activeLoc.toLowerCase() !== 'canada') {
-      const userLat = parseFloat(localStorage.getItem("user_lat") || "");
-      const userLon = parseFloat(localStorage.getItem("user_lon") || "");
-      
-      if (!isNaN(userLat) && !isNaN(userLon) && item.latitude && item.longitude) {
-        const dist = calculateDistance(userLat, userLon, parseFloat(item.latitude), parseFloat(item.longitude));
-        const maxDistMatch = distance.match(/\d+/);
-        const maxDist = maxDistMatch ? parseInt(maxDistMatch[0], 10) : 50;
-        if (dist > maxDist) return false;
-      } else {
-        const keywords = getExpandedLocationKeywords(activeLoc);
-        if (keywords.length > 0 && item.location) {
-          const itemLocLower = item.location.toLowerCase();
-          const match = keywords.some(kw => itemLocLower.includes(kw.toLowerCase()));
-          if (!match) return false;
-        }
-      }
+      const match = isLocationMatch(item.location, activeLoc);
+      if (!match) return false;
     }
     
     // minPrice

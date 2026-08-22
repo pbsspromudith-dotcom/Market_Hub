@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { extractCityName, getExpandedLocationKeywords } from '@/utils';
+import { extractCityName, getExpandedLocationKeywords, isLocationMatch } from '@/utils';
 
 export async function GET(req: Request) {
   try {
@@ -26,18 +26,42 @@ export async function GET(req: Request) {
 
     // Filter by location / city (including expanded sub-cities) if provided
     if (!showAll && !userId && locationParam) {
-      const keywords = getExpandedLocationKeywords(locationParam);
-      if (keywords.length === 1) {
-        query = query.ilike('location', `%${keywords[0]}%`);
-      } else if (keywords.length > 1) {
-        const conditions = keywords.map(kw => `location.ilike.%${kw}%`).join(',');
-        query = query.or(conditions);
+      const cleanLoc = locationParam.trim();
+      if (
+        cleanLoc && 
+        cleanLoc.toLowerCase() !== 'all' && 
+        cleanLoc.toLowerCase() !== 'canada' && 
+        cleanLoc.toLowerCase() !== 'nationwide' && 
+        cleanLoc.toLowerCase() !== 'canada wide'
+      ) {
+        const keywords = getExpandedLocationKeywords(cleanLoc);
+        if (keywords.length === 1) {
+          query = query.ilike('location', `%${keywords[0]}%`);
+        } else if (keywords.length > 1) {
+          const conditions = keywords.map(kw => `location.ilike.%${kw}%`).join(',');
+          query = query.or(conditions);
+        }
       }
     }
 
     const { data: listingsList, error } = await query;
 
     if (error) throw error;
+
+    // Strict in-memory verification filter to ensure precise location matching
+    let validListings = listingsList || [];
+    if (!showAll && !userId && locationParam) {
+      const cleanLoc = locationParam.trim();
+      if (
+        cleanLoc && 
+        cleanLoc.toLowerCase() !== 'all' && 
+        cleanLoc.toLowerCase() !== 'canada' && 
+        cleanLoc.toLowerCase() !== 'nationwide' && 
+        cleanLoc.toLowerCase() !== 'canada wide'
+      ) {
+        validListings = validListings.filter(row => isLocationMatch(row.location, cleanLoc));
+      }
+    }
 
     const fixImagePath = (path: string | null) => {
       if (!path) return path;
@@ -50,7 +74,7 @@ export async function GET(req: Request) {
       return path;
     };
 
-    const mappedListings = listingsList.map(row => {
+    const mappedListings = validListings.map(row => {
       let image = row.image;
       let allImages: string[] = row.image ? [row.image] : [];
 

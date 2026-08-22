@@ -81,49 +81,91 @@ export const RAW_PROVINCE_DATA: Record<string, { province: string; provinceCode:
         name: 'Calgary / Greater Calgary',
         lat: '51.0447',
         lon: '-114.0719',
-        locations: [ 'Calgary', 'Downtown Calgary', 'NW Calgary', 'NE Calgary', 'SW Calgary', 'SE Calgary', 'Airdrie', 'Cochrane', 'Chestermere', 'Okotoks', 'Strathmore', 'High River' ],
+        locations: [ 'Calgary', 'Downtown Calgary', 'NW Calgary', 'NE Calgary', 'SW Calgary', 'SE Calgary', 'Beltline', 'Kensington', 'Inglewood', 'Bridgeland' ],
       },
       'airdrie': {
         name: 'Airdrie / Rocky View',
         lat: '51.2917',
         lon: '-114.0144',
-        locations: [ 'Airdrie', 'Balzac', 'Crossfield', 'Cochrane', 'Irricana', 'Beiseker', 'Rocky View County' ],
+        locations: [ 'Airdrie', 'Balzac', 'Crossfield', 'Irricana', 'Beiseker', 'Rocky View County' ],
       },
       'okotoks': {
         name: 'Okotoks / Foothills',
         lat: '50.7255',
         lon: '-113.9749',
-        locations: [ 'Okotoks', 'High River', 'Black Diamond', 'Turner Valley', 'Diamond Valley', 'Longview', 'Aldersyde' ],
+        locations: [ 'Okotoks', 'Black Diamond', 'Turner Valley', 'Diamond Valley', 'Longview', 'Aldersyde' ],
+      },
+      'cochrane': {
+        name: 'Cochrane / Rocky View',
+        lat: '51.1884',
+        lon: '-114.4719',
+        locations: [ 'Cochrane', 'Bragg Creek', 'Ghost Lake', 'Morley' ],
+      },
+      'chestermere': {
+        name: 'Chestermere / Rocky View',
+        lat: '51.0500',
+        lon: '-113.8222',
+        locations: [ 'Chestermere', 'Langdon', 'Indus', 'Conrich' ],
+      },
+      'high-river': {
+        name: 'High River / Foothills',
+        lat: '50.5817',
+        lon: '-113.8744',
+        locations: [ 'High River', 'Cayley', 'Nanton' ],
+      },
+      'strathmore': {
+        name: 'Strathmore / Wheatland',
+        lat: '51.0378',
+        lon: '-113.4008',
+        locations: [ 'Strathmore', 'Carseland', 'Standard', 'Husar' ],
       },
       'edmonton': {
         name: 'Edmonton / Greater Edmonton',
         lat: '53.5461',
         lon: '-113.4938',
-        locations: [ 'Edmonton', 'Downtown Edmonton', 'Strathcona', 'West Edmonton', 'North Edmonton', 'South Edmonton', 'Sherwood Park', 'St. Albert', 'Leduc', 'Spruce Grove', 'Stony Plain', 'Fort Saskatchewan', 'Beaumont' ],
+        locations: [ 'Edmonton', 'Downtown Edmonton', 'Strathcona', 'West Edmonton', 'North Edmonton', 'South Edmonton', 'Old Strathcona', 'Oliver', 'Garneau', 'Mill Woods', 'Castledowns' ],
       },
       'sherwood-park': {
         name: 'Sherwood Park / Strathcona County',
         lat: '53.5255',
         lon: '-113.3155',
-        locations: [ 'Sherwood Park', 'Ardrossan', 'Fort Saskatchewan', 'Edmonton', 'Strathcona County' ],
+        locations: [ 'Sherwood Park', 'Ardrossan', 'Strathcona County' ],
       },
       'st-albert': {
-        name: 'St. Albert / North Edmonton',
+        name: 'St. Albert / Sturgeon County',
         lat: '53.6305',
         lon: '-113.6256',
-        locations: [ 'St. Albert', 'Morinville', 'Legal', 'Bon Accord', 'Gibbons', 'Redwater', 'Edmonton' ],
+        locations: [ 'St. Albert', 'Morinville', 'Legal', 'Bon Accord', 'Gibbons', 'Redwater' ],
+      },
+      'fort-saskatchewan': {
+        name: 'Fort Saskatchewan / Strathcona',
+        lat: '53.7128',
+        lon: '-113.2133',
+        locations: [ 'Fort Saskatchewan', 'Bruderheim', 'Lamont' ],
+      },
+      'beaumont': {
+        name: 'Beaumont / Leduc County',
+        lat: '53.3564',
+        lon: '-113.4150',
+        locations: [ 'Beaumont', 'New Sarepta' ],
       },
       'leduc': {
-        name: 'Leduc / Beaumont',
+        name: 'Leduc / Leduc County',
         lat: '53.2594',
         lon: '-113.5492',
-        locations: [ 'Leduc', 'Beaumont', 'Nisku', 'Devon', 'Calmar', 'Thorsby', 'Millet', 'Edmonton International Airport' ],
+        locations: [ 'Leduc', 'Nisku', 'Devon', 'Calmar', 'Thorsby', 'Millet', 'Edmonton International Airport' ],
       },
       'spruce-grove': {
         name: 'Spruce Grove / Parkland',
         lat: '53.5450',
         lon: '-113.9009',
-        locations: [ 'Spruce Grove', 'Stony Plain', 'Parkland County', 'Wabamun', 'Devon' ],
+        locations: [ 'Spruce Grove', 'Parkland County', 'Wabamun' ],
+      },
+      'stony-plain': {
+        name: 'Stony Plain / Parkland',
+        lat: '53.5303',
+        lon: '-114.0042',
+        locations: [ 'Stony Plain', 'Spring Lake', 'Parkland County' ],
       },
       'red-deer': {
         name: 'Red Deer / Central Alberta',
@@ -243,49 +285,97 @@ export const RAW_PROVINCE_DATA: Record<string, { province: string; provinceCode:
         name: 'Vancouver / Metro Vancouver',
         lat: '49.2827',
         lon: '-123.1207',
-        locations: [ 'Vancouver', 'Downtown Vancouver', 'West End', 'Kitsilano', 'East Vancouver', 'South Vancouver', 'Burnaby', 'Richmond', 'New Westminster', 'North Vancouver', 'West Vancouver' ],
+        locations: [ 'Vancouver', 'Downtown Vancouver', 'West End', 'Kitsilano', 'East Vancouver', 'South Vancouver', 'Gastown', 'Yaletown', 'Mount Pleasant', 'Point Grey', 'Fairview', 'Kerrisdale' ],
       },
       'surrey': {
-        name: 'Surrey / Langley',
+        name: 'Surrey / South Fraser',
         lat: '49.1913',
         lon: '-122.8490',
-        locations: [ 'Surrey', 'City Centre', 'Guildford', 'Fleetwood', 'Newton', 'Cloverdale', 'South Surrey', 'White Rock', 'Langley City', 'Langley Township' ],
+        locations: [ 'Surrey', 'City Centre', 'Guildford', 'Fleetwood', 'Newton', 'Cloverdale', 'South Surrey', 'Whalley' ],
+      },
+      'white-rock': {
+        name: 'White Rock / South Fraser',
+        lat: '49.0253',
+        lon: '-122.8028',
+        locations: [ 'White Rock', 'Ocean Park', 'Crescent Beach' ],
+      },
+      'langley': {
+        name: 'Langley / Fraser Valley',
+        lat: '49.1044',
+        lon: '-122.6587',
+        locations: [ 'Langley', 'Langley City', 'Langley Township', 'Fort Langley', 'Walnut Grove', 'Aldergrove', 'Willoughby', 'Brookswood', 'Murrayville' ],
       },
       'burnaby': {
-        name: 'Burnaby / New Westminster',
+        name: 'Burnaby / Metro Vancouver',
         lat: '49.2488',
         lon: '-122.9805',
-        locations: [ 'Burnaby', 'Metrotown', 'Brentwood', 'Edmonds', 'Lougheed', 'New Westminster', 'Coquitlam', 'Vancouver' ],
+        locations: [ 'Burnaby', 'Metrotown', 'Brentwood', 'Edmonds', 'Lougheed', 'Capitol Hill', 'Deer Lake' ],
       },
-      'tri-cities': {
-        name: 'Tri-Cities',
+      'new-westminster': {
+        name: 'New Westminster / Metro Vancouver',
+        lat: '49.2057',
+        lon: '-122.9110',
+        locations: [ 'New Westminster', 'Queensborough', 'Uptown', 'Downtown New Westminster', 'Sapperton', 'West End New West' ],
+      },
+      'coquitlam': {
+        name: 'Coquitlam / Tri-Cities',
         lat: '49.2838',
         lon: '-122.7932',
-        locations: [ 'Coquitlam', 'Port Coquitlam', 'Port Moody', 'Anmore', 'Belcarra', 'Burnaby', 'New Westminster' ],
+        locations: [ 'Coquitlam', 'Westwood Plateau', 'Burke Mountain', 'Austin Heights', 'Maillardville' ],
       },
-      'north-shore': {
-        name: 'North Shore',
+      'port-coquitlam': {
+        name: 'Port Coquitlam / Tri-Cities',
+        lat: '49.2628',
+        lon: '-122.7811',
+        locations: [ 'Port Coquitlam', 'Citadel', 'Mary Hill', 'Oxford Heights' ],
+      },
+      'port-moody': {
+        name: 'Port Moody / Tri-Cities',
+        lat: '49.2831',
+        lon: '-122.8317',
+        locations: [ 'Port Moody', 'Newport Village', 'Klahanie', 'Heritage Mountain', 'Belcarra', 'Anmore' ],
+      },
+      'north-vancouver': {
+        name: 'North Vancouver / North Shore',
         lat: '49.3200',
         lon: '-123.0724',
-        locations: [ 'North Vancouver', 'West Vancouver', 'Deep Cove', 'Lynn Valley', 'Lions Bay', 'Bowen Island' ],
+        locations: [ 'North Vancouver', 'Deep Cove', 'Lynn Valley', 'Lonsdale', 'Capilano', 'Seymour' ],
+      },
+      'west-vancouver': {
+        name: 'West Vancouver / North Shore',
+        lat: '49.3275',
+        lon: '-123.1603',
+        locations: [ 'West Vancouver', 'Dundarave', 'Ambleside', 'Horseshoe Bay', 'British Properties', 'Lions Bay', 'Bowen Island' ],
       },
       'richmond': {
-        name: 'Richmond / Delta',
+        name: 'Richmond / Metro Vancouver',
         lat: '49.1666',
         lon: '-123.1336',
-        locations: [ 'Richmond', 'Steveston', 'Delta', 'Ladner', 'Tsawwassen', 'Vancouver' ],
+        locations: [ 'Richmond', 'Steveston', 'City Centre', 'Thompson', 'Westcambie', 'Broadmoor', 'Terra Nova' ],
+      },
+      'delta': {
+        name: 'Delta / Metro Vancouver',
+        lat: '49.0847',
+        lon: '-123.0587',
+        locations: [ 'Delta', 'Ladner', 'Tsawwassen', 'North Delta', 'Sunshine Hills' ],
       },
       'maple-ridge': {
         name: 'Maple Ridge / Pitt Meadows',
         lat: '49.2193',
         lon: '-122.5984',
-        locations: [ 'Maple Ridge', 'Pitt Meadows', 'Port Coquitlam', 'Mission' ],
+        locations: [ 'Maple Ridge', 'Pitt Meadows', 'Hammond', 'Silver Valley', 'Albion', 'Webster\'s Corners' ],
       },
       'abbotsford': {
         name: 'Abbotsford / Fraser Valley',
         lat: '49.0504',
         lon: '-122.3045',
-        locations: [ 'Abbotsford', 'Mission', 'Aldergrove', 'Chilliwack', 'Yarrow', 'Agassiz', 'Harrison Hot Springs' ],
+        locations: [ 'Abbotsford', 'Clearbrook', 'Matsqui', 'Clayburn', 'Sumas Prairie' ],
+      },
+      'mission': {
+        name: 'Mission / Fraser Valley',
+        lat: '49.1337',
+        lon: '-122.3094',
+        locations: [ 'Mission', 'Hatzic', 'Silverdale', 'Stave Falls', 'Steelhead' ],
       },
       'chilliwack': {
         name: 'Chilliwack / Fraser Valley',
@@ -861,25 +951,133 @@ export const RAW_PROVINCE_DATA: Record<string, { province: string; provinceCode:
         name: 'Toronto / GTA',
         lat: '43.6532',
         lon: '-79.3832',
-        locations: [ 'Toronto', 'Downtown Toronto', 'North York', 'Scarborough', 'Etobicoke', 'York', 'East York', 'Mississauga', 'Brampton', 'Vaughan', 'Markham', 'Richmond Hill', 'Pickering', 'Ajax', 'Whitby', 'Oshawa', 'Oakville', 'Milton', 'Burlington' ],
+        locations: [ 'Toronto', 'Downtown Toronto', 'North York', 'Scarborough', 'Etobicoke', 'York', 'East York', 'Old Toronto', 'Midtown Toronto', 'East End Toronto', 'West End Toronto' ],
       },
       'mississauga': {
         name: 'Mississauga / Peel',
         lat: '43.5890',
         lon: '-79.6441',
-        locations: [ 'Mississauga', 'Port Credit', 'Streetsville', 'Meadowvale', 'Cooksville', 'Malton', 'Brampton', 'Caledon', 'Bolton' ],
+        locations: [ 'Mississauga', 'Port Credit', 'Streetsville', 'Meadowvale', 'Cooksville', 'Malton', 'Clarkson', 'Erindale', 'Lorne Park', 'Erin Mills', 'Churchill Meadows', 'Mineola' ],
       },
       'brampton': {
-        name: 'Brampton / Caledon',
+        name: 'Brampton / Peel',
         lat: '43.7315',
         lon: '-79.7624',
-        locations: [ 'Brampton', 'Bramalea', 'Mount Pleasant', 'Springdale', 'Heart Lake', 'Caledon', 'Bolton', 'Caledon East' ],
+        locations: [ 'Brampton', 'Bramalea', 'Mount Pleasant', 'Springdale', 'Heart Lake', 'Castlemore', "Fletcher's Meadow", 'Goreway' ],
+      },
+      'caledon': {
+        name: 'Caledon / Peel',
+        lat: '43.8687',
+        lon: '-79.9996',
+        locations: [ 'Caledon', 'Bolton', 'Caledon East', 'Inglewood', 'Belfountain', 'Alton', 'Cheltenham' ],
+      },
+      'oakville': {
+        name: 'Oakville / Halton',
+        lat: '43.4675',
+        lon: '-79.6877',
+        locations: [ 'Oakville', 'Bronte', 'Kerr Village', 'Glen Abbey', 'River Oaks', 'Falgarwood', 'West Oak Trails' ],
+      },
+      'burlington': {
+        name: 'Burlington / Halton',
+        lat: '43.3255',
+        lon: '-79.7990',
+        locations: [ 'Burlington', 'Aldershot', 'Tyandaga', 'Millcroft', 'Roseland', 'Alton Village' ],
+      },
+      'milton': {
+        name: 'Milton / Halton',
+        lat: '43.5183',
+        lon: '-79.8774',
+        locations: [ 'Milton', 'Old Milton', 'Campbellville', 'Brookville', 'Moffat' ],
+      },
+      'halton-hills': {
+        name: 'Halton Hills / Halton',
+        lat: '43.6300',
+        lon: '-79.9500',
+        locations: [ 'Halton Hills', 'Georgetown', 'Acton', 'Glen Williams', 'Norval' ],
+      },
+      'vaughan': {
+        name: 'Vaughan / York Region',
+        lat: '43.8372',
+        lon: '-79.5083',
+        locations: [ 'Vaughan', 'Woodbridge', 'Maple', 'Concord', 'Kleinburg', 'Thornhill' ],
+      },
+      'markham': {
+        name: 'Markham / York Region',
+        lat: '43.8561',
+        lon: '-79.3370',
+        locations: [ 'Markham', 'Unionville', 'Milliken', 'Cornell', 'Box Grove', 'Wismer' ],
+      },
+      'richmond-hill': {
+        name: 'Richmond Hill / York Region',
+        lat: '43.8828',
+        lon: '-79.4403',
+        locations: [ 'Richmond Hill', 'Oak Ridges', 'Jefferson', 'Langstaff' ],
+      },
+      'newmarket': {
+        name: 'Newmarket / York Region',
+        lat: '44.0592',
+        lon: '-79.4613',
+        locations: [ 'Newmarket', 'Glenway', 'Stonehaven', 'Armitage' ],
+      },
+      'aurora': {
+        name: 'Aurora / York Region',
+        lat: '44.0001',
+        lon: '-79.4663',
+        locations: [ 'Aurora', 'Aurora Grove', 'Aurora Highlands' ],
+      },
+      'king': {
+        name: 'King / York Region',
+        lat: '43.9300',
+        lon: '-79.5500',
+        locations: [ 'King City', 'Nobleton', 'Schomberg', 'Pottageville' ],
+      },
+      'whitchurch-stouffville': {
+        name: 'Whitchurch-Stouffville / York Region',
+        lat: '43.9700',
+        lon: '-79.2500',
+        locations: [ 'Stouffville', 'Whitchurch-Stouffville', 'Ballantrae', 'Gormley' ],
+      },
+      'georgina': {
+        name: 'Georgina / York Region',
+        lat: '44.3000',
+        lon: '-79.4300',
+        locations: [ 'Georgina', 'Keswick', 'Sutton', 'Jackson\'s Point', 'Pefferlaw' ],
+      },
+      'pickering': {
+        name: 'Pickering / Durham Region',
+        lat: '43.8384',
+        lon: '-79.0868',
+        locations: [ 'Pickering', 'Rouge Hill', 'Liverpool', 'Dunbarton', 'Amberlea', 'Bay Ridges' ],
+      },
+      'ajax': {
+        name: 'Ajax / Durham Region',
+        lat: '43.8509',
+        lon: '-79.0204',
+        locations: [ 'Ajax', 'Pickering Village', 'Southwood', 'Discovery Bay' ],
+      },
+      'whitby': {
+        name: 'Whitby / Durham Region',
+        lat: '43.8975',
+        lon: '-78.9429',
+        locations: [ 'Whitby', 'Brooklin', 'Port Whitby', 'Taunton' ],
+      },
+      'oshawa': {
+        name: 'Oshawa / Durham Region',
+        lat: '43.8971',
+        lon: '-78.8658',
+        locations: [ 'Oshawa', 'Downtown Oshawa', 'Kedron', 'Windfields', 'Samac', 'Lakeview' ],
+      },
+      'clarington': {
+        name: 'Clarington / Durham Region',
+        lat: '43.9100',
+        lon: '-78.6800',
+        locations: [ 'Bowmanville', 'Courtice', 'Newcastle', 'Orono' ],
       },
       'hamilton': {
-        name: 'Hamilton / Halton',
+        name: 'Hamilton / Greater Hamilton',
         lat: '43.2557',
         lon: '-79.8711',
-        locations: [ 'Hamilton', 'Downtown Hamilton', 'Ancaster', 'Dundas', 'Stoney Creek', 'Waterdown', 'Burlington', 'Oakville', 'Milton', 'Grimsby' ],
+        locations: [ 'Hamilton', 'Downtown Hamilton', 'Ancaster', 'Dundas', 'Stoney Creek', 'Waterdown', 'Mount Hope', 'Binbrook', 'Flamborough' ],
       },
       'niagara': {
         name: 'Niagara Region',
@@ -891,7 +1089,7 @@ export const RAW_PROVINCE_DATA: Record<string, { province: string; provinceCode:
         name: 'Ottawa / Eastern Ontario',
         lat: '45.4215',
         lon: '-75.6972',
-        locations: [ 'Ottawa', 'Downtown Ottawa', 'Kanata', 'Nepean', 'Orleans', 'Barrhaven', 'Gloucester', 'Stittsville', 'Rockland', 'Casselman', 'Embrun', 'Carleton Place', 'Arnprior' ],
+        locations: [ 'Ottawa', 'Downtown Ottawa', 'Kanata', 'Nepean', 'Orleans', 'Barrhaven', 'Gloucester', 'Stittsville', 'ByWard Market', 'Centretown', 'The Glebe', 'Westboro', 'Rockland', 'Casselman', 'Embrun', 'Carleton Place', 'Arnprior' ],
       },
       'kingston': {
         name: 'Kingston / Eastern Ontario',
@@ -1644,18 +1842,53 @@ export function searchCanadianLocations(query: string, limit: number = 10): Loca
 }
 
 /**
+ * Extracts clean city name from a location string (e.g. "Toronto, ON" -> "Toronto").
+ */
+export function extractCityName(locationStr: string): string {
+  if (!locationStr) return '';
+  const trimmed = locationStr.trim();
+  if (
+    !trimmed ||
+    trimmed.toLowerCase() === 'all' ||
+    trimmed.toLowerCase() === 'canada' ||
+    trimmed.toLowerCase() === 'nationwide' ||
+    trimmed.toLowerCase() === 'canada wide'
+  ) {
+    return '';
+  }
+
+  const parts = trimmed.split(',').map((p) => p.trim());
+  if (parts.length > 1) {
+    // If first part contains house/street numbers e.g. "123 Yonge St, Toronto, ON", city is second part
+    if (/\d/.test(parts[0]) && parts[1]) {
+      return parts[1].replace(/^city of\s+/i, '').trim();
+    }
+    return parts[0].replace(/^city of\s+/i, '').trim();
+  }
+  return trimmed.replace(/^city of\s+/i, '').trim();
+}
+
+/**
  * Returns all expanded keyword variations for a given location or city.
- * E.g., searching "Calgary" returns ['Calgary', 'Airdrie', 'Cochrane', 'Okotoks', ...],
- * and searching "Airdrie" returns ['Airdrie', 'Calgary', 'Balzac', 'Crossfield', ...].
+ * E.g., searching "Toronto" returns ['Toronto', 'Downtown Toronto', 'North York', 'Scarborough', ...],
+ * and searching "Scarborough" returns ['Scarborough', 'Toronto', ...].
  */
 export function getExpandedKeywordsForCity(input: string): string[] {
   if (!input) return [];
   const clean = input.trim();
-  if (!clean || clean.toLowerCase() === 'all' || clean.toLowerCase() === 'canada') return [];
+  if (
+    !clean ||
+    clean.toLowerCase() === 'all' ||
+    clean.toLowerCase() === 'canada' ||
+    clean.toLowerCase() === 'nationwide' ||
+    clean.toLowerCase() === 'canada wide'
+  ) {
+    return [];
+  }
 
   // Extract base city
-  const baseCity = clean.split(',')[0].replace(/^city of\s+/i, '').trim();
-  const baseNorm = normalizeString(baseCity);
+  const baseCity = extractCityName(clean);
+  const baseNorm = normalizeString(baseCity || clean);
 
   if (CANADA_FULL_METRO_MAPPINGS[baseNorm]) {
     return CANADA_FULL_METRO_MAPPINGS[baseNorm];
@@ -1669,5 +1902,78 @@ export function getExpandedKeywordsForCity(input: string): string[] {
     }
   }
 
-  return [baseCity];
+  return [baseCity || clean];
 }
+
+/**
+ * Determines whether an ad's location matches the selected location filter.
+ * - When targetLocation is empty / 'all' / 'canada' / 'nationwide': matches any ad.
+ * - When targetLocation is a specific city/area (e.g. "Toronto, ON"):
+ *   Only returns true if the ad's location is in Toronto or its sub-districts (e.g. "North York", "Downtown Toronto").
+ *   Returns false for other cities (e.g. "Brampton, ON", "Oakville, ON", "Mississauga, ON").
+ */
+export function isLocationMatch(
+  adLocation: string | null | undefined,
+  targetLocation: string | null | undefined
+): boolean {
+  if (!targetLocation) return true;
+  const targetClean = targetLocation.trim();
+  if (
+    !targetClean ||
+    targetClean.toLowerCase() === 'all' ||
+    targetClean.toLowerCase() === 'canada' ||
+    targetClean.toLowerCase() === 'nationwide' ||
+    targetClean.toLowerCase() === 'canada wide'
+  ) {
+    return true;
+  }
+
+  if (!adLocation) return false;
+  const adClean = adLocation.trim();
+  if (!adClean) return false;
+
+  const targetCity = extractCityName(targetClean);
+  const adCity = extractCityName(adClean);
+
+  const targetCityNorm = normalizeString(targetCity || targetClean);
+  const adCityNorm = normalizeString(adCity || adClean);
+  const adFullNorm = normalizeString(adClean);
+  const targetFullNorm = normalizeString(targetClean);
+
+  // 1. Direct city match or exact string match
+  if (targetCityNorm && adCityNorm && targetCityNorm === adCityNorm) {
+    return true;
+  }
+  if (targetFullNorm === adFullNorm) {
+    return true;
+  }
+
+  // 2. Check expanded keywords of target location
+  const targetKeywords = getExpandedKeywordsForCity(targetClean);
+  if (targetKeywords.length > 0) {
+    const isMatched = targetKeywords.some((kw) => {
+      const kwNorm = normalizeString(kw);
+      if (!kwNorm) return false;
+      if (adCityNorm === kwNorm) return true;
+      const regex = new RegExp(`(^|\\s)${kwNorm}(\\s|$)`, 'i');
+      return regex.test(adFullNorm);
+    });
+    if (isMatched) return true;
+  }
+
+  // 3. Check expanded keywords of ad location (e.g. ad is "Scarborough", target is "Toronto")
+  const adKeywords = getExpandedKeywordsForCity(adClean);
+  if (adKeywords.length > 0) {
+    const isMatched = adKeywords.some((kw) => {
+      const kwNorm = normalizeString(kw);
+      if (!kwNorm) return false;
+      if (targetCityNorm === kwNorm) return true;
+      const regex = new RegExp(`(^|\\s)${kwNorm}(\\s|$)`, 'i');
+      return regex.test(targetFullNorm);
+    });
+    if (isMatched) return true;
+  }
+
+  return false;
+}
+

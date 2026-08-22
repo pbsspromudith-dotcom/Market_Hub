@@ -1,4 +1,10 @@
-import { CANADA_FULL_METRO_MAPPINGS, getExpandedKeywordsForCity, normalizeString } from './lib/canadianLocations';
+import { 
+  CANADA_FULL_METRO_MAPPINGS, 
+  getExpandedKeywordsForCity, 
+  normalizeString, 
+  extractCityName as extractCityNameLib, 
+  isLocationMatch as isLocationMatchLib 
+} from './lib/canadianLocations';
 
 export const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
   const R = 3958.8; // Radius of the Earth in miles
@@ -14,19 +20,14 @@ export const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2
 };
 
 export const extractCityName = (locationStr: string): string => {
-  if (!locationStr) return '';
-  const trimmed = locationStr.trim();
-  if (!trimmed || trimmed.toLowerCase() === 'all' || trimmed.toLowerCase() === 'canada') return '';
-  
-  const parts = trimmed.split(',').map(p => p.trim());
-  if (parts.length > 1) {
-    // If first part contains house/street numbers e.g. "123 Yonge St, Toronto, ON", city is second part
-    if (/\d/.test(parts[0]) && parts[1]) {
-      return parts[1].replace(/^city of\s+/i, '');
-    }
-    return parts[0].replace(/^city of\s+/i, '');
-  }
-  return trimmed.replace(/^city of\s+/i, '');
+  return extractCityNameLib(locationStr);
+};
+
+export const isLocationMatch = (
+  adLocation: string | null | undefined, 
+  targetLocation: string | null | undefined
+): boolean => {
+  return isLocationMatchLib(adLocation, targetLocation);
 };
 
 // Comprehensive Canadian major cities and their sub-cities / boroughs / regions across all 10 provinces
@@ -36,3 +37,4 @@ export const getExpandedLocationKeywords = (locationStr: string): string[] => {
   if (!locationStr) return [];
   return getExpandedKeywordsForCity(locationStr);
 };
+

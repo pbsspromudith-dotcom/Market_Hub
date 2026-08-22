@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from 'next/link';
 import { formatPrice } from "../constants";
-import { calculateDistance, getExpandedLocationKeywords, extractCityName } from "../utils";
+import { calculateDistance, getExpandedLocationKeywords, extractCityName, isLocationMatch } from "../utils";
 import LocationAutocomplete from "@/components/LocationAutocomplete";
 import { 
   Home as HomeIcon, 
@@ -451,7 +451,12 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn, initialCategories = [], initial
 
         {/* Home Page Featured Showcase Gallery */}
         {(() => {
-          const homeGalleryItems = listings.filter((item: any) => item.is_home_gallery || item.is_home_page);
+          const activeLoc = locationSearch || (typeof window !== "undefined" ? localStorage.getItem("user_location") : "") || "";
+          const homeGalleryItems = listings.filter((item: any) => {
+            const isShowcase = item.is_home_gallery || item.is_home_page;
+            if (!isShowcase) return false;
+            return isLocationMatch(item.location, activeLoc);
+          });
           if (homeGalleryItems.length === 0) return null;
 
           return (
@@ -541,34 +546,8 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn, initialCategories = [], initial
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
               {listings
                 .filter((item: any) => {
-                  const userLat = parseFloat(localStorage.getItem("user_lat") || "");
-                  const userLon = parseFloat(localStorage.getItem("user_lon") || "");
-                  
-                  if (!isNaN(userLat) && !isNaN(userLon) && item.latitude && item.longitude) {
-                    const dist = calculateDistance(userLat, userLon, parseFloat(item.latitude), parseFloat(item.longitude));
-                    return dist <= 50; // Show within 50 miles radius
-                  }
-                  
-                  // Fallback to text search if no coordinates
-                  if (locationSearch) {
-                    const itemLoc = (item.location || "").toLowerCase().trim();
-                    const userLoc = (locationSearch || "").toLowerCase().trim();
-                    if (!itemLoc) return true;
-
-                    const keywords = getExpandedLocationKeywords(locationSearch);
-                    if (keywords.length > 0) {
-                      const matchesKw = keywords.some(kw => itemLoc.includes(kw.toLowerCase()));
-                      if (matchesKw) return true;
-                    }
-
-                    const userCity = extractCityName(userLoc).toLowerCase();
-                    const itemCity = extractCityName(itemLoc).toLowerCase();
-
-                    return itemLoc.includes(userLoc) || 
-                           userLoc.includes(itemLoc) || 
-                           (userCity && itemCity && (userCity.includes(itemCity) || itemCity.includes(userCity)));
-                  }
-                  return true;
+                  const activeLoc = locationSearch || (typeof window !== "undefined" ? localStorage.getItem("user_location") : "") || "";
+                  return isLocationMatch(item.location, activeLoc);
                 })
                 .slice(0, homepageAdCount)
                 .map((item: any) => (
