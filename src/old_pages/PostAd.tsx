@@ -223,6 +223,113 @@ const PostAd: React.FC = () => {
   const [selectedPlan, setSelectedPlan] = useState<'free' | 'boost' | 'premium'>('free');
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
 
+  // Standalone promotional publishing modes (Homepage Ad, Top Ad, Urgent Ad, Highlighted Ad)
+  const [promotionData, setPromotionData] = useState({
+    is_top_ad: false,
+    is_highlighted: false,
+    is_urgent: false,
+    is_home_gallery: false,
+    top_ad_duration: 7,
+    highlighted_duration: 7,
+    urgent_duration: 7,
+    home_gallery_duration: 7,
+  });
+  const [promotionPricing, setPromotionPricing] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch('/api/promotions/pricing')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.data)) {
+          setPromotionPricing(data.data);
+          setPromotionData((prev) => {
+            const getValidDuration = (type: string, currentDuration: number) => {
+              const opts = data.data.filter((p: any) => p.promotion_type?.toLowerCase().replace(/\s+/g, '_') === type.toLowerCase().replace(/\s+/g, '_'));
+              if (opts.length > 0) {
+                const match = opts.find((p: any) => Number(p.duration_days) === Number(currentDuration));
+                if (match) return Number(match.duration_days);
+                return Number(opts[0].duration_days);
+              }
+              return currentDuration;
+            };
+
+            return {
+              ...prev,
+              top_ad_duration: getValidDuration('top_ad', prev.top_ad_duration),
+              highlighted_duration: getValidDuration('highlighted', prev.highlighted_duration),
+              urgent_duration: getValidDuration('urgent', prev.urgent_duration),
+              home_gallery_duration: getValidDuration('home_gallery', prev.home_gallery_duration),
+            };
+          });
+        }
+      })
+      .catch(console.error);
+  }, []);
+
+  const getPromotionOptions = (type: string, fallbackPrice: number) => {
+    const normType = type.toLowerCase().replace(/\s+/g, '_');
+    const opts = promotionPricing.filter(
+      (p: any) => p.promotion_type?.toLowerCase().replace(/\s+/g, '_') === normType
+    );
+    if (opts.length > 0) return opts;
+    return [{ duration_days: 7, price: fallbackPrice }];
+  };
+
+  const calculatePromoPrice = (type: string, duration: number, fallbackPrice: number) => {
+    const opts = getPromotionOptions(type, fallbackPrice);
+    const match = opts.find((p: any) => Number(p.duration_days) === Number(duration));
+    if (match) return Number(match.price);
+    return Number(opts[0]?.price || fallbackPrice);
+  };
+
+  const getAddonTotal = () => {
+    let subtotal = 0;
+    if (selectedPlan === 'free' && promotionData.is_top_ad) {
+      subtotal += calculatePromoPrice('top_ad', promotionData.top_ad_duration, 9.99);
+    }
+    if (selectedPlan !== 'premium' && promotionData.is_highlighted) {
+      subtotal += calculatePromoPrice('highlighted', promotionData.highlighted_duration, 4.99);
+    }
+    if (promotionData.is_urgent) {
+      subtotal += calculatePromoPrice('urgent', promotionData.urgent_duration, 5.99);
+    }
+    if (selectedPlan !== 'premium' && promotionData.is_home_gallery) {
+      subtotal += calculatePromoPrice('home_gallery', promotionData.home_gallery_duration, 14.99);
+    }
+    return subtotal;
+  };
+
+  const getPlanPrice = (plan: 'free' | 'boost' | 'premium') => {
+    if (plan === 'free') return 0;
+    if (plan === 'boost') {
+      const match = promotionPricing.find((p: any) => 
+        p.promotion_type?.toLowerCase() === 'plan_boost' || p.promotion_type?.toLowerCase() === 'boost'
+      );
+      return match ? Number(match.price) : 9.99;
+    }
+    if (plan === 'premium') {
+      const match = promotionPricing.find((p: any) => 
+        p.promotion_type?.toLowerCase() === 'plan_premium' || p.promotion_type?.toLowerCase() === 'premium'
+      );
+      return match ? Number(match.price) : 24.99;
+    }
+    return 0;
+  };
+
+  const getGrandTotal = () => {
+    let planPrice = getPlanPrice(selectedPlan);
+    let addonPrice = getAddonTotal();
+    let subtotal = planPrice + addonPrice;
+    let tax = Math.round(subtotal * 0.13 * 100) / 100;
+    return {
+      planPrice,
+      addonPrice,
+      subtotal,
+      tax,
+      total: Math.round((subtotal + tax) * 100) / 100,
+    };
+  };
+
   // Moneris Checkout payment state
   const [isPayModalOpen, setIsPayModalOpen] = useState(false);
   const [payTicket, setPayTicket] = useState("");
@@ -252,7 +359,9 @@ const PostAd: React.FC = () => {
   const [includeEmail, setIncludeEmail] = useState(false);
   const [includePhone, setIncludePhone] = useState(false);
   const [carMake, setCarMake] = useState("");
+  const [isCustomMake, setIsCustomMake] = useState(false);
   const [carModel, setCarModel] = useState("");
+  const [isCustomModel, setIsCustomModel] = useState(false);
   const [carYear, setCarYear] = useState("");
   const [carTransmission, setCarTransmission] = useState("");
   const [carFuelType, setCarFuelType] = useState("");
@@ -801,14 +910,11 @@ const PostAd: React.FC = () => {
         facebook_link: planToUse !== 'free' ? (facebookLink || null) : null,
       };
 
-      // Apply promotional plan properties
-      if (planToUse === 'boost') {
-        payload.is_top_ad = true;
-      } else if (planToUse === 'premium') {
-        payload.is_top_ad = true;
-        payload.is_home_gallery = true;
-        payload.is_highlighted = true;
-      }
+      // Apply promotional plan properties & publishing modes
+      payload.is_top_ad = planToUse === 'boost' || planToUse === 'premium' || promotionData.is_top_ad;
+      payload.is_home_gallery = planToUse === 'premium' || promotionData.is_home_gallery;
+      payload.is_highlighted = planToUse === 'premium' || promotionData.is_highlighted;
+      payload.is_urgent = promotionData.is_urgent;
 
       // Multi-city or single city (Multi-city only available on paid plans)
       if (!isEditMode && planToUse !== 'free' && postInMultipleCities && selectedCities.length > 0) {
@@ -856,8 +962,11 @@ const PostAd: React.FC = () => {
         const isPending = !!(data.needs_approval || data.status === 'pending_approval');
         setCreatedNeedsApproval(isPending);
 
-        // If paid plan (Boost or Premium), initiate Moneris payment preload
-        if (planToUse === 'boost' || planToUse === 'premium') {
+        // Check if there are any charges (Paid Plan or Individual Add-ons)
+        const grandTotal = getGrandTotal();
+        const hasCharges = grandTotal.subtotal > 0;
+
+        if (hasCharges) {
           setCreatedListingId(data.id);
 
           const preloadRes = await fetch("/api/payments/preload", {
@@ -866,7 +975,15 @@ const PostAd: React.FC = () => {
             body: JSON.stringify({
               listing_id: data.id,
               user_id: userId,
-              plan: planToUse,
+              plan: planToUse !== 'free' ? planToUse : undefined,
+              is_top_ad: promotionData.is_top_ad,
+              top_ad_duration: promotionData.top_ad_duration,
+              is_highlighted: promotionData.is_highlighted,
+              highlighted_duration: promotionData.highlighted_duration,
+              is_urgent: promotionData.is_urgent,
+              urgent_duration: promotionData.urgent_duration,
+              is_home_gallery: promotionData.is_home_gallery,
+              home_gallery_duration: promotionData.home_gallery_duration,
             }),
           });
           const preloadData = await preloadRes.json();
@@ -1116,8 +1233,8 @@ const PostAd: React.FC = () => {
 
       {/* Main Grid: Form Column + Sticky Sidebar Column */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 xl:gap-10 items-start">
-        {/* Left Form Area (8 cols on lg, 9 cols on xl) */}
-        <div className="lg:col-span-8 xl:col-span-9 space-y-6 sm:space-y-8">
+        {/* Left Form Area (Full width on Step 3, 8/9 cols on other steps) */}
+        <div className={step === 3 ? "lg:col-span-12 space-y-6 sm:space-y-8" : "lg:col-span-8 xl:col-span-9 space-y-6 sm:space-y-8"}>
           {/* ═══════════════════════════════════════════
               STEP 1: CATEGORY SELECTION
              ═══════════════════════════════════════════ */}
@@ -1342,32 +1459,160 @@ const PostAd: React.FC = () => {
 
                   {/* 2-Column Responsive Specifications Grid */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    {/* Make */}
+                    {/* Make / Brand (Backend Options) */}
                     <div>
-                      <label className="block text-[11px] font-black text-slate-600 uppercase tracking-widest mb-2">
-                        Make / Brand <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={carMake}
-                        onChange={(e) => setCarMake(e.target.value)}
-                        className="w-full h-12 px-4 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-bold text-slate-900 placeholder:text-slate-400 placeholder:font-normal transition-all shadow-2xs"
-                        placeholder="e.g. Toyota, Honda, Ford, BMW..."
-                      />
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="block text-[11px] font-black text-slate-600 uppercase tracking-widest">
+                          Make / Brand <span className="text-red-500">*</span>
+                        </label>
+                        {isCustomMake && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsCustomMake(false);
+                              setCarMake("");
+                            }}
+                            className="text-[10px] font-bold text-primary hover:underline cursor-pointer"
+                          >
+                            Select from List
+                          </button>
+                        )}
+                      </div>
+                      
+                      {(() => {
+                        const makesList = dbOptions
+                          .filter((o: any) => o.option_type === 'car_make')
+                          .sort((a: any, b: any) => a.option_value.localeCompare(b.option_value));
+
+                        if (isCustomMake) {
+                          return (
+                            <input
+                              type="text"
+                              value={carMake}
+                              onChange={(e) => setCarMake(e.target.value)}
+                              className="w-full h-12 px-4 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-bold text-slate-900 placeholder:text-slate-400 placeholder:font-normal transition-all shadow-2xs"
+                              placeholder="Enter custom make (e.g. Genesis, Rivian, Lucid...)"
+                              autoFocus
+                            />
+                          );
+                        }
+
+                        const isMakeInList = makesList.some((m: any) => m.option_value.toLowerCase() === carMake.toLowerCase());
+
+                        return (
+                          <select
+                            value={isMakeInList ? carMake : (carMake ? "__custom__" : "")}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (val === "__custom__") {
+                                setIsCustomMake(true);
+                                setCarMake("");
+                                setCarModel("");
+                              } else {
+                                setCarMake(val);
+                                setIsCustomMake(false);
+                                // Check if current model exists under new make, if not reset
+                                const matchedMake = makesList.find((m: any) => m.option_value === val);
+                                if (matchedMake) {
+                                  const makeModels = dbOptions.filter((o: any) => o.option_type === 'car_model' && o.parent_id === matchedMake.id);
+                                  const modelExists = makeModels.some((m: any) => m.option_value.toLowerCase() === carModel.toLowerCase());
+                                  if (!modelExists) setCarModel("");
+                                }
+                              }
+                            }}
+                            className="w-full h-12 px-4 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-bold text-slate-900 cursor-pointer transition-all shadow-2xs"
+                          >
+                            <option value="">Select Make / Brand...</option>
+                            {makesList.map((m: any) => (
+                              <option key={m.id} value={m.option_value}>
+                                {m.option_value}
+                              </option>
+                            ))}
+                            <option value="__custom__">+ Other / Custom Make...</option>
+                          </select>
+                        );
+                      })()}
                     </div>
 
-                    {/* Model */}
+                    {/* Model (Backend Options filtered by Make) */}
                     <div>
-                      <label className="block text-[11px] font-black text-slate-600 uppercase tracking-widest mb-2">
-                        Model <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={carModel}
-                        onChange={(e) => setCarModel(e.target.value)}
-                        className="w-full h-12 px-4 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-bold text-slate-900 placeholder:text-slate-400 placeholder:font-normal transition-all shadow-2xs"
-                        placeholder="e.g. Camry, Civic, F-150, RAV4..."
-                      />
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="block text-[11px] font-black text-slate-600 uppercase tracking-widest">
+                          Model <span className="text-red-500">*</span>
+                        </label>
+                        {isCustomModel && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsCustomModel(false);
+                              setCarModel("");
+                            }}
+                            className="text-[10px] font-bold text-primary hover:underline cursor-pointer"
+                          >
+                            Select from List
+                          </button>
+                        )}
+                      </div>
+
+                      {(() => {
+                        const selectedMakeObj = dbOptions.find(
+                          (o: any) => o.option_type === 'car_make' && o.option_value.toLowerCase() === carMake.toLowerCase()
+                        );
+
+                        const availableModels = dbOptions
+                          .filter((o: any) => 
+                            o.option_type === 'car_model' && 
+                            (selectedMakeObj ? o.parent_id === selectedMakeObj.id : true)
+                          )
+                          .sort((a: any, b: any) => a.option_value.localeCompare(b.option_value));
+
+                        if (isCustomModel || (!selectedMakeObj && availableModels.length === 0 && carMake)) {
+                          return (
+                            <input
+                              type="text"
+                              value={carModel}
+                              onChange={(e) => setCarModel(e.target.value)}
+                              className="w-full h-12 px-4 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-bold text-slate-900 placeholder:text-slate-400 placeholder:font-normal transition-all shadow-2xs"
+                              placeholder={carMake ? `Enter model for ${carMake}...` : "Enter model..."}
+                              autoFocus={isCustomModel}
+                            />
+                          );
+                        }
+
+                        const isModelInList = availableModels.some((m: any) => m.option_value.toLowerCase() === carModel.toLowerCase());
+
+                        return (
+                          <select
+                            disabled={!carMake}
+                            value={isModelInList ? carModel : (carModel ? "__custom__" : "")}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (val === "__custom__") {
+                                setIsCustomModel(true);
+                                setCarModel("");
+                              } else {
+                                setCarModel(val);
+                                setIsCustomModel(false);
+                              }
+                            }}
+                            className="w-full h-12 px-4 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-bold text-slate-900 cursor-pointer transition-all shadow-2xs disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed"
+                          >
+                            <option value="">
+                              {carMake 
+                                ? (availableModels.length > 0 ? `Select ${carMake} Model...` : "No models found - Select Custom")
+                                : "Select a Make first..."}
+                            </option>
+                            {availableModels.map((m: any) => (
+                              <option key={m.id} value={m.option_value}>
+                                {m.option_value}
+                              </option>
+                            ))}
+                            {carMake && (
+                              <option value="__custom__">+ Other / Custom Model...</option>
+                            )}
+                          </select>
+                        );
+                      })()}
                     </div>
 
                     {/* Year */}
@@ -1900,271 +2145,259 @@ const PostAd: React.FC = () => {
           )}
 
           {/* ═══════════════════════════════════════════
-              STEP 3: CHOOSE VISIBILITY PLAN
+              STEP 3: CHOOSE VISIBILITY PLAN (FULL PAGE MATCHING PDF)
              ═══════════════════════════════════════════ */}
           {step === 3 && (
-            <div className="bg-white p-6 sm:p-8 md:p-10 rounded-3xl border border-slate-200 shadow-sm space-y-8 animate-in fade-in duration-300">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="inline-flex items-center gap-1 py-1 px-3 rounded-full bg-blue-50 text-primary text-[10px] font-black uppercase tracking-widest border border-blue-200/60">
-                      <span className="material-icons text-xs">workspace_premium</span> STEP 3 OF 4
-                    </span>
-                  </div>
-                  <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-                    HitAds Visibility Plan
-                  </h2>
-                  <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">
-                    Boost views and sell up to 5x faster with optional promotion across Canada.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setIsPlanModalOpen(true)}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-primary font-bold text-xs uppercase tracking-wider transition-all border border-blue-200 cursor-pointer self-start sm:self-center shadow-2xs hover:shadow-xs"
-                >
-                  <span className="material-icons text-base">view_carousel</span> Compare All Plans
-                </button>
+            <div className="w-full max-w-6xl mx-auto py-2 sm:py-6 space-y-8 animate-in fade-in duration-300">
+              {/* Header from PDF Page 1 */}
+              <div className="text-center max-w-2xl mx-auto space-y-2">
+                <h1 className="text-3xl sm:text-4xl font-extrabold text-[#111827] tracking-tight">
+                  Pick Your HitAds Plan
+                </h1>
+                <p className="text-sm sm:text-base text-slate-500 font-medium">
+                  Choose the level of visibility that works for your ad.
+                </p>
               </div>
 
-              {/* 3 Interactive Plan Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                {/* FREE PLAN */}
+              {/* 3 Pricing Cards Grid from PDF Page 2 */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 items-stretch">
+                
+                {/* 1. FREE PLAN */}
                 <div 
                   onClick={() => {
                     setSelectedPlan('free');
                     setPostInMultipleCities(false);
                     setSelectedCities([]);
                   }}
-                  className={`p-6 rounded-3xl border-2 cursor-pointer transition-all duration-200 flex flex-col justify-between relative ${
+                  className={`flex flex-col rounded-2xl border bg-white p-7 sm:p-8 transition-all duration-200 cursor-pointer ${
                     selectedPlan === 'free'
-                      ? "border-primary bg-blue-50/40 shadow-xl ring-2 ring-primary/20 scale-[1.02]"
-                      : "border-slate-200 bg-white hover:border-slate-300 hover:shadow-md hover:-translate-y-0.5"
+                      ? "border-[#3b2885] ring-2 ring-[#3b2885]/20 shadow-xl scale-[1.02]"
+                      : "border-slate-200 hover:border-slate-300 hover:shadow-lg"
                   }`}
                 >
-                  <div>
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-xs font-black text-slate-900 uppercase tracking-widest">FREE</span>
-                      {selectedPlan === 'free' ? (
-                        <span className="text-[10px] font-black text-white bg-primary px-3 py-1 rounded-full uppercase tracking-wider flex items-center gap-1 shadow-xs">
-                          <span className="material-icons text-xs">check</span> Selected
-                        </span>
-                      ) : (
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Standard</span>
-                      )}
-                    </div>
-                    <div className="text-2xl font-black text-green-600 mb-1">FREE</div>
-                    <p className="text-xs text-slate-500 font-medium mb-5">Basic listing for casual sellers</p>
-
-                    <div className="space-y-2.5 pt-4 border-t border-slate-100 text-xs">
-                      <div className="flex items-center gap-2 text-slate-700 font-bold">
-                        <span className="material-icons text-green-600 text-sm">check_circle</span>
-                        <span>10 Photo Uploads</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-slate-700 font-bold">
-                        <span className="material-icons text-green-600 text-sm">check_circle</span>
-                        <span>Single City Location</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-slate-700 font-bold">
-                        <span className="material-icons text-green-600 text-sm">check_circle</span>
-                        <span>Standard Search Ranking</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-slate-400 font-medium">
-                        <span className="material-icons text-slate-300 text-sm">remove_circle_outline</span>
-                        <span className="line-through text-slate-400">Multi-City Posting</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-slate-400 font-medium">
-                        <span className="material-icons text-slate-300 text-sm">remove_circle_outline</span>
-                        <span className="line-through text-slate-400">YouTube & Facebook Links</span>
-                      </div>
+                  {/* Header */}
+                  <div className="text-center pb-6 border-b border-slate-100">
+                    <h3 className="text-xl font-extrabold text-[#111827] uppercase tracking-wider mb-1">
+                      FREE
+                    </h3>
+                    <p className="text-xs text-slate-400 font-medium mb-4">
+                      Get your ad online
+                    </p>
+                    <div className="text-3xl font-black text-[#16a34a] tracking-tight">
+                      FREE
                     </div>
                   </div>
 
-                  <div className="mt-6 pt-4 border-t border-slate-100">
+                  {/* Features List */}
+                  <div className="py-6 flex-1 space-y-3.5">
+                    <div className="flex items-center gap-2.5 text-sm text-slate-600 font-medium">
+                      <span className="text-[#16a34a] font-bold text-base">✓</span>
+                      <span>Up to 10 photos</span>
+                    </div>
+                    <div className="flex items-center gap-2.5 text-sm text-slate-600 font-medium">
+                      <span className="text-[#16a34a] font-bold text-base">✓</span>
+                      <span>Standard listing</span>
+                    </div>
+                    <div className="flex items-center gap-2.5 text-sm text-slate-600 font-medium">
+                      <span className="text-[#16a34a] font-bold text-base">✓</span>
+                      <span>Business phone / contact</span>
+                    </div>
+                  </div>
+
+                  {/* Action Button */}
+                  <div className="pt-4">
                     <button
                       type="button"
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         setSelectedPlan('free');
                         setPostInMultipleCities(false);
                         setSelectedCities([]);
+                        setStep(4);
                       }}
-                      className={`w-full py-3 rounded-xl font-black text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 ${
+                      className={`w-full py-3.5 px-6 rounded-xl font-bold text-sm uppercase tracking-wider transition-all duration-150 shadow-md cursor-pointer ${
                         selectedPlan === 'free'
-                          ? "bg-primary text-white shadow-md shadow-primary/25"
-                          : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                          ? "bg-[#3b2885] text-white hover:bg-[#312070] shadow-[#3b2885]/20 ring-2 ring-[#3b2885]/30"
+                          : "bg-[#3b2885] text-white hover:bg-[#312070]"
                       }`}
                     >
-                      {selectedPlan === 'free' ? "Active Selection" : "Select Free"}
+                      {selectedPlan === 'free' ? "SELECT & CONTINUE" : "SELECT"}
                     </button>
                   </div>
                 </div>
 
-                {/* BOOST PLAN */}
+                {/* 2. BOOST PLAN (MOST POPULAR) */}
                 <div 
                   onClick={() => setSelectedPlan('boost')}
-                  className={`p-6 rounded-3xl border-2 cursor-pointer transition-all duration-200 flex flex-col justify-between relative ${
+                  className={`relative flex flex-col rounded-2xl border-2 bg-white p-7 sm:p-8 transition-all duration-200 cursor-pointer ${
                     selectedPlan === 'boost'
-                      ? "border-blue-600 bg-blue-50/50 shadow-xl ring-2 ring-blue-500/20 scale-[1.02]"
-                      : "border-slate-200 bg-white hover:border-blue-200 hover:shadow-md hover:-translate-y-0.5"
+                      ? "border-[#2563eb] ring-2 ring-blue-500/20 shadow-2xl scale-[1.03] z-10"
+                      : "border-[#2563eb] shadow-xl shadow-blue-500/10 hover:shadow-2xl hover:shadow-blue-500/15"
                   }`}
                 >
-                  <div className="absolute -top-3 right-6 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-[9px] font-black uppercase tracking-widest py-1 px-3 rounded-full shadow-md">
-                    ⭐ POPULAR
+                  {/* Most Popular Banner */}
+                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#1d4ed8] text-white text-[11px] font-black uppercase tracking-widest py-1 px-4 rounded-full shadow-md">
+                    MOST POPULAR
                   </div>
-                  <div>
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-xs font-black text-blue-900 uppercase tracking-widest">BOOST</span>
-                      {selectedPlan === 'boost' ? (
-                        <span className="text-[10px] font-black text-white bg-blue-600 px-3 py-1 rounded-full uppercase tracking-wider flex items-center gap-1 shadow-xs">
-                          <span className="material-icons text-xs">check</span> Selected
-                        </span>
-                      ) : (
-                        <span className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">Fast Sale</span>
-                      )}
-                    </div>
-                    <div className="text-2xl font-black text-slate-900 mb-1">
-                      $9.99 <span className="text-xs text-slate-500 font-normal">/ 30 days</span>
-                    </div>
-                    <p className="text-xs text-slate-500 font-medium mb-5">Sell up to 3x faster with priority ranking</p>
 
-                    <div className="space-y-2.5 pt-4 border-t border-slate-100 text-xs">
-                      <div className="flex items-center gap-2 text-blue-900 font-bold">
-                        <span className="material-icons text-blue-600 text-sm">stars</span>
-                        <span>Priority Top Ad Placement</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-slate-800 font-bold">
-                        <span className="material-icons text-green-600 text-sm">check_circle</span>
-                        <span>20 Photo Uploads (2x More!)</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-slate-800 font-bold">
-                        <span className="material-icons text-green-600 text-sm">check_circle</span>
-                        <span>Multi-City Posting (Up to 5 Cities)</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-slate-800 font-bold">
-                        <span className="material-icons text-green-600 text-sm">check_circle</span>
-                        <span>YouTube & Facebook Links</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-slate-800 font-bold">
-                        <span className="material-icons text-green-600 text-sm">autorenew</span>
-                        <span>7-Day Auto Refresh</span>
-                      </div>
+                  {/* Header */}
+                  <div className="text-center pt-2 pb-6 border-b border-slate-100">
+                    <h3 className="text-xl font-extrabold text-[#111827] uppercase tracking-wider mb-1">
+                      BOOST
+                    </h3>
+                    <p className="text-xs text-slate-400 font-medium mb-4">
+                      Get noticed faster
+                    </p>
+                    <div className="text-3xl font-black text-[#16a34a] tracking-tight">
+                      ${getPlanPrice('boost').toFixed(2)} <span className="text-sm font-semibold text-slate-500">/ 30 days</span>
                     </div>
                   </div>
 
-                  <div className="mt-6 pt-4 border-t border-slate-100">
+                  {/* Features List */}
+                  <div className="py-6 flex-1 space-y-3.5">
+                    <div className="flex items-center gap-2.5 text-sm text-slate-700 font-semibold">
+                      <span className="text-[#16a34a] font-bold text-base">✓</span>
+                      <span>Up to 20 photos</span>
+                    </div>
+                    <div className="flex items-center gap-2.5 text-sm text-slate-600 font-medium">
+                      <span className="text-[#16a34a] font-bold text-base">✓</span>
+                      <span>Standard listing</span>
+                    </div>
+                    <div className="flex items-center gap-2.5 text-sm text-slate-600 font-medium">
+                      <span className="text-[#16a34a] font-bold text-base">✓</span>
+                      <span>Automatic refresh every 7 days</span>
+                    </div>
+                    <div className="flex items-center gap-2.5 text-sm text-slate-700 font-semibold">
+                      <span className="text-[#16a34a] font-bold text-base">✓</span>
+                      <span>Priority in search</span>
+                    </div>
+                    <div className="flex items-center gap-2.5 text-sm text-slate-600 font-medium">
+                      <span className="text-[#16a34a] font-bold text-base">✓</span>
+                      <span>Website link</span>
+                    </div>
+                    <div className="flex items-center gap-2.5 text-sm text-slate-600 font-medium">
+                      <span className="text-[#16a34a] font-bold text-base">✓</span>
+                      <span>Business phone / contact</span>
+                    </div>
+                  </div>
+
+                  {/* Action Button */}
+                  <div className="pt-4">
                     <button
                       type="button"
-                      onClick={() => setSelectedPlan('boost')}
-                      className={`w-full py-3 rounded-xl font-black text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 ${
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedPlan('boost');
+                        setStep(4);
+                      }}
+                      className={`w-full py-3.5 px-6 rounded-xl font-bold text-sm uppercase tracking-wider transition-all duration-150 shadow-md cursor-pointer ${
                         selectedPlan === 'boost'
-                          ? "bg-blue-600 text-white shadow-md shadow-blue-500/25"
-                          : "bg-blue-50 text-blue-700 hover:bg-blue-100"
+                          ? "bg-[#3b2885] text-white hover:bg-[#312070] shadow-[#3b2885]/20 ring-2 ring-[#3b2885]/30"
+                          : "bg-[#3b2885] text-white hover:bg-[#312070]"
                       }`}
                     >
-                      {selectedPlan === 'boost' ? "Active Selection" : "Select Boost ($9.99)"}
+                      {selectedPlan === 'boost' ? "SELECT & CONTINUE" : "SELECT"}
                     </button>
                   </div>
                 </div>
 
-                {/* PREMIUM PLAN */}
+                {/* 3. PREMIUM PLAN */}
                 <div 
                   onClick={() => setSelectedPlan('premium')}
-                  className={`p-6 rounded-3xl border-2 cursor-pointer transition-all duration-200 flex flex-col justify-between relative ${
+                  className={`flex flex-col rounded-2xl border bg-white p-7 sm:p-8 transition-all duration-200 cursor-pointer ${
                     selectedPlan === 'premium'
-                      ? "border-purple-600 bg-purple-50/50 shadow-xl ring-2 ring-purple-600/20 scale-[1.02]"
-                      : "border-slate-200 bg-white hover:border-purple-200 hover:shadow-md hover:-translate-y-0.5"
+                      ? "border-[#3b2885] ring-2 ring-[#3b2885]/20 shadow-xl scale-[1.02]"
+                      : "border-slate-200 hover:border-slate-300 hover:shadow-lg"
                   }`}
                 >
-                  <div className="absolute -top-3 right-6 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-[9px] font-black uppercase tracking-widest py-1 px-3 rounded-full shadow-md">
-                    👑 BEST VALUE
-                  </div>
-                  <div>
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-xs font-black text-purple-900 uppercase tracking-widest">PREMIUM</span>
-                      {selectedPlan === 'premium' ? (
-                        <span className="text-[10px] font-black text-white bg-purple-600 px-3 py-1 rounded-full uppercase tracking-wider flex items-center gap-1 shadow-xs">
-                          <span className="material-icons text-xs">check</span> Selected
-                        </span>
-                      ) : (
-                        <span className="text-[10px] font-bold text-purple-600 uppercase tracking-wider">Max Reach</span>
-                      )}
-                    </div>
-                    <div className="text-2xl font-black text-slate-900 mb-1">
-                      $24.99 <span className="text-xs text-slate-500 font-normal">/ 30 days</span>
-                    </div>
-                    <p className="text-xs text-slate-500 font-medium mb-5">Maximum visibility on Homepage & Search</p>
-
-                    <div className="space-y-2.5 pt-4 border-t border-slate-100 text-xs">
-                      <div className="flex items-center gap-2 text-purple-900 font-bold">
-                        <span className="material-icons text-purple-600 text-sm">home</span>
-                        <span>Homepage Showcase Gallery</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-purple-900 font-bold">
-                        <span className="material-icons text-purple-600 text-sm">stars</span>
-                        <span>Priority Top Ad Placement</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-slate-800 font-bold">
-                        <span className="material-icons text-green-600 text-sm">check_circle</span>
-                        <span>20 Photo Uploads</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-slate-800 font-bold">
-                        <span className="material-icons text-green-600 text-sm">check_circle</span>
-                        <span>Multi-City Posting (Up to 5 Cities)</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-slate-800 font-bold">
-                        <span className="material-icons text-green-600 text-sm">check_circle</span>
-                        <span>YouTube & Facebook Links</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-slate-800 font-bold">
-                        <span className="material-icons text-green-600 text-sm">autorenew</span>
-                        <span>3-Day Auto Refresh</span>
-                      </div>
+                  {/* Header */}
+                  <div className="text-center pb-6 border-b border-slate-100">
+                    <h3 className="text-xl font-extrabold text-[#111827] uppercase tracking-wider mb-1">
+                      PREMIUM
+                    </h3>
+                    <p className="text-xs text-slate-400 font-medium mb-4">
+                      Maximum exposure
+                    </p>
+                    <div className="text-3xl font-black text-[#16a34a] tracking-tight">
+                      ${getPlanPrice('premium').toFixed(2)} <span className="text-sm font-semibold text-slate-500">/ 30 days</span>
                     </div>
                   </div>
 
-                  <div className="mt-6 pt-4 border-t border-slate-100">
+                  {/* Features List */}
+                  <div className="py-6 flex-1 space-y-3">
+                    <div className="flex items-center gap-2.5 text-sm text-slate-700 font-semibold">
+                      <span className="text-[#16a34a] font-bold text-base">✓</span>
+                      <span>Up to 20 photos</span>
+                    </div>
+                    <div className="flex items-center gap-2.5 text-sm text-slate-600 font-medium">
+                      <span className="text-[#16a34a] font-bold text-base">✓</span>
+                      <span>Standard listing</span>
+                    </div>
+                    <div className="flex items-center gap-2.5 text-sm text-slate-600 font-medium">
+                      <span className="text-[#16a34a] font-bold text-base">✓</span>
+                      <span>Automatic refresh every 3 days</span>
+                    </div>
+                    <div className="flex items-center gap-2.5 text-sm text-slate-700 font-semibold">
+                      <span className="text-[#16a34a] font-bold text-base">✓</span>
+                      <span>Priority in search</span>
+                    </div>
+                    <div className="flex items-center gap-2.5 text-sm text-blue-600 font-bold">
+                      <span className="text-[#16a34a] font-bold text-base">✓</span>
+                      <span>Multi-city posting - up to 5 cities</span>
+                    </div>
+                    <div className="flex items-center gap-2.5 text-sm text-slate-600 font-medium">
+                      <span className="text-[#16a34a] font-bold text-base">✓</span>
+                      <span>Website link</span>
+                    </div>
+                    <div className="flex items-center gap-2.5 text-sm text-slate-600 font-medium">
+                      <span className="text-[#16a34a] font-bold text-base">✓</span>
+                      <span>Facebook link</span>
+                    </div>
+                    <div className="flex items-center gap-2.5 text-sm text-slate-600 font-medium">
+                      <span className="text-[#16a34a] font-bold text-base">✓</span>
+                      <span>YouTube link</span>
+                    </div>
+                    <div className="flex items-center gap-2.5 text-sm text-slate-600 font-medium">
+                      <span className="text-[#16a34a] font-bold text-base">✓</span>
+                      <span>Business phone / contact</span>
+                    </div>
+                  </div>
+
+                  {/* Action Button */}
+                  <div className="pt-4">
                     <button
                       type="button"
-                      onClick={() => setSelectedPlan('premium')}
-                      className={`w-full py-3 rounded-xl font-black text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 ${
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedPlan('premium');
+                        setStep(4);
+                      }}
+                      className={`w-full py-3.5 px-6 rounded-xl font-bold text-sm uppercase tracking-wider transition-all duration-150 shadow-md cursor-pointer ${
                         selectedPlan === 'premium'
-                          ? "bg-purple-600 text-white shadow-md shadow-purple-600/25"
-                          : "bg-purple-50 text-purple-700 hover:bg-purple-100"
+                          ? "bg-[#3b2885] text-white hover:bg-[#312070] shadow-[#3b2885]/20 ring-2 ring-[#3b2885]/30"
+                          : "bg-[#3b2885] text-white hover:bg-[#312070]"
                       }`}
                     >
-                      {selectedPlan === 'premium' ? "Active Selection" : "Select Premium ($24.99)"}
+                      {selectedPlan === 'premium' ? "SELECT & CONTINUE" : "SELECT"}
                     </button>
                   </div>
                 </div>
+
               </div>
 
-              {/* Selection Highlights Banner */}
-              <div className="bg-slate-50 rounded-2xl p-5 border border-slate-200/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-blue-100 text-primary flex items-center justify-center shrink-0">
-                    <span className="material-icons text-xl">
-                      {selectedPlan === 'free' ? 'photo_camera' : 'stars'}
-                    </span>
-                  </div>
-                  <div>
-                    <div className="text-xs font-black text-slate-900">
-                      Selected: {selectedPlan === 'free' ? 'FREE Standard Plan' : selectedPlan === 'boost' ? 'BOOST Plan ($9.99 CAD)' : 'PREMIUM Plan ($24.99 CAD)'}
-                    </div>
-                    <div className="text-[11px] text-slate-500 font-medium">
-                      {selectedPlan === 'free' 
-                        ? 'Next, upload up to 10 photos and enter your item location.' 
-                        : 'Next, upload up to 20 photos, choose up to 5 cities, and add your YouTube/Facebook links.'}
-                    </div>
-                  </div>
-                </div>
+              {/* Footnote from PDF */}
+              <div className="text-center pt-2">
+                <p className="text-xs sm:text-sm text-slate-400 font-medium">
+                  Premium Multi-City Posting lets the same ad appear in up to 5 cities selected by the advertiser.
+                </p>
               </div>
 
-              {/* Bottom Actions */}
-              <div className="pt-6 border-t border-slate-100 flex justify-between items-center">
+              {/* Bottom Navigation */}
+              <div className="pt-6 border-t border-slate-200 flex justify-between items-center">
                 <button
                   type="button"
                   onClick={() => setStep(2)}
-                  className="px-6 py-3 font-bold text-slate-500 hover:text-slate-800 text-sm transition-colors cursor-pointer flex items-center gap-1.5"
+                  className="px-6 py-3 font-bold text-slate-500 hover:text-slate-800 text-sm transition-colors cursor-pointer flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl shadow-2xs hover:bg-slate-50"
                 >
                   <span className="material-icons text-base">chevron_left</span>
                   Back to Details
@@ -2640,6 +2873,240 @@ const PostAd: React.FC = () => {
                 )}
               </section>
 
+              {/* ═══════════════════════════════════════════
+                  PUBLISHING MODES & PROMOTIONAL UPGRADES
+                 ═══════════════════════════════════════════ */}
+              <section className="space-y-4 pt-6 border-t border-slate-100">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div>
+                    <label className="block text-xs font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
+                      <span className="material-icons text-primary text-base">stars</span>
+                      Publishing Modes & Promotional Upgrades
+                    </label>
+                    <p className="text-xs text-slate-500 font-medium mt-0.5">
+                      Boost visibility, get urgent buyers, or feature your ad on the Homepage.
+                    </p>
+                  </div>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    Optional Add-ons
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* 1. HOMEPAGE AD / HOME GALLERY */}
+                  <div className={`p-4.5 rounded-2xl border transition-all ${
+                    selectedPlan === 'premium'
+                      ? 'border-purple-200 bg-purple-50/50'
+                      : promotionData.is_home_gallery
+                      ? 'border-blue-500 bg-blue-50/60 shadow-md ring-1 ring-blue-500/20'
+                      : 'border-slate-200 bg-white hover:border-slate-300'
+                  }`}>
+                    <div className="flex items-start justify-between gap-3">
+                      <label className="flex items-start gap-3 cursor-pointer flex-1 min-w-0 select-none">
+                        <input
+                          type="checkbox"
+                          disabled={selectedPlan === 'premium'}
+                          checked={selectedPlan === 'premium' || promotionData.is_home_gallery}
+                          onChange={(e) => setPromotionData({ ...promotionData, is_home_gallery: e.target.checked })}
+                          className="w-5 h-5 text-blue-600 rounded border-slate-300 focus:ring-blue-500 mt-0.5 shrink-0 cursor-pointer disabled:opacity-75"
+                        />
+                        <div className="min-w-0">
+                          <p className="text-xs font-black text-slate-900 flex items-center gap-1.5 flex-wrap">
+                            <span>Homepage Ad (Gallery)</span>
+                            {selectedPlan === 'premium' ? (
+                              <span className="text-[9px] font-black bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                                ✓ Included in Premium
+                              </span>
+                            ) : (
+                              <span className="text-[10px] font-black bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">
+                                ${calculatePromoPrice('home_gallery', promotionData.home_gallery_duration, 14.99).toFixed(2)} CAD
+                              </span>
+                            )}
+                          </p>
+                          <p className="text-[11px] text-slate-500 font-medium mt-0.5 leading-relaxed">
+                            Showcase your ad prominently on the HitAds Homepage Showcase Gallery.
+                          </p>
+                        </div>
+                      </label>
+
+                      {selectedPlan !== 'premium' && (
+                        <div className="shrink-0">
+                          <select
+                            disabled={!promotionData.is_home_gallery}
+                            value={promotionData.home_gallery_duration}
+                            onChange={(e) => setPromotionData({ ...promotionData, home_gallery_duration: Number(e.target.value) })}
+                            className="text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none shadow-2xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {getPromotionOptions('home_gallery', 14.99).map((opt: any) => (
+                              <option key={opt.duration_days} value={opt.duration_days}>
+                                {opt.duration_days} Days (${Number(opt.price).toFixed(2)})
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 2. TOP AD */}
+                  <div className={`p-4.5 rounded-2xl border transition-all ${
+                    selectedPlan === 'boost' || selectedPlan === 'premium'
+                      ? 'border-blue-200 bg-blue-50/50'
+                      : promotionData.is_top_ad
+                      ? 'border-amber-500 bg-amber-50/60 shadow-md ring-1 ring-amber-500/20'
+                      : 'border-slate-200 bg-white hover:border-slate-300'
+                  }`}>
+                    <div className="flex items-start justify-between gap-3">
+                      <label className="flex items-start gap-3 cursor-pointer flex-1 min-w-0 select-none">
+                        <input
+                          type="checkbox"
+                          disabled={selectedPlan === 'boost' || selectedPlan === 'premium'}
+                          checked={selectedPlan === 'boost' || selectedPlan === 'premium' || promotionData.is_top_ad}
+                          onChange={(e) => setPromotionData({ ...promotionData, is_top_ad: e.target.checked })}
+                          className="w-5 h-5 text-amber-600 rounded border-slate-300 focus:ring-amber-500 mt-0.5 shrink-0 cursor-pointer disabled:opacity-75"
+                        />
+                        <div className="min-w-0">
+                          <p className="text-xs font-black text-slate-900 flex items-center gap-1.5 flex-wrap">
+                            <span>Top Ad Placement</span>
+                            {selectedPlan === 'boost' || selectedPlan === 'premium' ? (
+                              <span className="text-[9px] font-black bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                                ✓ Included in {selectedPlan.toUpperCase()}
+                              </span>
+                            ) : (
+                              <span className="text-[10px] font-black bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full">
+                                ${calculatePromoPrice('top_ad', promotionData.top_ad_duration, 9.99).toFixed(2)} CAD
+                              </span>
+                            )}
+                          </p>
+                          <p className="text-[11px] text-slate-500 font-medium mt-0.5 leading-relaxed">
+                            Positioned at the very top of category and search results above standard ads.
+                          </p>
+                        </div>
+                      </label>
+
+                      {selectedPlan === 'free' && (
+                        <div className="shrink-0">
+                          <select
+                            disabled={!promotionData.is_top_ad}
+                            value={promotionData.top_ad_duration}
+                            onChange={(e) => setPromotionData({ ...promotionData, top_ad_duration: Number(e.target.value) })}
+                            className="text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 focus:ring-2 focus:ring-amber-500 outline-none shadow-2xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {getPromotionOptions('top_ad', 9.99).map((opt: any) => (
+                              <option key={opt.duration_days} value={opt.duration_days}>
+                                {opt.duration_days} Days (${Number(opt.price).toFixed(2)})
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 3. URGENT AD */}
+                  <div className={`p-4.5 rounded-2xl border transition-all ${
+                    promotionData.is_urgent
+                      ? 'border-red-500 bg-red-50/60 shadow-md ring-1 ring-red-500/20'
+                      : 'border-slate-200 bg-white hover:border-slate-300'
+                  }`}>
+                    <div className="flex items-start justify-between gap-3">
+                      <label className="flex items-start gap-3 cursor-pointer flex-1 min-w-0 select-none">
+                        <input
+                          type="checkbox"
+                          checked={promotionData.is_urgent}
+                          onChange={(e) => setPromotionData({ ...promotionData, is_urgent: e.target.checked })}
+                          className="w-5 h-5 text-red-600 rounded border-slate-300 focus:ring-red-500 mt-0.5 shrink-0 cursor-pointer"
+                        />
+                        <div className="min-w-0">
+                          <p className="text-xs font-black text-slate-900 flex items-center gap-1.5 flex-wrap">
+                            <span className="flex items-center gap-1">
+                              <span className="material-icons text-red-500 text-sm">local_fire_department</span>
+                              Urgent Ad
+                            </span>
+                            <span className="text-[10px] font-black bg-red-100 text-red-800 px-2 py-0.5 rounded-full">
+                              ${calculatePromoPrice('urgent', promotionData.urgent_duration, 5.99).toFixed(2)} CAD
+                            </span>
+                          </p>
+                          <p className="text-[11px] text-slate-500 font-medium mt-0.5 leading-relaxed">
+                            Stands out with an eye-catching bright red "Urgent" badge to sell up to 3x faster.
+                          </p>
+                        </div>
+                      </label>
+
+                      <div className="shrink-0">
+                        <select
+                          disabled={!promotionData.is_urgent}
+                          value={promotionData.urgent_duration}
+                          onChange={(e) => setPromotionData({ ...promotionData, urgent_duration: Number(e.target.value) })}
+                          className="text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 focus:ring-2 focus:ring-red-500 outline-none shadow-2xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {getPromotionOptions('urgent', 5.99).map((opt: any) => (
+                            <option key={opt.duration_days} value={opt.duration_days}>
+                              {opt.duration_days} Days (${Number(opt.price).toFixed(2)})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 4. HIGHLIGHTED AD */}
+                  <div className={`p-4.5 rounded-2xl border transition-all ${
+                    selectedPlan === 'premium'
+                      ? 'border-purple-200 bg-purple-50/50'
+                      : promotionData.is_highlighted
+                      ? 'border-yellow-500 bg-yellow-50/60 shadow-md ring-1 ring-yellow-500/20'
+                      : 'border-slate-200 bg-white hover:border-slate-300'
+                  }`}>
+                    <div className="flex items-start justify-between gap-3">
+                      <label className="flex items-start gap-3 cursor-pointer flex-1 min-w-0 select-none">
+                        <input
+                          type="checkbox"
+                          disabled={selectedPlan === 'premium'}
+                          checked={selectedPlan === 'premium' || promotionData.is_highlighted}
+                          onChange={(e) => setPromotionData({ ...promotionData, is_highlighted: e.target.checked })}
+                          className="w-5 h-5 text-yellow-600 rounded border-slate-300 focus:ring-yellow-500 mt-0.5 shrink-0 cursor-pointer disabled:opacity-75"
+                        />
+                        <div className="min-w-0">
+                          <p className="text-xs font-black text-slate-900 flex items-center gap-1.5 flex-wrap">
+                            <span>Highlighted Background</span>
+                            {selectedPlan === 'premium' ? (
+                              <span className="text-[9px] font-black bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                                ✓ Included in Premium
+                              </span>
+                            ) : (
+                              <span className="text-[10px] font-black bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full">
+                                ${calculatePromoPrice('highlighted', promotionData.highlighted_duration, 4.99).toFixed(2)} CAD
+                              </span>
+                            )}
+                          </p>
+                          <p className="text-[11px] text-slate-500 font-medium mt-0.5 leading-relaxed">
+                            Distinct highlighted background that catches the buyer's eye when scrolling listings.
+                          </p>
+                        </div>
+                      </label>
+
+                      {selectedPlan !== 'premium' && (
+                        <div className="shrink-0">
+                          <select
+                            disabled={!promotionData.is_highlighted}
+                            value={promotionData.highlighted_duration}
+                            onChange={(e) => setPromotionData({ ...promotionData, highlighted_duration: Number(e.target.value) })}
+                            className="text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 focus:ring-2 focus:ring-yellow-500 outline-none shadow-2xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {getPromotionOptions('highlighted', 4.99).map((opt: any) => (
+                              <option key={opt.duration_days} value={opt.duration_days}>
+                                {opt.duration_days} Days (${Number(opt.price).toFixed(2)})
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </section>
+
               {/* Selected Plan Summary Banner */}
               <div className="pt-6 border-t border-slate-100">
                 <div className={`p-5 rounded-2xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${
@@ -2661,7 +3128,12 @@ const PostAd: React.FC = () => {
                       <div className="text-xs font-black text-slate-900 flex items-center gap-2">
                         <span>{selectedPlan.toUpperCase()} PLAN SELECTED</span>
                         <span className="text-green-600 font-bold">
-                          {selectedPlan === 'free' ? 'FREE ($0.00 CAD)' : selectedPlan === 'boost' ? '$9.99 CAD / 30 days' : '$24.99 CAD / 30 days'}
+                          {(() => {
+                            const grand = getGrandTotal();
+                            return grand.subtotal === 0 
+                              ? 'FREE ($0.00 CAD)' 
+                              : `${grand.total.toFixed(2)} CAD (incl. 13% tax)`;
+                          })()}
                         </span>
                       </div>
                       <p className="text-[11px] text-slate-500 font-medium mt-0.5">
@@ -2707,7 +3179,12 @@ const PostAd: React.FC = () => {
                     ? (isEditMode ? "Saving Changes..." : "Publishing Ad...") 
                     : (isEditMode 
                         ? "Save Changes" 
-                        : (selectedPlan === 'free' ? "Publish Free Ad" : `Proceed to Secure Payment (${selectedPlan === 'boost' ? '$9.99' : '$24.99'})`))}{" "}
+                        : (() => {
+                            const grand = getGrandTotal();
+                            return grand.subtotal === 0 
+                              ? "Publish Free Ad" 
+                              : `Proceed to Secure Payment (${grand.total.toFixed(2)} CAD)`;
+                          })())}{" "}
                   <span className="material-icons text-lg">
                     {selectedPlan === 'free' ? 'check' : 'lock'}
                   </span>
@@ -2720,6 +3197,7 @@ const PostAd: React.FC = () => {
         {/* ═══════════════════════════════════════════
             RIGHT SIDEBAR (STICKY, LIVE SUMMARY & TIPS)
            ═══════════════════════════════════════════ */}
+        {step !== 3 && (
         <aside className="lg:col-span-4 xl:col-span-3 space-y-6 sticky top-28 self-start">
           {/* Live Ad Summary Card */}
           <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-5">
@@ -2872,6 +3350,7 @@ const PostAd: React.FC = () => {
             </p>
           </div>
         </aside>
+        )}
       </div>
 
       {/* HitAds Pricing Cards Popup Modal */}

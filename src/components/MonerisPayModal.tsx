@@ -23,56 +23,98 @@ const MonerisPayModal: React.FC<MonerisPayModalProps> = ({
   const [isVerifying, setIsVerifying] = useState(false);
   const checkoutInstanceRef = useRef<any>(null);
 
-  // Load Moneris Checkout script dynamically
+  // Load Moneris Checkout script dynamically and wait until window.monerisCheckout is ready
   useEffect(() => {
     const scriptUrl = environment === 'prod' 
       ? 'https://gateway.moneris.com/chktv2/js/chkt_v3.00.js'
       : 'https://gatewayt.moneris.com/chktv2/js/chkt_v3.00.js';
-    
-    const loadScript = () => {
-      if (document.querySelector(`script[src="${scriptUrl}"]`)) {
-        setIsScriptLoaded(true);
-        return;
+
+    let isMounted = true;
+    let pollInterval: any = null;
+
+    const checkReady = () => {
+      if (typeof (window as any).monerisCheckout === 'function') {
+        if (isMounted) {
+          setIsScriptLoaded(true);
+        }
+        if (pollInterval) clearInterval(pollInterval);
+        return true;
       }
-      
-      const script = document.createElement('script');
-      script.src = scriptUrl;
-      script.async = true;
-      script.onload = () => {
-        setIsScriptLoaded(true);
-      };
-      script.onerror = () => {
-        setError('Failed to load Moneris payment library. Please check your internet connection.');
-        setIsInitializingCheckout(false);
-      };
-      document.body.appendChild(script);
+      return false;
     };
 
-    loadScript();
+    if (checkReady()) {
+      return;
+    }
+
+    let script = document.querySelector(`script[src="${scriptUrl}"]`) as HTMLScriptElement;
+    if (!script) {
+      script = document.createElement('script');
+      script.src = scriptUrl;
+      script.async = true;
+      script.onerror = () => {
+        if (isMounted) {
+          setError('Failed to load Moneris payment library. Please check your internet connection.');
+          setIsInitializingCheckout(false);
+        }
+        if (pollInterval) clearInterval(pollInterval);
+      };
+      document.body.appendChild(script);
+    }
+
+    // Poll until window.monerisCheckout is confirmed available
+    let elapsed = 0;
+    pollInterval = setInterval(() => {
+      elapsed += 100;
+      if (checkReady()) {
+        clearInterval(pollInterval);
+      } else if (elapsed > 12000) {
+        clearInterval(pollInterval);
+        if (isMounted) {
+          setError('Moneris payment library took too long to load. Please try again.');
+          setIsInitializingCheckout(false);
+        }
+      }
+    }, 100);
 
     return () => {
-      // Clean up checkout if open
+      isMounted = false;
+      if (pollInterval) clearInterval(pollInterval);
       if (checkoutInstanceRef.current) {
         try {
           checkoutInstanceRef.current.closeCheckout();
         } catch (e) {
-          // Ignore error during cleanup. In Next.js Strict Mode, 
-          // this fires immediately before the iframe is ready.
+          // Ignore error during cleanup
         }
       }
     };
-  }, []);
+  }, [environment]);
 
-  // Initialize Moneris Checkout when script is loaded and ticket is available
+  // Initialize Moneris Checkout when script is confirmed loaded and ticket is available
   useEffect(() => {
     if (!isScriptLoaded || !ticket) return;
+
+    let timer: any = null;
 
     const initializeCheckout = () => {
       try {
         setError(null);
         setIsInitializingCheckout(true);
 
-        const myCheckout = new window.monerisCheckout();
+        if (typeof (window as any).monerisCheckout !== 'function') {
+          // Retry in 150ms if not yet fully ready
+          timer = setTimeout(initializeCheckout, 150);
+          return;
+        }
+
+        const div = document.getElementById('monerisCheckoutDiv');
+        if (!div) {
+          // Retry in 100ms if target div is not yet mounted
+          timer = setTimeout(initializeCheckout, 100);
+          return;
+        }
+
+        const myCheckout = new (window as any).monerisCheckout();
         checkoutInstanceRef.current = myCheckout;
 
         myCheckout.setMode(environment === 'prod' ? 'prod' : 'qa');
@@ -110,7 +152,6 @@ const MonerisPayModal: React.FC<MonerisPayModalProps> = ({
 
         myCheckout.setCallback('payment_submitted', (data: string) => {
           console.log('Moneris payment submitted:', data);
-          // Optional: handle UI loading state while waiting for payment_complete
         });
 
         myCheckout.setCallback('payment_complete', (data: string) => {
@@ -139,9 +180,10 @@ const MonerisPayModal: React.FC<MonerisPayModalProps> = ({
       }
     };
 
-    // Small timeout to ensure target div is mounted in the DOM
-    const timer = setTimeout(initializeCheckout, 300);
-    return () => clearTimeout(timer);
+    timer = setTimeout(initializeCheckout, 250);
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
   }, [isScriptLoaded, ticket, environment]);
 
   const verifyPayment = async (completedTicket: string) => {
@@ -187,7 +229,7 @@ const MonerisPayModal: React.FC<MonerisPayModalProps> = ({
           <button 
             disabled={isVerifying}
             onClick={onCancel}
-            className="text-slate-400 hover:text-slate-600 transition-colors w-8 h-8 rounded-full hover:bg-slate-50 flex items-center justify-center disabled:opacity-50"
+            className="text-slate-400 hover:text-slate-600 transition-colors w-8 h-8 rounded-full hover:bg-slate-50 flex items-center justify-center disabled:opacity-50 cursor-pointer"
           >
             <span className="material-icons">close</span>
           </button>
@@ -229,7 +271,7 @@ const MonerisPayModal: React.FC<MonerisPayModalProps> = ({
                 <p className="text-xs mt-1 leading-relaxed">{error}</p>
                 <button 
                   onClick={onCancel}
-                  className="mt-3 text-xs font-black uppercase tracking-widest bg-red-100 hover:bg-red-200 text-red-800 px-3 py-1.5 rounded-lg transition-colors"
+                  className="mt-3 text-xs font-black uppercase tracking-widest bg-red-100 hover:bg-red-200 text-red-800 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
                 >
                   Return to options
                 </button>

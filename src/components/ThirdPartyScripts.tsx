@@ -60,6 +60,12 @@ export default function ThirdPartyScripts() {
         crossOrigin="anonymous"
         strategy="afterInteractive"
       />
+
+      {/* Moneris Checkout Library */}
+      <Script
+        src="https://gatewayt.moneris.com/chktv2/js/chkt_v3.00.js"
+        strategy="lazyOnload"
+      />
     </>
   );
 }

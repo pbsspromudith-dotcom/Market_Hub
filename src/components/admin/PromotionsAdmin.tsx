@@ -116,7 +116,9 @@ export default function PromotionsAdmin() {
                   <option value="top_ad">Top Ad</option>
                   <option value="highlighted">Highlighted</option>
                   <option value="urgent">Urgent</option>
-                  <option value="home_gallery">Home Page</option>
+                  <option value="home_gallery">Home Page Gallery</option>
+                  <option value="boost">Boost Plan (Full Package)</option>
+                  <option value="premium">Premium Plan (Full Package)</option>
                 </select>
               </div>
 

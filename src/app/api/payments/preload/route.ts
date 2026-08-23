@@ -53,18 +53,21 @@ export async function POST(req: Request) {
     if (typeof body.custom_amount === 'number' && body.custom_amount > 0) {
       subtotal = Number(body.custom_amount);
       selectedPromotions.push('test_checkout');
-    } else if (body.plan === 'boost') {
-      subtotal = 9.99;
-      selectedPromotions.push('plan_boost:30', 'top_ad:30');
-    } else if (body.plan === 'premium') {
-      subtotal = 24.99;
-      selectedPromotions.push('plan_premium:30', 'top_ad:30', 'home_gallery:30', 'highlighted:30');
     } else {
-      if (is_top_ad) { 
+      if (body.plan === 'boost') {
+        subtotal += 9.99;
+        selectedPromotions.push('plan_boost:30', 'top_ad:30');
+      } else if (body.plan === 'premium') {
+        subtotal += 24.99;
+        selectedPromotions.push('plan_premium:30', 'top_ad:30', 'home_gallery:30', 'highlighted:30');
+      }
+
+      // Add individual add-ons (if not already included by the plan)
+      if (is_top_ad && body.plan !== 'boost' && body.plan !== 'premium') { 
         subtotal += calculatePrice('top_ad', top_ad_duration, 9.99); 
         selectedPromotions.push(`top_ad:${top_ad_duration}`); 
       }
-      if (is_highlighted) { 
+      if (is_highlighted && body.plan !== 'premium') { 
         subtotal += calculatePrice('highlighted', highlighted_duration, 4.99); 
         selectedPromotions.push(`highlighted:${highlighted_duration}`); 
       }
@@ -72,7 +75,7 @@ export async function POST(req: Request) {
         subtotal += calculatePrice('urgent', urgent_duration, 5.99); 
         selectedPromotions.push(`urgent:${urgent_duration}`); 
       }
-      if (is_home_gallery) { 
+      if (is_home_gallery && body.plan !== 'premium') { 
         subtotal += calculatePrice('home_gallery', home_gallery_duration, 14.99); 
         selectedPromotions.push(`home_gallery:${home_gallery_duration}`); 
       }

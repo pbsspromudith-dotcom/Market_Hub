@@ -1,1 +1,0 @@
-const { PrismaClient } = require('./src/generated/prisma/client'); require('dotenv').config(); async function test() { const prisma = new PrismaClient({ log: ['query'] }); try { const cats = await prisma.category.findMany({ take: 1 }); console.log('Success:', cats.length); } catch (err) { console.error('Prisma Error:', err); } finally { await prisma.disconnect(); } } test();
