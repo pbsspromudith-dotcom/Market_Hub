@@ -244,47 +244,103 @@ What would you like to explore?`,
     }
 
     // ── 9. Live Listing Database Search ──
-    // Extract keywords by removing generic conversational stopwords
-    const cleanSearch = lower
-      .replace(/\b(do you have|can you find|find me|show me|search for|look for|is there|are there|looking for|i want|i need|any|in|at|near|for sale|buy|rent|please|help me find)\b/gi, ' ')
-      .replace(/[^\w\s]/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
+    // 1. Remove emojis and clean input
+    const stripped = trimmed.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, ' ');
+    const searchLower = stripped.toLowerCase().trim();
 
-    const searchWords = cleanSearch.split(' ').filter(w => w.length >= 2);
-    const searchTarget = searchWords.length > 0 ? searchWords.join(' ') : cleanSearch;
+    // 2. Remove conversational stopwords & action verbs
+    const stopWords = [
+      'do you have', 'can you find', 'can you show', 'find me', 'show me', 'search for',
+      'look for', 'looking for', 'is there', 'are there', 'i want to find', 'i want',
+      'i need', 'help me find', 'how about', 'tell me about', 'how to', 'browse all',
+      'browse', 'find', 'search', 'show', 'look', 'view', 'list', 'get', 'see', 'please',
+      'any', 'all', 'some', 'for sale', 'available', 'active', 'near', 'around', 'in canada',
+      'in', 'at', 'items', 'item', 'listings', 'listing', 'ads', 'ad'
+    ];
+
+    let cleaned = searchLower;
+    for (const sw of stopWords) {
+      const regex = new RegExp(`\\b${sw}\\b`, 'gi');
+      cleaned = cleaned.replace(regex, ' ');
+    }
+    cleaned = cleaned.replace(/[^\w\s]/g, ' ').replace(/\s+/g, ' ').trim();
+
+    // 3. Detect category intention
+    let categoryIntent: string | null = null;
+    let remainingTerms = cleaned;
+
+    if (/\b(car|cars|vehicle|vehicles|auto|autos|automobile|automobiles|truck|trucks|suv|suvs|van|vans|sedan|coupe)\b/i.test(cleaned)) {
+      categoryIntent = 'Vehicles';
+      remainingTerms = remainingTerms.replace(/\b(car|cars|vehicle|vehicles|auto|autos|automobile|automobiles|truck|trucks|suv|suvs|van|vans|sedan|coupe)\b/gi, ' ').trim();
+    } else if (/\b(real estate|property|properties|house|houses|home|homes|apartment|apartments|condo|condos|room|rooms|basement|basements|townhouse|townhouses|rent|rentals|rental)\b/i.test(cleaned)) {
+      categoryIntent = 'Real Estate';
+      remainingTerms = remainingTerms.replace(/\b(real estate|property|properties)\b/gi, ' ').trim();
+    } else if (/\b(job|jobs|hiring|employment|career|careers|work|vacancy|vacancies)\b/i.test(cleaned)) {
+      categoryIntent = 'Jobs';
+      remainingTerms = remainingTerms.replace(/\b(job|jobs|hiring|employment|career|careers|work)\b/gi, ' ').trim();
+    } else if (/\b(service|services|contractor|contractors|moving|cleaning|plumber|electrician|repair)\b/i.test(cleaned)) {
+      categoryIntent = 'Local Services';
+      remainingTerms = remainingTerms.replace(/\b(service|services)\b/gi, ' ').trim();
+    } else if (/\b(buy and sell|buy & sell|furniture|electronics|phone|phones|iphone|laptop|laptops)\b/i.test(cleaned)) {
+      categoryIntent = 'Buy & Sell';
+      remainingTerms = remainingTerms.replace(/\b(buy and sell|buy & sell)\b/gi, ' ').trim();
+    }
+
+    remainingTerms = remainingTerms.replace(/\s+/g, ' ').trim();
+    const searchWords = remainingTerms.split(' ').filter(w => w.length >= 2);
 
     let matchedListings: any[] = [];
 
-    if (searchTarget.length >= 2) {
-      // Build Supabase query
-      let query = supabase
+    // Query active listings
+    let query = supabase
+      .from('listings')
+      .select('id, title, price, price_type, location, category, image, is_top_ad, is_highlighted')
+      .or('status.eq.active,status.is.null');
+
+    if (categoryIntent) {
+      query = query.ilike('category', `%${categoryIntent}%`);
+    }
+
+    if (searchWords.length > 0) {
+      for (const word of searchWords) {
+        query = query.or(`title.ilike.%${word}%,description.ilike.%${word}%,category.ilike.%${word}%,location.ilike.%${word}%`);
+      }
+    }
+
+    const { data: results } = await query
+      .order('is_top_ad', { ascending: false })
+      .order('id', { ascending: false })
+      .limit(4);
+
+    if (results && results.length > 0) {
+      matchedListings = results;
+    } else if (categoryIntent) {
+      // Fallback: If no results with strict words, but category was detected, show latest listings in that category
+      const { data: catResults } = await supabase
         .from('listings')
         .select('id, title, price, price_type, location, category, image, is_top_ad, is_highlighted')
-        .or('status.eq.active,status.is.null');
-
-      // Check if location or title match
-      const { data: results, error } = await query
-        .or(`title.ilike.%${searchTarget}%,description.ilike.%${searchTarget}%,category.ilike.%${searchTarget}%,location.ilike.%${searchTarget}%`)
+        .or('status.eq.active,status.is.null')
+        .ilike('category', `%${categoryIntent}%`)
         .order('is_top_ad', { ascending: false })
+        .order('id', { ascending: false })
         .limit(4);
 
-      if (!error && results && results.length > 0) {
-        matchedListings = results;
-      } else if (searchWords.length > 1) {
-        // Try searching by the first primary keyword
-        const firstWord = searchWords[0];
-        const { data: fallbackResults } = await supabase
-          .from('listings')
-          .select('id, title, price, price_type, location, category, image, is_top_ad, is_highlighted')
-          .or('status.eq.active,status.is.null')
-          .or(`title.ilike.%${firstWord}%,category.ilike.%${firstWord}%,location.ilike.%${firstWord}%`)
-          .order('is_top_ad', { ascending: false })
-          .limit(4);
+      if (catResults && catResults.length > 0) {
+        matchedListings = catResults;
+      }
+    } else if (cleaned.length >= 2) {
+      // Fallback: Generic search on all fields
+      const { data: genResults } = await supabase
+        .from('listings')
+        .select('id, title, price, price_type, location, category, image, is_top_ad, is_highlighted')
+        .or('status.eq.active,status.is.null')
+        .or(`title.ilike.%${cleaned}%,description.ilike.%${cleaned}%,category.ilike.%${cleaned}%,location.ilike.%${cleaned}%`)
+        .order('is_top_ad', { ascending: false })
+        .order('id', { ascending: false })
+        .limit(4);
 
-        if (fallbackResults && fallbackResults.length > 0) {
-          matchedListings = fallbackResults;
-        }
+      if (genResults && genResults.length > 0) {
+        matchedListings = genResults;
       }
     }
 
@@ -316,7 +372,7 @@ What would you like to explore?`,
         .join('\n');
 
       return NextResponse.json({
-        text: `Here are matching listings found on HitAds for **"${trimmed}"**:\n\n${listSummary}\n\n👉 Click any item above to view full photos and contact the seller, or [browse all results in Search](/search?q=${encodeURIComponent(searchTarget)}).`,
+        text: `Here are matching listings found on HitAds for **"${trimmed}"**:\n\n${listSummary}\n\n👉 Click any item above to view full photos and contact the seller, or [browse all results in Search](/search?q=${encodeURIComponent(cleaned || trimmed)}).`,
         items: items,
         suggestions: ["🔍 Search More Items", "➕ Post Similar Ad", "💎 Pricing Plans"]
       });

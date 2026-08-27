@@ -284,16 +284,16 @@ const PostAd: React.FC = () => {
 
   const getAddonTotal = () => {
     let subtotal = 0;
-    if (selectedPlan === 'free' && promotionData.is_top_ad) {
+    if (promotionData.is_top_ad) {
       subtotal += calculatePromoPrice('top_ad', promotionData.top_ad_duration, 9.99);
     }
-    if (selectedPlan !== 'premium' && promotionData.is_highlighted) {
+    if (promotionData.is_highlighted) {
       subtotal += calculatePromoPrice('highlighted', promotionData.highlighted_duration, 4.99);
     }
     if (promotionData.is_urgent) {
       subtotal += calculatePromoPrice('urgent', promotionData.urgent_duration, 5.99);
     }
-    if (selectedPlan !== 'premium' && promotionData.is_home_gallery) {
+    if (promotionData.is_home_gallery) {
       subtotal += calculatePromoPrice('home_gallery', promotionData.home_gallery_duration, 14.99);
     }
     return subtotal;
@@ -342,6 +342,58 @@ const PostAd: React.FC = () => {
   const [price, setPrice] = useState("");
   const [priceType, setPriceType] = useState("amount");
   const [priceOptions, setPriceOptions] = useState<any[]>([]);
+
+  const getPriceOptionKey = (opt: any): string => {
+    if (opt.option_key) return opt.option_key;
+    const val = (opt.option_value || "").toLowerCase();
+    if (val.includes("fixed") || val.includes("amount") || val.includes("$")) return "amount";
+    if (val.includes("free")) return "free";
+    if (val.includes("contact")) return "contact";
+    if (val.includes("swap") || val.includes("trade")) return "swap";
+    return opt.option_value ? opt.option_value.toLowerCase().replace(/\s+/g, '_') : String(opt.id || "amount");
+  };
+
+  const normalizedPriceOptions = React.useMemo(() => {
+    const defaultOptions = [
+      { key: "amount", label: "Fixed Amount ($)" },
+      { key: "free", label: "Free" },
+      { key: "contact", label: "Please Contact" },
+      { key: "swap", label: "Swap / Trade" },
+    ];
+
+    if (!priceOptions || priceOptions.length === 0) {
+      return defaultOptions;
+    }
+
+    const seenKeys = new Set<string>();
+    const list: { key: string; label: string }[] = [];
+
+    // Process options from DB
+    priceOptions.forEach((opt: any) => {
+      const key = getPriceOptionKey(opt);
+      if (!seenKeys.has(key)) {
+        seenKeys.add(key);
+        list.push({ key, label: opt.option_value || key });
+      }
+    });
+
+    // Ensure 'amount' is present if not in DB
+    if (!seenKeys.has("amount")) {
+      list.unshift({ key: "amount", label: "Fixed Amount ($)" });
+    }
+
+    return list;
+  }, [priceOptions]);
+
+  const getPriceOptionLabel = (key: string): string => {
+    const found = normalizedPriceOptions.find((o) => o.key === key);
+    if (found) return found.label;
+    if (key === "amount") return "Fixed Amount ($)";
+    if (key === "free") return "Free";
+    if (key === "contact") return "Please Contact";
+    if (key === "swap") return "Swap / Trade";
+    return "Special Pricing";
+  };
   const [location, setLocation] = useState("");
   const [postalCode, setPostalCode] = useState("");
   const [latitude, setLatitude] = useState<number | null>(null);
@@ -911,9 +963,9 @@ const PostAd: React.FC = () => {
       };
 
       // Apply promotional plan properties & publishing modes
-      payload.is_top_ad = planToUse === 'boost' || planToUse === 'premium' || promotionData.is_top_ad;
-      payload.is_home_gallery = planToUse === 'premium' || promotionData.is_home_gallery;
-      payload.is_highlighted = planToUse === 'premium' || promotionData.is_highlighted;
+      payload.is_top_ad = promotionData.is_top_ad;
+      payload.is_home_gallery = promotionData.is_home_gallery;
+      payload.is_highlighted = promotionData.is_highlighted;
       payload.is_urgent = promotionData.is_urgent;
 
       // Multi-city or single city (Multi-city only available on paid plans)
@@ -2030,32 +2082,23 @@ const PostAd: React.FC = () => {
 
                     {/* Price Type Segmented Buttons */}
                     <div className="flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setPriceType("amount")}
-                        className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all border ${
-                          priceType === "amount"
-                            ? "bg-primary text-white border-primary shadow-xs"
-                            : "bg-white text-slate-700 border-slate-200 hover:border-primary/50"
-                        }`}
-                      >
-                        Fixed Amount ($)
-                      </button>
-                      {priceOptions.map((opt: any) => (
+                      {normalizedPriceOptions.map((opt) => (
                         <button
-                          key={opt.id}
+                          key={opt.key}
                           type="button"
                           onClick={() => {
-                            setPriceType(opt.option_key);
-                            setPrice("0");
+                            setPriceType(opt.key);
+                            if (opt.key !== "amount") {
+                              setPrice("0");
+                            }
                           }}
                           className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all border ${
-                            priceType === opt.option_key
+                            priceType === opt.key
                               ? "bg-primary text-white border-primary shadow-xs"
                               : "bg-white text-slate-700 border-slate-200 hover:border-primary/50"
                           }`}
                         >
-                          {opt.option_value}
+                          {opt.label}
                         </button>
                       ))}
                     </div>
@@ -2081,7 +2124,7 @@ const PostAd: React.FC = () => {
                     ) : (
                       <div className="h-12 px-4 rounded-xl bg-white border border-slate-200 flex items-center text-xs font-bold text-slate-600">
                         <span className="material-icons text-sm text-green-600 mr-2">check_circle</span>
-                        No numerical price required ({priceOptions.find(o => o.option_key === priceType)?.option_value || "Special Pricing"})
+                        No numerical price required ({getPriceOptionLabel(priceType)})
                       </div>
                     )}
                   </div>
@@ -2873,9 +2916,9 @@ const PostAd: React.FC = () => {
                 )}
               </section>
 
-              {/* ═══════════════════════════════════════════
+              {/* ===========================================
                   PUBLISHING MODES & PROMOTIONAL UPGRADES
-                 ═══════════════════════════════════════════ */}
+                 =========================================== */}
               <section className="space-y-4 pt-6 border-t border-slate-100">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
@@ -2895,9 +2938,7 @@ const PostAd: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* 1. HOMEPAGE AD / HOME GALLERY */}
                   <div className={`p-4.5 rounded-2xl border transition-all ${
-                    selectedPlan === 'premium'
-                      ? 'border-purple-200 bg-purple-50/50'
-                      : promotionData.is_home_gallery
+                    promotionData.is_home_gallery
                       ? 'border-blue-500 bg-blue-50/60 shadow-md ring-1 ring-blue-500/20'
                       : 'border-slate-200 bg-white hover:border-slate-300'
                   }`}>
@@ -2905,23 +2946,16 @@ const PostAd: React.FC = () => {
                       <label className="flex items-start gap-3 cursor-pointer flex-1 min-w-0 select-none">
                         <input
                           type="checkbox"
-                          disabled={selectedPlan === 'premium'}
-                          checked={selectedPlan === 'premium' || promotionData.is_home_gallery}
+                          checked={promotionData.is_home_gallery}
                           onChange={(e) => setPromotionData({ ...promotionData, is_home_gallery: e.target.checked })}
-                          className="w-5 h-5 text-blue-600 rounded border-slate-300 focus:ring-blue-500 mt-0.5 shrink-0 cursor-pointer disabled:opacity-75"
+                          className="w-5 h-5 text-blue-600 rounded border-slate-300 focus:ring-blue-500 mt-0.5 shrink-0 cursor-pointer"
                         />
                         <div className="min-w-0">
                           <p className="text-xs font-black text-slate-900 flex items-center gap-1.5 flex-wrap">
                             <span>Homepage Ad (Gallery)</span>
-                            {selectedPlan === 'premium' ? (
-                              <span className="text-[9px] font-black bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full uppercase tracking-wider">
-                                ✓ Included in Premium
-                              </span>
-                            ) : (
-                              <span className="text-[10px] font-black bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">
-                                ${calculatePromoPrice('home_gallery', promotionData.home_gallery_duration, 14.99).toFixed(2)} CAD
-                              </span>
-                            )}
+                            <span className="text-[10px] font-black bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">
+                              ${calculatePromoPrice('home_gallery', promotionData.home_gallery_duration, 14.99).toFixed(2)} CAD
+                            </span>
                           </p>
                           <p className="text-[11px] text-slate-500 font-medium mt-0.5 leading-relaxed">
                             Showcase your ad prominently on the HitAds Homepage Showcase Gallery.
@@ -2929,30 +2963,26 @@ const PostAd: React.FC = () => {
                         </div>
                       </label>
 
-                      {selectedPlan !== 'premium' && (
-                        <div className="shrink-0">
-                          <select
-                            disabled={!promotionData.is_home_gallery}
-                            value={promotionData.home_gallery_duration}
-                            onChange={(e) => setPromotionData({ ...promotionData, home_gallery_duration: Number(e.target.value) })}
-                            className="text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none shadow-2xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            {getPromotionOptions('home_gallery', 14.99).map((opt: any) => (
-                              <option key={opt.duration_days} value={opt.duration_days}>
-                                {opt.duration_days} Days (${Number(opt.price).toFixed(2)})
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                      )}
+                      <div className="shrink-0">
+                        <select
+                          disabled={!promotionData.is_home_gallery}
+                          value={promotionData.home_gallery_duration}
+                          onChange={(e) => setPromotionData({ ...promotionData, home_gallery_duration: Number(e.target.value) })}
+                          className="text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none shadow-2xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {getPromotionOptions('home_gallery', 14.99).map((opt: any) => (
+                            <option key={opt.duration_days} value={opt.duration_days}>
+                              {opt.duration_days} Days (${Number(opt.price).toFixed(2)})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                     </div>
                   </div>
 
                   {/* 2. TOP AD */}
                   <div className={`p-4.5 rounded-2xl border transition-all ${
-                    selectedPlan === 'boost' || selectedPlan === 'premium'
-                      ? 'border-blue-200 bg-blue-50/50'
-                      : promotionData.is_top_ad
+                    promotionData.is_top_ad
                       ? 'border-amber-500 bg-amber-50/60 shadow-md ring-1 ring-amber-500/20'
                       : 'border-slate-200 bg-white hover:border-slate-300'
                   }`}>
@@ -2960,23 +2990,16 @@ const PostAd: React.FC = () => {
                       <label className="flex items-start gap-3 cursor-pointer flex-1 min-w-0 select-none">
                         <input
                           type="checkbox"
-                          disabled={selectedPlan === 'boost' || selectedPlan === 'premium'}
-                          checked={selectedPlan === 'boost' || selectedPlan === 'premium' || promotionData.is_top_ad}
+                          checked={promotionData.is_top_ad}
                           onChange={(e) => setPromotionData({ ...promotionData, is_top_ad: e.target.checked })}
-                          className="w-5 h-5 text-amber-600 rounded border-slate-300 focus:ring-amber-500 mt-0.5 shrink-0 cursor-pointer disabled:opacity-75"
+                          className="w-5 h-5 text-amber-600 rounded border-slate-300 focus:ring-amber-500 mt-0.5 shrink-0 cursor-pointer"
                         />
                         <div className="min-w-0">
                           <p className="text-xs font-black text-slate-900 flex items-center gap-1.5 flex-wrap">
                             <span>Top Ad Placement</span>
-                            {selectedPlan === 'boost' || selectedPlan === 'premium' ? (
-                              <span className="text-[9px] font-black bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full uppercase tracking-wider">
-                                ✓ Included in {selectedPlan.toUpperCase()}
-                              </span>
-                            ) : (
-                              <span className="text-[10px] font-black bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full">
-                                ${calculatePromoPrice('top_ad', promotionData.top_ad_duration, 9.99).toFixed(2)} CAD
-                              </span>
-                            )}
+                            <span className="text-[10px] font-black bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full">
+                              ${calculatePromoPrice('top_ad', promotionData.top_ad_duration, 9.99).toFixed(2)} CAD
+                            </span>
                           </p>
                           <p className="text-[11px] text-slate-500 font-medium mt-0.5 leading-relaxed">
                             Positioned at the very top of category and search results above standard ads.
@@ -2984,22 +3007,20 @@ const PostAd: React.FC = () => {
                         </div>
                       </label>
 
-                      {selectedPlan === 'free' && (
-                        <div className="shrink-0">
-                          <select
-                            disabled={!promotionData.is_top_ad}
-                            value={promotionData.top_ad_duration}
-                            onChange={(e) => setPromotionData({ ...promotionData, top_ad_duration: Number(e.target.value) })}
-                            className="text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 focus:ring-2 focus:ring-amber-500 outline-none shadow-2xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            {getPromotionOptions('top_ad', 9.99).map((opt: any) => (
-                              <option key={opt.duration_days} value={opt.duration_days}>
-                                {opt.duration_days} Days (${Number(opt.price).toFixed(2)})
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                      )}
+                      <div className="shrink-0">
+                        <select
+                          disabled={!promotionData.is_top_ad}
+                          value={promotionData.top_ad_duration}
+                          onChange={(e) => setPromotionData({ ...promotionData, top_ad_duration: Number(e.target.value) })}
+                          className="text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 focus:ring-2 focus:ring-amber-500 outline-none shadow-2xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {getPromotionOptions('top_ad', 9.99).map((opt: any) => (
+                            <option key={opt.duration_days} value={opt.duration_days}>
+                              {opt.duration_days} Days (${Number(opt.price).toFixed(2)})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                     </div>
                   </div>
 
@@ -3052,9 +3073,7 @@ const PostAd: React.FC = () => {
 
                   {/* 4. HIGHLIGHTED AD */}
                   <div className={`p-4.5 rounded-2xl border transition-all ${
-                    selectedPlan === 'premium'
-                      ? 'border-purple-200 bg-purple-50/50'
-                      : promotionData.is_highlighted
+                    promotionData.is_highlighted
                       ? 'border-yellow-500 bg-yellow-50/60 shadow-md ring-1 ring-yellow-500/20'
                       : 'border-slate-200 bg-white hover:border-slate-300'
                   }`}>
@@ -3062,23 +3081,16 @@ const PostAd: React.FC = () => {
                       <label className="flex items-start gap-3 cursor-pointer flex-1 min-w-0 select-none">
                         <input
                           type="checkbox"
-                          disabled={selectedPlan === 'premium'}
-                          checked={selectedPlan === 'premium' || promotionData.is_highlighted}
+                          checked={promotionData.is_highlighted}
                           onChange={(e) => setPromotionData({ ...promotionData, is_highlighted: e.target.checked })}
-                          className="w-5 h-5 text-yellow-600 rounded border-slate-300 focus:ring-yellow-500 mt-0.5 shrink-0 cursor-pointer disabled:opacity-75"
+                          className="w-5 h-5 text-yellow-600 rounded border-slate-300 focus:ring-yellow-500 mt-0.5 shrink-0 cursor-pointer"
                         />
                         <div className="min-w-0">
                           <p className="text-xs font-black text-slate-900 flex items-center gap-1.5 flex-wrap">
                             <span>Highlighted Background</span>
-                            {selectedPlan === 'premium' ? (
-                              <span className="text-[9px] font-black bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full uppercase tracking-wider">
-                                ✓ Included in Premium
-                              </span>
-                            ) : (
-                              <span className="text-[10px] font-black bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full">
-                                ${calculatePromoPrice('highlighted', promotionData.highlighted_duration, 4.99).toFixed(2)} CAD
-                              </span>
-                            )}
+                            <span className="text-[10px] font-black bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full">
+                              ${calculatePromoPrice('highlighted', promotionData.highlighted_duration, 4.99).toFixed(2)} CAD
+                            </span>
                           </p>
                           <p className="text-[11px] text-slate-500 font-medium mt-0.5 leading-relaxed">
                             Distinct highlighted background that catches the buyer's eye when scrolling listings.
@@ -3086,22 +3098,20 @@ const PostAd: React.FC = () => {
                         </div>
                       </label>
 
-                      {selectedPlan !== 'premium' && (
-                        <div className="shrink-0">
-                          <select
-                            disabled={!promotionData.is_highlighted}
-                            value={promotionData.highlighted_duration}
-                            onChange={(e) => setPromotionData({ ...promotionData, highlighted_duration: Number(e.target.value) })}
-                            className="text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 focus:ring-2 focus:ring-yellow-500 outline-none shadow-2xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            {getPromotionOptions('highlighted', 4.99).map((opt: any) => (
-                              <option key={opt.duration_days} value={opt.duration_days}>
-                                {opt.duration_days} Days (${Number(opt.price).toFixed(2)})
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                      )}
+                      <div className="shrink-0">
+                        <select
+                          disabled={!promotionData.is_highlighted}
+                          value={promotionData.highlighted_duration}
+                          onChange={(e) => setPromotionData({ ...promotionData, highlighted_duration: Number(e.target.value) })}
+                          className="text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 focus:ring-2 focus:ring-yellow-500 outline-none shadow-2xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {getPromotionOptions('highlighted', 4.99).map((opt: any) => (
+                            <option key={opt.duration_days} value={opt.duration_days}>
+                              {opt.duration_days} Days (${Number(opt.price).toFixed(2)})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -3140,8 +3150,8 @@ const PostAd: React.FC = () => {
                         {selectedPlan === 'free' 
                           ? 'Standard 10-photo listing, 1 city location, free Canada-wide listing.' 
                           : selectedPlan === 'boost'
-                          ? 'Priority Top Placement, 20 photos, Multi-City posting, YouTube/Facebook links, 7-day auto refresh.'
-                          : 'Homepage Showcase Gallery, Top Placement, 20 photos, Multi-City posting, YouTube/Facebook links, 3-day auto refresh.'}
+                          ? 'Priority search placement, up to 20 photos, YouTube/Facebook links, 7-day auto refresh.'
+                          : 'Up to 20 photos, Multi-City posting (up to 5 cities), YouTube/Facebook links, 3-day auto refresh.'}
                       </p>
                     </div>
                   </div>
@@ -3234,7 +3244,7 @@ const PostAd: React.FC = () => {
                 <span className="font-black text-green-600 text-right">
                   {priceType === "amount" 
                     ? (price ? `$${parseFloat(price).toLocaleString()}` : "$0.00")
-                    : (priceOptions.find(o => o.option_key === priceType)?.option_value || "Special Pricing")}
+                    : getPriceOptionLabel(priceType)}
                 </span>
               </div>
 
