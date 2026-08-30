@@ -169,15 +169,15 @@ const Layout: React.FC<LayoutProps> = ({
               </Link>
             </div>
 
-            {/* Desktop Search */}
-            <div className="hidden lg:flex items-center justify-center flex-[2] max-w-3xl">
+            {/* Desktop / Tablet Search */}
+            <div className="hidden md:flex items-center justify-center flex-[2] max-w-xl lg:max-w-3xl mx-2 lg:mx-4">
               {!isLoginPage && (
                 <form
                   onSubmit={handleGlobalSearch}
-                  className="w-full relative flex items-center bg-white border border-slate-200 rounded-full p-1.5 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.08)] hover:shadow-[0_4px_25px_-4px_rgba(0,0,0,0.12)] focus-within:ring-4 focus-within:ring-primary/10 focus-within:border-primary transition-all duration-300"
+                  className="w-full relative flex items-center bg-white border border-slate-200 rounded-full p-1 sm:p-1.5 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.08)] hover:shadow-[0_4px_25px_-4px_rgba(0,0,0,0.12)] focus-within:ring-4 focus-within:ring-primary/10 focus-within:border-primary transition-all duration-300"
                 >
-                  <div className="flex-1 relative flex items-center group">
-                    <span className="material-icons absolute left-4 text-slate-400 text-xl group-focus-within:text-primary transition-colors">
+                  <div className="flex-1 relative flex items-center group min-w-0">
+                    <span className="material-icons absolute left-3 sm:left-4 text-slate-400 text-lg sm:text-xl group-focus-within:text-primary transition-colors pointer-events-none">
                       search
                     </span>
                     <input
@@ -185,27 +185,29 @@ const Layout: React.FC<LayoutProps> = ({
                       value={globalSearch}
                       onChange={(e) => setGlobalSearch(e.target.value)}
                       placeholder="What are you looking for?"
-                      className="w-full bg-transparent border-0 border-none outline-none focus:outline-none focus:ring-0 focus:border-none focus-visible:outline-none shadow-none text-sm font-bold text-slate-800 placeholder:text-slate-400 placeholder:font-medium pl-12 pr-4 py-2.5"
+                      className="w-full bg-transparent border-0 border-none outline-none focus:outline-none focus:ring-0 focus:border-none focus-visible:outline-none shadow-none text-xs sm:text-sm font-bold text-slate-800 placeholder:text-slate-400 placeholder:font-medium pl-9 sm:pl-12 pr-2 sm:pr-4 py-2 sm:py-2.5 truncate"
                     />
                   </div>
-                  <div className="w-px h-6 bg-slate-200 mx-1"></div>
-                  <LocationAutocomplete
-                    value={globalLocation}
-                    onChange={(val) => setGlobalLocation(val)}
-                    onSelectLocation={(item) => {
-                      setGlobalLocation(item.fullAddress);
-                      localStorage.setItem("user_location", item.fullAddress);
-                      localStorage.setItem("user_lat", item.lat);
-                      localStorage.setItem("user_lon", item.lon);
-                      window.dispatchEvent(new Event("location_updated"));
-                    }}
-                    variant="navbar"
-                    placeholder="City, Province or Postal Code..."
-                    syncWithLocalStorage={true}
-                  />
+                  <div className="w-px h-6 bg-slate-200 mx-1 shrink-0"></div>
+                  <div className="max-w-[140px] sm:max-w-[180px] lg:max-w-xs shrink-0">
+                    <LocationAutocomplete
+                      value={globalLocation}
+                      onChange={(val) => setGlobalLocation(val)}
+                      onSelectLocation={(item) => {
+                        setGlobalLocation(item.fullAddress);
+                        localStorage.setItem("user_location", item.fullAddress);
+                        localStorage.setItem("user_lat", item.lat);
+                        localStorage.setItem("user_lon", item.lon);
+                        window.dispatchEvent(new Event("location_updated"));
+                      }}
+                      variant="navbar"
+                      placeholder="City, Province..."
+                      syncWithLocalStorage={true}
+                    />
+                  </div>
                   <button
                     type="submit"
-                    className="bg-primary hover:bg-primary-hover text-white px-8 py-3 rounded-full transition-all flex items-center justify-center font-black text-[11px] uppercase tracking-widest shadow-sm hover:shadow-md hover:-translate-y-[1px] active:translate-y-0 ml-1 shrink-0"
+                    className="bg-primary hover:bg-primary-hover text-white px-4 sm:px-6 lg:px-8 py-2.5 sm:py-3 rounded-full transition-all flex items-center justify-center font-black text-[10px] sm:text-[11px] uppercase tracking-widest shadow-sm hover:shadow-md hover:-translate-y-[1px] active:translate-y-0 ml-1 shrink-0"
                   >
                     Search
                   </button>
@@ -214,7 +216,7 @@ const Layout: React.FC<LayoutProps> = ({
             </div>
 
             {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center gap-6 flex-1 justify-end shrink-0">
+            <div className="hidden md:flex items-center gap-3 lg:gap-6 flex-1 justify-end shrink-0">
               {!isLoginPage && (
                 <Link
                   href="/post-ad"
@@ -475,21 +477,21 @@ const Layout: React.FC<LayoutProps> = ({
             className="hidden md:block w-full border-t border-slate-200 bg-white shadow-sm relative z-40"
             onMouseLeave={() => setHoveredCategory(null)}
           >
-            <div className="w-full px-4 sm:px-6 lg:px-10 overflow-x-auto custom-scrollbar relative z-50 bg-white">
-              <ul className="flex items-center justify-center min-w-max mx-auto">
+            <div className="w-full px-4 sm:px-6 lg:px-8 overflow-x-auto scrollbar-hide relative z-50 bg-white">
+              <ul className="flex items-center justify-start xl:justify-center min-w-max mx-auto py-0.5">
                 {CATEGORIES.map((cat, index) => (
                   <React.Fragment key={cat}>
                     <li onMouseEnter={() => setHoveredCategory(cat)}>
                       <Link
                         href={`/search?cat=${encodeURIComponent(cat)}`}
                         onClick={handleNavClick}
-                        className={`block px-4 lg:px-6 py-3 text-sm font-bold transition-all whitespace-nowrap border-b-2 ${hoveredCategory === cat ? "border-primary text-primary" : "border-transparent text-slate-700 hover:text-primary hover:border-primary/50"}`}
+                        className={`block px-3 sm:px-4 lg:px-5 py-2.5 sm:py-3 text-xs lg:text-sm font-bold transition-all whitespace-nowrap border-b-2 ${hoveredCategory === cat ? "border-primary text-primary" : "border-transparent text-slate-700 hover:text-primary hover:border-primary/50"}`}
                       >
                         {cat}
                       </Link>
                     </li>
                     {index < CATEGORIES.length - 1 && (
-                      <div className="h-6 w-px bg-slate-200 shrink-0"></div>
+                      <div className="h-4 w-px bg-slate-200 shrink-0"></div>
                     )}
                   </React.Fragment>
                 ))}
