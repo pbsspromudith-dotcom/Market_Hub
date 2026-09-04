@@ -930,7 +930,7 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn, initialCategories = [], initial
                 </Link>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
                 {homeGalleryItems.map((item: any) => (
                   <Link 
                     key={item.id} 
@@ -973,125 +973,132 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn, initialCategories = [], initial
           );
         })()}
 
-        {/* Recently Added & Sidebar */}
-        <div className="flex flex-col lg:flex-row gap-8 lg:gap-10 xl:gap-12 items-start">
-          <div className="flex-grow w-full">
-            <div className="flex justify-between items-end mb-6 sm:mb-8">
-              <div>
-                <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mb-1">Recently Added</h2>
-                <p className="text-slate-500 font-medium text-xs sm:text-sm">
-                  New items posted in your area
-                </p>
-              </div>
-              <Link 
-                href="/search"
-                onClick={() => window.scrollTo(0, 0)}
-                className="text-xs font-black text-primary uppercase tracking-widest hover:underline shrink-0"
-              >
-                See All
-              </Link>
+        {/* Recently Added Section - 4 Ads in 1 Row & Fully Responsive */}
+        <section className="mb-14 sm:mb-20">
+          <div className="flex justify-between items-end mb-6 sm:mb-8">
+            <div>
+              <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mb-1">Recently Added</h2>
+              <p className="text-slate-500 font-medium text-xs sm:text-sm">
+                New items posted in your area
+              </p>
             </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
-              {listings
-                .filter((item: any) => {
-                  const activeLoc = locationSearch || (typeof window !== "undefined" ? localStorage.getItem("user_location") : "") || "";
-                  return isLocationMatch(item.location, activeLoc);
-                })
-                .slice(0, homepageAdCount)
-                .map((item: any) => (
-                <Link 
-                  href={`/item/${item.id}`}
-                  key={item.id}
-                  onClick={() => window.scrollTo(0, 0)}
-                  className={`group rounded-2xl sm:rounded-[2rem] border border-slate-200/80 overflow-hidden hover:shadow-xl hover:border-primary/40 transition-all ${item.is_featured ? 'bg-accent-beige' : 'bg-white'}`}
-                >
-                  <div className="aspect-[4/3] relative flex items-center justify-center bg-slate-100 overflow-hidden">
-                    <img
-                      src={
-                        item.image ||
-                        "https://picsum.photos/seed/default/800/600"
-                      }
-                      alt={item.title}
-                      loading="lazy"
-                      width="800"
-                      height="600"
-                      decoding="async"
-                      className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-500"
-                    />
-                    <button 
-                      aria-label="Add to favorites"
-                      className="absolute top-3.5 right-3.5 sm:top-4 sm:right-4 w-9 h-9 bg-white/90 backdrop-blur rounded-full flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors shadow-sm"
-                    >
-                      <span className="material-icons text-lg">
-                        favorite_border
-                      </span>
-                    </button>
-                    {item.is_featured ? (
-                      <div className="absolute top-3.5 left-3.5 sm:top-4 sm:left-4 bg-accent-gold text-charcoal text-[10px] font-black px-2.5 py-1 rounded-xl shadow-lg">
-                        FEATURED
-                      </div>
-                    ) : null}
-                  </div>
-                  <div className="p-5 sm:p-6">
-                    <div className="text-slate-900 font-black text-xl sm:text-2xl mb-1 sm:mb-2">
-                      {formatPrice(item.price, item.price_type)}
-                    </div>
-                    <h3 className="font-bold text-slate-800 line-clamp-2 min-h-[2.5rem] sm:min-h-[3rem] text-base sm:text-lg group-hover:text-primary transition-colors mb-4">
-                      {item.title}
-                    </h3>
-                    <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase tracking-widest pt-3 sm:pt-4 mt-auto border-t border-slate-100">
-                      <span className="flex items-center gap-1 truncate">
-                        <span className="material-icons text-[12px] text-slate-gray">
-                          schedule
-                        </span>{" "}
-                        {item.created_at ? new Date(item.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : (item.time || "Recently")}
-                      </span>
-                      <span className="flex items-center gap-1 shrink-0 ml-2">
-                        <span className="material-icons text-[12px] text-slate-gray">
-                          location_on
-                        </span>{" "}
-                        {item.location || 'Canada'}
-                      </span>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
+            <Link 
+              href="/search"
+              onClick={() => window.scrollTo(0, 0)}
+              className="text-xs font-black text-primary uppercase tracking-widest hover:underline shrink-0"
+            >
+              See All
+            </Link>
           </div>
 
-          {/* Sidebar */}
-          <aside className="w-full lg:w-80 space-y-6 sm:space-y-8 flex-shrink-0">
-            {!isLoggedIn && (
-              <div className="bg-secondary rounded-2xl sm:rounded-[2.5rem] p-6 sm:p-8 text-white relative overflow-hidden group shadow-lg shadow-secondary/15">
-                <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-colors"></div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+            {listings
+              .filter((item: any) => {
+                const activeLoc = locationSearch || (typeof window !== "undefined" ? localStorage.getItem("user_location") : "") || "";
+                return isLocationMatch(item.location, activeLoc);
+              })
+              .slice(0, homepageAdCount)
+              .map((item: any) => (
+              <Link 
+                href={`/item/${item.id}`}
+                key={item.id}
+                onClick={() => window.scrollTo(0, 0)}
+                className={`group rounded-2xl sm:rounded-[2rem] border border-slate-200/80 overflow-hidden hover:shadow-xl hover:border-primary/40 transition-all flex flex-col ${item.is_featured ? 'bg-accent-beige' : 'bg-white'}`}
+              >
+                <div className="aspect-[4/3] relative flex items-center justify-center bg-slate-100 overflow-hidden">
+                  <img
+                    src={
+                      item.image ||
+                      "https://picsum.photos/seed/default/800/600"
+                    }
+                    alt={item.title}
+                    loading="lazy"
+                    width="800"
+                    height="600"
+                    decoding="async"
+                    className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <button 
+                    aria-label="Add to favorites"
+                    className="absolute top-3.5 right-3.5 sm:top-4 sm:right-4 w-9 h-9 bg-white/90 backdrop-blur rounded-full flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors shadow-sm"
+                  >
+                    <span className="material-icons text-lg">
+                      favorite_border
+                    </span>
+                  </button>
+                  {item.is_featured ? (
+                    <div className="absolute top-3.5 left-3.5 sm:top-4 sm:left-4 bg-accent-gold text-charcoal text-[10px] font-black px-2.5 py-1 rounded-xl shadow-lg">
+                      FEATURED
+                    </div>
+                  ) : null}
+                </div>
+                <div className="p-4 sm:p-6 flex flex-col flex-grow">
+                  <div className="text-slate-900 font-black text-xl sm:text-2xl mb-1 sm:mb-2">
+                    {formatPrice(item.price, item.price_type)}
+                  </div>
+                  <h3 className="font-bold text-slate-800 line-clamp-2 min-h-[2.5rem] sm:min-h-[3rem] text-sm sm:text-base group-hover:text-primary transition-colors mb-4">
+                    {item.title}
+                  </h3>
+                  <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase tracking-widest pt-3 sm:pt-4 mt-auto border-t border-slate-100">
+                    <span className="flex items-center gap-1 truncate">
+                      <span className="material-icons text-[12px] text-slate-gray">
+                        schedule
+                      </span>{" "}
+                      {item.created_at ? new Date(item.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : (item.time || "Recently")}
+                    </span>
+                    <span className="flex items-center gap-1 shrink-0 ml-2">
+                      <span className="material-icons text-[12px] text-slate-gray">
+                        location_on
+                      </span>{" "}
+                      {item.location || 'Canada'}
+                    </span>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        {/* Community & Trust Section */}
+        <section className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
+          {!isLoggedIn && (
+            <div className="bg-secondary rounded-2xl sm:rounded-[2.5rem] p-6 sm:p-8 text-white relative overflow-hidden group shadow-lg shadow-secondary/15 flex flex-col justify-between">
+              <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-colors"></div>
+              <div>
                 <h3 className="text-xl sm:text-2xl font-black mb-2 sm:mb-3 relative z-10">
                   Join HitAds
                 </h3>
-                <p className="text-white/90 text-xs sm:text-sm mb-6 leading-relaxed relative z-10 font-medium">
-                  Create a free account to contact sellers and save your favorite items.
+                <p className="text-white/90 text-xs sm:text-sm mb-6 leading-relaxed relative z-10 font-medium max-w-md">
+                  Create a free account to contact sellers, post your own ads, and save your favorite items across Canada.
                 </p>
-                <Link 
-                  href="/login"
-                  onClick={() => window.scrollTo(0, 0)}
-                  className="block w-full bg-white text-slate-900 font-black py-3.5 rounded-xl sm:rounded-2xl text-center transition-all shadow-lg hover:bg-slate-100 text-xs sm:text-sm uppercase tracking-wider"
-                >
-                  Join Free
-                </Link>
               </div>
-            )}
+              <Link 
+                href="/login"
+                onClick={() => window.scrollTo(0, 0)}
+                className="inline-block w-full sm:w-auto self-start bg-white text-slate-900 font-black py-3.5 px-8 rounded-xl sm:rounded-2xl text-center transition-all shadow-lg hover:bg-slate-100 text-xs sm:text-sm uppercase tracking-wider"
+              >
+                Join Free
+              </Link>
+            </div>
+          )}
 
-            <div className="bg-white rounded-2xl sm:rounded-[2.5rem] border border-slate-200/80 p-6 sm:p-8 shadow-sm">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary-soft/20 rounded-xl sm:rounded-2xl flex items-center justify-center text-primary mb-4 sm:mb-6">
-                <span className="material-icons text-xl sm:text-2xl">shield</span>
+          <div className={`bg-white rounded-2xl sm:rounded-[2.5rem] border border-slate-200/80 p-6 sm:p-8 shadow-sm flex flex-col justify-between ${isLoggedIn ? 'md:col-span-2' : ''}`}>
+            <div>
+              <div className="flex items-center gap-3 mb-4 sm:mb-5">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary-soft/20 rounded-xl sm:rounded-2xl flex items-center justify-center text-primary shrink-0">
+                  <span className="material-icons text-xl sm:text-2xl">shield</span>
+                </div>
+                <div>
+                  <h3 className="font-black text-base sm:text-lg text-slate-900">
+                    Safety First
+                  </h3>
+                  <p className="text-xs text-slate-500 font-medium">
+                    We prioritize secure trading and verified interactions for every user on our platform.
+                  </p>
+                </div>
               </div>
-              <h3 className="font-black mb-2 sm:mb-3 text-base sm:text-lg text-slate-900">
-                Safety First
-              </h3>
-              <p className="text-xs text-slate-500 leading-relaxed mb-6 font-medium">
-                We prioritize secure trading and verified interactions for every user on our platform.
-              </p>
-              <ul className="space-y-3 sm:space-y-4 mb-6 sm:mb-8">
+
+              <ul className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 my-4 sm:my-6">
                 {[
                   "Verified Identities",
                   "Safe Exchange Zones",
@@ -1099,25 +1106,25 @@ const Home: React.FC<HomeProps> = ({ isLoggedIn, initialCategories = [], initial
                 ].map((t) => (
                   <li
                     key={t}
-                    className="flex items-center gap-2.5 sm:gap-3 text-[10px] font-black uppercase tracking-widest text-slate-500"
+                    className="flex items-center gap-2 text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-100"
                   >
-                    <span className="material-icons text-primary text-sm sm:text-base">
+                    <span className="material-icons text-primary text-sm sm:text-base shrink-0">
                       check_circle
                     </span>
-                    {t}
+                    <span className="truncate">{t}</span>
                   </li>
                 ))}
               </ul>
-              <Link 
-                href="/help"
-                onClick={() => window.scrollTo(0, 0)}
-                className="text-xs font-black text-primary hover:underline uppercase tracking-widest inline-flex items-center gap-1"
-              >
-                Learn More <span className="material-icons text-xs">arrow_forward</span>
-              </Link>
             </div>
-          </aside>
-        </div>
+            <Link 
+              href="/help"
+              onClick={() => window.scrollTo(0, 0)}
+              className="text-xs font-black text-primary hover:underline uppercase tracking-widest inline-flex items-center gap-1 self-start"
+            >
+              Learn More <span className="material-icons text-xs">arrow_forward</span>
+            </Link>
+          </div>
+        </section>
       </main>
     </div>
   );

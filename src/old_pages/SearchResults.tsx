@@ -500,7 +500,7 @@ const SearchResults: React.FC = () => {
             </div>
           </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {isLoading && <p className="text-center p-10 font-bold col-span-full">Loading listings...</p>}
               {!isLoading && filteredListings.length === 0 && <p className="text-center p-10 font-bold text-slate-500 col-span-full">No matching listings found.</p>}
               {paginatedListings.map((item) => (

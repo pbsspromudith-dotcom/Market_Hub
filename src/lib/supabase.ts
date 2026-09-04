@@ -9,9 +9,14 @@ if (!supabaseUrl || !supabaseKey) {
   console.warn('Missing Supabase URL or Key in environment variables');
 }
 
-export const supabase = createClient(supabaseUrl, supabaseKey, {
-  auth: {
-    persistSession: false,
-    autoRefreshToken: false,
+// Provide fallback placeholder values if env vars are missing to prevent fatal crashes during module evaluation / build-time page data collection
+export const supabase = createClient(
+  supabaseUrl || 'https://placeholder.supabase.co',
+  supabaseKey || 'placeholder-anon-key',
+  {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    }
   }
-});
+);
