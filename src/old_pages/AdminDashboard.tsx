@@ -7,6 +7,9 @@ import Link from 'next/link';
 import { formatPrice } from '../constants';
 import { useUI } from '../components/UIProvider';
 import PromotionsAdmin from '@/components/admin/PromotionsAdmin';
+import AdReviewModal from '@/components/admin/AdReviewModal';
+import AdEditModal from '@/components/admin/AdEditModal';
+import PromoteOutreachModal from '@/components/admin/PromoteOutreachModal';
 
 const AdminDashboard: React.FC = () => {
   const [adminStats, setAdminStats] = useState<any>(null);
@@ -14,6 +17,10 @@ const AdminDashboard: React.FC = () => {
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+  const [reviewingListing, setReviewingListing] = useState<any | null>(null);
+  const [isReviewingPending, setIsReviewingPending] = useState(false);
+  const [editingListing, setEditingListing] = useState<any | null>(null);
+  const [outreachListing, setOutreachListing] = useState<any | null>(null);
   const [options, setOptions] = useState<any[]>([]);
   const [newOptionType, setNewOptionType] = useState('category');
   const [newOptionValue, setNewOptionValue] = useState('');
@@ -1025,6 +1032,31 @@ const AdminDashboard: React.FC = () => {
     setTimeout(() => setApprovalMsg(null), 4000);
   };
 
+  const handleReviewModalApprove = async (listingId: number, approvalId?: number) => {
+    const listing = pendingApprovals.find(p => p.id === listingId) || reviewingListing;
+    const pendingStage = (listing?.approval_stages || []).find((s: any) => s.status === 'pending');
+    const stageId = approvalId || pendingStage?.id;
+    if (stageId) {
+      await handleApproveReject(stageId, listingId, 'approve');
+      setReviewingListing(null);
+    }
+  };
+
+  const handleReviewModalReject = async (listingId: number, approvalId?: number, reason?: string) => {
+    const listing = pendingApprovals.find(p => p.id === listingId) || reviewingListing;
+    const pendingStage = (listing?.approval_stages || []).find((s: any) => s.status === 'pending');
+    const stageId = approvalId || pendingStage?.id;
+    if (stageId) {
+      await handleApproveReject(stageId, listingId, 'reject', reason);
+      setReviewingListing(null);
+    }
+  };
+
+  const handleListingSaved = (updatedListing: any) => {
+    setListings(prev => prev.map(l => l.id === updatedListing.id ? { ...l, ...updatedListing } : l));
+    fetchListings();
+  };
+
   const handleDeleteListing = (id: string) => {
     showConfirm({
       title: 'Delete Listing',
@@ -1521,55 +1553,113 @@ const AdminDashboard: React.FC = () => {
                       )}
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        <button
-                          onClick={() => handleTogglePromotion(l.id, 'is_home_gallery', !!l.is_home_gallery)}
-                          className={`px-2 py-1 rounded text-[10px] font-bold border transition-colors ${
-                            l.is_home_gallery
-                              ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-                              : 'bg-slate-100 text-slate-400 border-slate-200 hover:border-blue-300 hover:text-blue-600'
-                          }`}
-                          title="Toggle Home Page Gallery Promotion"
-                        >
-                          Home Gallery
-                        </button>
-                        <button
-                          onClick={() => handleTogglePromotion(l.id, 'is_top_ad', !!l.is_top_ad)}
-                          className={`px-2 py-1 rounded text-[10px] font-bold border transition-colors ${
-                            l.is_top_ad
-                              ? 'bg-amber-500 text-white border-amber-500 shadow-sm'
-                              : 'bg-slate-100 text-slate-400 border-slate-200 hover:border-amber-300 hover:text-amber-600'
-                          }`}
-                          title="Toggle Top Ad Promotion"
-                        >
-                          Top Ad
-                        </button>
-                        <button
-                          onClick={() => handleTogglePromotion(l.id, 'is_featured', !!l.is_featured)}
-                          className={`px-2 py-1 rounded text-[10px] font-bold border transition-colors ${
-                            l.is_featured
-                              ? 'bg-purple-600 text-white border-purple-600 shadow-sm'
-                              : 'bg-slate-100 text-slate-400 border-slate-200 hover:border-purple-300 hover:text-purple-600'
-                          }`}
-                          title="Toggle Featured Ad Promotion"
-                        >
-                          Featured
-                        </button>
+                      <div className="space-y-2">
+                        {/* Promoted Status Badge + Outreach Trigger */}
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {(l.is_home_gallery || l.is_top_ad || l.is_featured) ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-purple-100 text-purple-700 border border-purple-200">
+                              <span className="w-1.5 h-1.5 rounded-full bg-purple-600 animate-pulse"></span>
+                              Promoted
+                            </span>
+                          ) : l.is_promo_expired || l.had_promotion ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-amber-100 text-amber-700 border border-amber-200">
+                              Promo Expired
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-slate-100 text-slate-500">
+                              Standard
+                            </span>
+                          )}
+
+                          {/* Re-promotion / Outreach Button */}
+                          <button
+                            type="button"
+                            onClick={() => setOutreachListing(l)}
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white border border-indigo-200 transition-colors shadow-2xs"
+                            title="Promote ad via email or send custom message"
+                          >
+                            <span className="material-icons text-xs">campaign</span>
+                            <span>Promote / Email</span>
+                          </button>
+                        </div>
+
+                        {/* Quick Promotion Toggles */}
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <button
+                            onClick={() => handleTogglePromotion(l.id, 'is_home_gallery', !!l.is_home_gallery)}
+                            className={`px-2 py-0.5 rounded text-[9px] font-bold border transition-colors ${
+                              l.is_home_gallery
+                                ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                                : 'bg-slate-100 text-slate-400 border-slate-200 hover:border-blue-300 hover:text-blue-600'
+                            }`}
+                            title="Toggle Home Page Gallery Promotion"
+                          >
+                            Home Gallery
+                          </button>
+                          <button
+                            onClick={() => handleTogglePromotion(l.id, 'is_top_ad', !!l.is_top_ad)}
+                            className={`px-2 py-0.5 rounded text-[9px] font-bold border transition-colors ${
+                              l.is_top_ad
+                                ? 'bg-amber-500 text-white border-amber-500 shadow-xs'
+                                : 'bg-slate-100 text-slate-400 border-slate-200 hover:border-amber-300 hover:text-amber-600'
+                            }`}
+                            title="Toggle Top Ad Promotion"
+                          >
+                            Top Ad
+                          </button>
+                          <button
+                            onClick={() => handleTogglePromotion(l.id, 'is_featured', !!l.is_featured)}
+                            className={`px-2 py-0.5 rounded text-[9px] font-bold border transition-colors ${
+                              l.is_featured
+                                ? 'bg-purple-600 text-white border-purple-600 shadow-xs'
+                                : 'bg-slate-100 text-slate-400 border-slate-200 hover:border-purple-300 hover:text-purple-600'
+                            }`}
+                            title="Toggle Featured Ad Promotion"
+                          >
+                            Featured
+                          </button>
+                        </div>
                       </div>
                     </td>
+
+                    {/* Actions Column: Review, Edit, Delete */}
                     <td className="px-6 py-4 text-right">
-                      <button 
-                        onClick={() => handleDeleteListing(l.id)}
-                        disabled={isDeleting === l.id}
-                        className="w-8 h-8 rounded-lg bg-red-50 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center transition-colors disabled:opacity-50 inline-flex"
-                        title="Delete Listing"
-                      >
-                        {isDeleting === l.id ? (
-                          <span className="material-icons text-sm animate-spin">sync</span>
-                        ) : (
-                          <span className="material-icons text-sm">delete</span>
-                        )}
-                      </button>
+                      <div className="inline-flex items-center gap-1.5 justify-end">
+                        {/* 1. Review: Access full information with a single click */}
+                        <button
+                          onClick={() => {
+                            setReviewingListing(l);
+                            setIsReviewingPending(false);
+                          }}
+                          className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white flex items-center justify-center transition-colors shadow-2xs"
+                          title="Review: Access full ad information"
+                        >
+                          <span className="material-icons text-base">visibility</span>
+                        </button>
+
+                        {/* 2. Edit: Make changes to correct mistakes or remove unwanted images */}
+                        <button
+                          onClick={() => setEditingListing(l)}
+                          className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 hover:bg-amber-600 hover:text-white flex items-center justify-center transition-colors shadow-2xs"
+                          title="Edit: Correct mistakes or remove unwanted images"
+                        >
+                          <span className="material-icons text-base">edit</span>
+                        </button>
+
+                        {/* 3. Delete: Remove the ad entirely */}
+                        <button 
+                          onClick={() => handleDeleteListing(l.id)}
+                          disabled={isDeleting === l.id}
+                          className="w-8 h-8 rounded-lg bg-red-50 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center transition-colors disabled:opacity-50 shadow-2xs"
+                          title="Delete: Remove the ad entirely"
+                        >
+                          {isDeleting === l.id ? (
+                            <span className="material-icons text-sm animate-spin">sync</span>
+                          ) : (
+                            <span className="material-icons text-base">delete</span>
+                          )}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -2836,22 +2926,76 @@ const AdminDashboard: React.FC = () => {
                   {pendingApprovals.map((listing: any) => (
                     <div key={listing.id} className="border border-slate-200 rounded-2xl overflow-hidden hover:shadow-md transition-shadow">
                       {/* Listing Header */}
-                      <div className="flex items-center gap-4 p-5 bg-slate-50/50 border-b border-slate-100">
-                        <div className="w-14 h-14 rounded-xl bg-slate-100 overflow-hidden flex-shrink-0 border border-slate-200">
-                          {listing.image ? (
-                            <img src={listing.image} className="w-full h-full object-cover" alt="" />
-                          ) : (
-                            <span className="w-full h-full flex items-center justify-center material-icons text-slate-400">image</span>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-black text-slate-800 truncate">{listing.title}</h3>
-                          <div className="flex items-center gap-3 mt-1 text-xs text-slate-400">
-                            <span className="flex items-center gap-1"><span className="material-icons text-xs">person</span>{listing.poster?.name || 'Unknown'}</span>
-                            <span className="flex items-center gap-1"><span className="material-icons text-xs">location_on</span>{listing.location}</span>
-                            <span className="flex items-center gap-1"><span className="material-icons text-xs">sell</span>{listing.category}</span>
-                            <span className="font-bold text-primary">${Number(listing.price || 0).toLocaleString()}</span>
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 bg-slate-50/50 border-b border-slate-100">
+                        <div className="flex items-center gap-4 min-w-0">
+                          <div className="w-16 h-16 rounded-xl bg-slate-100 overflow-hidden flex-shrink-0 border border-slate-200 shadow-xs">
+                            {listing.image ? (
+                              <img src={listing.image} className="w-full h-full object-cover" alt="" />
+                            ) : (
+                              <span className="w-full h-full flex items-center justify-center material-icons text-slate-400">image</span>
+                            )}
                           </div>
+                          <div className="min-w-0">
+                            <h3 className="font-black text-slate-800 text-base truncate">{listing.title}</h3>
+                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-xs text-slate-500">
+                              <span className="flex items-center gap-1">
+                                <span className="material-icons text-xs text-slate-400">person</span>
+                                {listing.poster?.name || 'Unknown'}
+                              </span>
+                              <span className="flex items-center gap-1 font-semibold text-slate-700">
+                                <span className="material-icons text-xs text-primary">location_on</span>
+                                {listing.location || [listing.city, listing.province].filter(Boolean).join(', ') || 'Unknown Location'}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <span className="material-icons text-xs text-slate-400">sell</span>
+                                {listing.category}
+                              </span>
+                              <span className="font-black text-primary text-sm">
+                                ${Number(listing.price || 0).toLocaleString()}
+                              </span>
+                            </div>
+
+                            {/* Ad Date & Expiration Date Row */}
+                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5 text-[11px] text-slate-400">
+                              <span className="flex items-center gap-1">
+                                <span className="material-icons text-xs">calendar_today</span>
+                                <span>Ad Date: <strong className="text-slate-600">{new Date(listing.created_at || Date.now()).toLocaleDateString('en-CA', { year: 'numeric', month: 'short', day: 'numeric' })}</strong></span>
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <span className="material-icons text-xs text-amber-500">event_busy</span>
+                                <span>Expires: <strong className="text-slate-600">{new Date(listing.expires_at || (new Date(listing.created_at || Date.now()).getTime() + 30*24*60*60*1000)).toLocaleDateString('en-CA', { year: 'numeric', month: 'short', day: 'numeric' })}</strong></span>
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Direct Inspection Actions */}
+                        <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                          {/* Review Full Ad Button */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setReviewingListing(listing);
+                              setIsReviewingPending(true);
+                            }}
+                            className="flex items-center gap-1.5 px-3.5 py-2 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white border border-blue-200 rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-xs"
+                            title="Review full advertisement, description, all images and details"
+                          >
+                            <span className="material-icons text-sm">visibility</span>
+                            <span>Review Full Ad</span>
+                          </button>
+
+                          {/* Open Ad Link in New Tab */}
+                          <a
+                            href={`/item/${listing.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1 px-3 py-2 bg-white text-slate-600 hover:text-primary border border-slate-200 hover:border-slate-300 rounded-xl text-xs font-bold transition-all shadow-xs"
+                            title="Open advertisement in new tab"
+                          >
+                            <span className="material-icons text-sm">open_in_new</span>
+                            <span className="hidden sm:inline">Open</span>
+                          </a>
                         </div>
                       </div>
 
@@ -4160,6 +4304,44 @@ const AdminDashboard: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Review Ad Modal */}
+      {reviewingListing && (
+        <AdReviewModal
+          listing={reviewingListing}
+          onClose={() => {
+            setReviewingListing(null);
+            setIsReviewingPending(false);
+          }}
+          isPendingApproval={isReviewingPending}
+          onApprove={handleReviewModalApprove}
+          onReject={handleReviewModalReject}
+        />
+      )}
+
+      {/* Edit Listing Modal (Correct mistakes, curate/remove individual photos) */}
+      {editingListing && (
+        <AdEditModal
+          listing={editingListing}
+          currentUserId={(() => {
+            try {
+              return JSON.parse(localStorage.getItem('user') || '{}')?.id || 1;
+            } catch {
+              return 1;
+            }
+          })()}
+          onClose={() => setEditingListing(null)}
+          onSaved={handleListingSaved}
+        />
+      )}
+
+      {/* Promotional Outreach Modal (Promote via email, customized message) */}
+      {outreachListing && (
+        <PromoteOutreachModal
+          listing={outreachListing}
+          onClose={() => setOutreachListing(null)}
+        />
       )}
     </div>
   );

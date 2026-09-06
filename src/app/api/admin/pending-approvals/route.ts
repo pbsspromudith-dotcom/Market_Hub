@@ -76,22 +76,31 @@ export async function GET() {
     // Assemble result
     const result = pendingListings.map(listing => {
       let image = listing.image;
+      let allImages: string[] = [];
       if (listing.image && listing.image.startsWith('[')) {
         try {
           const parsed = JSON.parse(listing.image);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            image = parsed[0];
-          } else {
-            image = null;
+          if (Array.isArray(parsed)) {
+            allImages = parsed.map(fixImagePath).filter((x): x is string => typeof x === 'string' && x.length > 0);
+            image = parsed.length > 0 ? parsed[0] : null;
           }
         } catch (e) {
           // ignore
         }
+      } else if (listing.image) {
+        const fixed = fixImagePath(listing.image);
+        if (fixed) allImages = [fixed];
       }
+
+      // Default expiration to 30 days after created_at if not explicitly set
+      const createdDate = listing.created_at ? new Date(listing.created_at) : new Date();
+      const expiresAt = listing.expires_at || new Date(createdDate.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
       return {
         ...listing,
         image: fixImagePath(image),
+        allImages,
+        expires_at: expiresAt,
         poster: posterMap.get(listing.user_id) || null,
         approval_stages: (approvals || [])
           .filter(a => a.listing_id === listing.id)

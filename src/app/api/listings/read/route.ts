@@ -63,6 +63,18 @@ export async function GET(req: Request) {
       }
     }
 
+    let userMap = new Map();
+    if (showAll && validListings.length > 0) {
+      const uIds = [...new Set(validListings.filter(l => l.user_id).map(l => l.user_id))];
+      if (uIds.length > 0) {
+        const { data: usersData } = await supabase
+          .from('users')
+          .select('id, name, email, phone')
+          .in('id', uIds);
+        userMap = new Map((usersData || []).map(u => [u.id, u]));
+      }
+    }
+
     const fixImagePath = (path: string | null) => {
       if (!path) return path;
       if (path.startsWith('/api/uploads/')) {
@@ -100,21 +112,36 @@ export async function GET(req: Request) {
       let { is_top_ad, is_highlighted, is_urgent, is_home_gallery } = row;
       const promotion_expires_at = (row as any).promotion_expires_at;
       
+      const had_promotion = !!(row.is_top_ad || row.is_highlighted || row.is_urgent || row.is_home_gallery || promotion_expires_at);
+      let is_promo_expired = false;
+
       if (promotion_expires_at && new Date(promotion_expires_at) < now) {
         is_top_ad = false;
         is_highlighted = false;
         is_urgent = false;
         is_home_gallery = false;
+        is_promo_expired = true;
       }
+
+      const createdDate = row.created_at ? new Date(row.created_at) : new Date();
+      const expiresAt = (row as any).expires_at || new Date(createdDate.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString();
+      const poster = row.user_id ? userMap.get(row.user_id) : null;
+      const targetEmail = row.contact_email || poster?.email || '';
 
       return {
         ...row,
+        expires_at: expiresAt,
+        poster_name: poster?.name || null,
+        poster_email: poster?.email || null,
+        target_email: targetEmail,
+        had_promotion,
+        is_promo_expired,
         is_top_ad,
         is_highlighted,
         is_urgent,
         is_home_gallery,
         image: fixImagePath(image),
-        allImages: allImages.map(fixImagePath)
+        allImages: allImages.map(fixImagePath).filter((x): x is string => typeof x === 'string' && x.length > 0)
       };
     });
 

@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@babel/core": "^7.29.6",
-    "@hono/node-server": "^1.19.13",
+    "@hono/node-server": "^1.19.16",
     "@supabase/server": "^1.3.0",
     "@supabase/supabase-js": "^2.110.0",
     "@tailwindcss/container-queries": "^0.1.1",
@@ -22,10 +22,10 @@
     "bcryptjs": "^3.0.3",
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^1.30.0",
-    "next": "16.2.9",
+    "next": "16.3.4",
     "nodemailer": "^9.0.1",
     "picomatch": "^4.0.4",
-    "postcss": "^8.5.10",
+    "postcss": "^8.5.28",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-google-recaptcha": "^3.1.0",
@@ -37,13 +37,16 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.2.9",
+    "eslint-config-next": "16.3.4",
     "pg": "^8.22.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   },
   "overrides": {
-    "postcss": "^8.5.10",
-    "@hono/node-server": "^1.19.13"
+    "postcss": "^8.5.28",
+    "@hono/node-server": "^1.19.16",
+    "browserslist": "^4.28.7",
+    "js-yaml": "^4.3.1",
+    "nanoid": "^3.3.18"
   }
 }

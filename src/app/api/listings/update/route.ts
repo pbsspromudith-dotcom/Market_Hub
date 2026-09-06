@@ -9,9 +9,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: 'Required fields missing' }, { status: 400 });
     }
 
+    const rawImages = data.images !== undefined ? data.images : data.image;
     let imageToSave: string | null = null;
-    if (data.image && Array.isArray(data.image) && data.image.length > 0) {
-      imageToSave = JSON.stringify(data.image);
+    if (Array.isArray(rawImages)) {
+      imageToSave = rawImages.length > 0 ? JSON.stringify(rawImages) : null;
+    } else if (typeof rawImages === 'string' && rawImages.trim()) {
+      imageToSave = rawImages.trim();
     }
 
     // 1. Fetch current listing to verify owner/auth
